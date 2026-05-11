@@ -9,6 +9,8 @@ import {
   TrendingUp,
 } from 'lucide-react'
 
+<h1>NEW VERSION TEST</h1>
+
 export default function Dashboard() {
   return (
     <main className="min-h-screen bg-gray-100 p-4">
