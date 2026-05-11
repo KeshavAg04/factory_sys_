@@ -11,6 +11,7 @@ export default function ProductionEntryPage() {
   const [machines, setMachines] = useState<any[]>([])
   const [labours, setLabours] = useState<any[]>([])
   const [rates, setRates] = useState<any[]>([])
+  const [bagNames, setBagNames] = useState<any[]>([])
 
   const [formData, setFormData] = useState({
     production_date: '',
@@ -63,10 +64,16 @@ export default function ProductionEntryPage() {
         .from('rate_master')
         .select('*')
 
+    const { data: bagNameData } =
+      await supabase
+        .from('bag_name_master')
+        .select('*')
+
     setFactories(factoryData || [])
     setMachines(machineData || [])
     setLabours(labourData || [])
     setRates(rateData || [])
+    setBagNames(bagNameData || [])
   }
 
   const filteredMachines =
@@ -283,12 +290,16 @@ export default function ProductionEntryPage() {
               />
 
               <datalist id="labours">
+
                 {labours.map((labour) => (
+
                   <option
                     key={labour.id}
                     value={labour.labour_name}
                   />
+
                 ))}
+
               </datalist>
 
               <select
@@ -396,6 +407,7 @@ export default function ProductionEntryPage() {
               </select>
 
               <input
+                list="bagNames"
                 name="bag_name"
                 value={formData.bag_name}
                 onChange={handleChange}
@@ -403,6 +415,19 @@ export default function ProductionEntryPage() {
                 className="border p-4 rounded-xl"
                 required
               />
+
+              <datalist id="bagNames">
+
+                {bagNames.map((bag) => (
+
+                  <option
+                    key={bag.id}
+                    value={bag.bag_name}
+                  />
+
+                ))}
+
+              </datalist>
 
               <input
                 type="number"
@@ -444,7 +469,10 @@ export default function ProductionEntryPage() {
                 </p>
 
                 <h2 className="text-4xl font-bold mt-2">
-                  ₹{Number(formData.amount || 0).toFixed(2)}
+                  ₹
+                  {Number(
+                    formData.amount || 0
+                  ).toFixed(2)}
                 </h2>
 
               </div>
@@ -460,9 +488,11 @@ export default function ProductionEntryPage() {
             disabled={loading}
             className="w-full bg-black text-white p-5 rounded-2xl text-lg font-semibold"
           >
+
             {loading
               ? 'Saving...'
               : 'Save Production Entry'}
+
           </button>
 
         </form>
