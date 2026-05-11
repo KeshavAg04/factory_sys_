@@ -13,6 +13,9 @@ export default function ProductionEntryPage() {
   const [rates, setRates] = useState<any[]>([])
   const [bagNames, setBagNames] = useState<any[]>([])
 
+  const [isCustomBagName, setIsCustomBagName] =
+    useState(false)
+
   const [formData, setFormData] = useState({
     production_date: '',
     factory: '',
@@ -139,6 +142,32 @@ export default function ProductionEntryPage() {
     setFormData(updatedData)
   }
 
+  const handleBagNameChange = (
+    e: React.ChangeEvent<HTMLSelectElement>
+  ) => {
+
+    const value = e.target.value
+
+    if (value === 'Custom') {
+
+      setIsCustomBagName(true)
+
+      setFormData((prev) => ({
+        ...prev,
+        bag_name: '',
+      }))
+
+      return
+    }
+
+    setIsCustomBagName(false)
+
+    setFormData((prev) => ({
+      ...prev,
+      bag_name: value,
+    }))
+  }
+
   const handleSubmit = async (
     e: React.FormEvent
   ) => {
@@ -170,6 +199,8 @@ export default function ProductionEntryPage() {
     const today = new Date()
       .toISOString()
       .split('T')[0]
+
+    setIsCustomBagName(false)
 
     setFormData({
       production_date: today,
@@ -406,28 +437,51 @@ export default function ProductionEntryPage() {
 
               </select>
 
-              <input
-                list="bagNames"
-                name="bag_name"
-                value={formData.bag_name}
-                onChange={handleChange}
-                placeholder="Bag Name"
+              <select
+                value={
+                  isCustomBagName
+                    ? 'Custom'
+                    : formData.bag_name
+                }
+                onChange={handleBagNameChange}
                 className="border p-4 rounded-xl"
-                required
-              />
+                required={!isCustomBagName}
+              >
 
-              <datalist id="bagNames">
+                <option value="">
+                  Select Bag Name
+                </option>
 
                 {bagNames.map((bag) => (
 
                   <option
                     key={bag.id}
                     value={bag.bag_name}
-                  />
+                  >
+                    {bag.bag_name}
+                  </option>
 
                 ))}
 
-              </datalist>
+                <option value="Custom">
+                  Custom
+                </option>
+
+              </select>
+
+              {isCustomBagName && (
+
+                <input
+                  type="text"
+                  name="bag_name"
+                  value={formData.bag_name}
+                  onChange={handleChange}
+                  placeholder="Enter Custom Bag Name"
+                  className="border p-4 rounded-xl"
+                  required
+                />
+
+              )}
 
               <input
                 type="number"
