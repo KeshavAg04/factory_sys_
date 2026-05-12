@@ -11,8 +11,6 @@ import { supabase } from '@/lib/supabase'
 
 export default function ProductionEntryPage() {
 
-  // MASTER DATA
-
   const [factories, setFactories] =
     useState<any[]>([])
 
@@ -30,8 +28,6 @@ export default function ProductionEntryPage() {
 
   const [rates, setRates] =
     useState<any[]>([])
-
-  // FORM
 
   const [formData, setFormData] =
     useState({
@@ -63,80 +59,80 @@ export default function ProductionEntryPage() {
     fetchMasterData()
   }, [])
 
-  // FETCH DATA
-
   const fetchMasterData = async () => {
 
-    const [
-      factoriesRes,
-      machinesRes,
-      meshesRes,
-      bagTypesRes,
-      bagNamesRes,
-      ratesRes,
-    ] = await Promise.all([
+    const {
+      data: factoriesData,
+    } = await supabase
+      .from('factory_master')
+      .select('*')
 
-      supabase
-        .from('factory_master')
-        .select('*'),
+    const {
+      data: machinesData,
+    } = await supabase
+      .from('machine_master')
+      .select('*')
 
-      supabase
-        .from('machine_master')
-        .select('*'),
+    const {
+      data: meshesData,
+    } = await supabase
+      .from('mesh_master')
+      .select('*')
 
-      supabase
-        .from('mesh_master')
-        .select('*'),
+    const {
+      data: bagTypesData,
+    } = await supabase
+      .from('bag_type_master')
+      .select('*')
 
-      supabase
-        .from('bag_type_master')
-        .select('*'),
+    const {
+      data: bagNamesData,
+    } = await supabase
+      .from('bag_name_master')
+      .select('*')
 
-      supabase
-        .from('bag_name_master')
-        .select('*'),
-
-      supabase
-        .from('rate_master')
-        .select('*'),
-
-    ])
+    const {
+      data: ratesData,
+    } = await supabase
+      .from('rate_master')
+      .select('*')
 
     setFactories(
-      factoriesRes.data || []
+      factoriesData || []
     )
 
     setMachines(
-      machinesRes.data || []
+      machinesData || []
     )
 
     setMeshes(
-      meshesRes.data || []
+      meshesData || []
     )
 
     setBagTypes(
-      bagTypesRes.data || []
+      bagTypesData || []
     )
 
     setBagNames(
-      bagNamesRes.data || []
+      bagNamesData || []
     )
 
     setRates(
-      ratesRes.data || []
+      ratesData || []
     )
   }
 
-  // FILTERED MACHINES
-
   const filteredMachines =
-    machines.filter(
-      (machine) =>
-        machine.factory ===
-        formData.factory
-    )
 
-  // AUTO RATE
+    formData.factory
+
+      ? machines.filter(
+          (machine) =>
+            machine.factory ===
+            formData.factory
+        )
+
+      : machines
 
   useEffect(() => {
 
@@ -163,7 +159,6 @@ export default function ProductionEntryPage() {
           matchedRate.rate,
         amount,
       }))
-
     }
 
   }, [
@@ -172,8 +167,6 @@ export default function ProductionEntryPage() {
     formData.quantity,
     rates,
   ])
-
-  // INPUT CHANGE
 
   const handleChange = (
     field: string,
@@ -188,8 +181,6 @@ export default function ProductionEntryPage() {
 
     }))
   }
-
-  // SUBMIT
 
   const handleSubmit = async (
     e: any
@@ -242,8 +233,6 @@ export default function ProductionEntryPage() {
 
       <div className="max-w-5xl mx-auto">
 
-        {/* HEADER */}
-
         <div className="mb-8">
 
           <p className="text-slate-500 text-sm">
@@ -256,16 +245,12 @@ export default function ProductionEntryPage() {
 
         </div>
 
-        {/* FORM */}
-
         <form
           onSubmit={handleSubmit}
           className="bg-white rounded-3xl shadow-sm border border-slate-200 p-6 md:p-8"
         >
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-
-            {/* DATE */}
 
             <input
               type="date"
@@ -302,9 +287,11 @@ export default function ProductionEntryPage() {
 
                 <option
                   key={factory.id}
-                  value={factory.name}
+                  value={
+                    factory.factory_name
+                  }
                 >
-                  {factory.name}
+                  {factory.factory_name}
                 </option>
 
               ))}
@@ -332,16 +319,16 @@ export default function ProductionEntryPage() {
 
                 <option
                   key={machine.id}
-                  value={machine.name}
+                  value={
+                    machine.machine_name
+                  }
                 >
-                  {machine.name}
+                  {machine.machine_name}
                 </option>
 
               ))}
 
             </select>
-
-            {/* LABOUR */}
 
             <input
               type="text"
@@ -400,14 +387,22 @@ export default function ProductionEntryPage() {
 
               {meshes.map((mesh) => (
 
-                <option
-                  key={mesh.id}
-                  value={mesh.name}
-                >
-                  {mesh.name}
-                </option>
+<option
+  key={mesh.id}
+  value={
+    mesh.mesh_name ||
+    mesh.mesh_size ||
+    mesh.mesh
+  }
+>
+  {
+    mesh.mesh_name ||
+    mesh.mesh_size ||
+    mesh.mesh
+  }
+</option>
 
-              ))}
+))}
 
             </select>
 
@@ -430,14 +425,22 @@ export default function ProductionEntryPage() {
 
               {bagTypes.map((bagType) => (
 
-                <option
-                  key={bagType.id}
-                  value={bagType.name}
-                >
-                  {bagType.name}
-                </option>
+<option
+  key={bagType.id}
+  value={
+    bagType.bag_type ||
+    bagType.type ||
+    bagType.name
+  }
+>
+  {
+    bagType.bag_type ||
+    bagType.type ||
+    bagType.name
+  }
+</option>
 
-              ))}
+))}
 
             </select>
 
@@ -462,16 +465,16 @@ export default function ProductionEntryPage() {
 
                 <option
                   key={bagName.id}
-                  value={bagName.name}
+                  value={
+                    bagName.bag_name
+                  }
                 >
-                  {bagName.name}
+                  {bagName.bag_name}
                 </option>
 
               ))}
 
             </select>
-
-            {/* QUANTITY */}
 
             <input
               type="number"
@@ -486,16 +489,12 @@ export default function ProductionEntryPage() {
               className="border border-slate-200 p-4 rounded-2xl"
             />
 
-            {/* RATE */}
-
             <input
               type="number"
               value={formData.rate}
               readOnly
               className="bg-slate-100 border border-slate-200 p-4 rounded-2xl"
             />
-
-            {/* AMOUNT */}
 
             <input
               type="number"
@@ -505,8 +504,6 @@ export default function ProductionEntryPage() {
             />
 
           </div>
-
-          {/* SUBMIT */}
 
           <button
             type="submit"
