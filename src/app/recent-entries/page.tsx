@@ -2,11 +2,18 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '@/lib/supabase'
+import toast from 'react-hot-toast'
 
 export default function RecentEntriesPage() {
 
-  const [entries, setEntries] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
+  const [entries, setEntries] =
+    useState<any[]>([])
+
+  const [loading, setLoading] =
+    useState(true)
+
+  const [visibleCount, setVisibleCount] =
+    useState(25)
 
   // FILTERS
 
@@ -59,7 +66,7 @@ export default function RecentEntriesPage() {
     setLoading(false)
   }
 
-  // UNIQUE FILTER VALUES
+  // FILTER VALUES
 
   const factories =
     [...new Set(
@@ -160,6 +167,11 @@ export default function RecentEntriesPage() {
         .eq('id', id)
 
     if (!error) {
+
+      toast.success(
+        'Entry deleted'
+      )
+
       fetchEntries()
     }
   }
@@ -194,6 +206,10 @@ export default function RecentEntriesPage() {
 
     if (!error) {
 
+      toast.success(
+        'Entry updated'
+      )
+
       setEditingId(null)
 
       fetchEntries()
@@ -203,14 +219,15 @@ export default function RecentEntriesPage() {
   if (loading) {
 
     return (
-      <main className="p-6">
-        Loading...
+      <main className="min-h-screen flex items-center justify-center text-slate-500 text-lg">
+        Loading entries...
       </main>
     )
   }
 
   return (
-    <main className="min-h-screen bg-gray-100 p-4">
+
+    <main className="min-h-screen bg-slate-100 p-4 md:p-6">
 
       <div className="max-w-7xl mx-auto">
 
@@ -218,11 +235,11 @@ export default function RecentEntriesPage() {
 
         <div className="mb-6">
 
-          <p className="text-gray-500 text-sm">
+          <p className="text-slate-500 text-sm">
             Production Management
           </p>
 
-          <h1 className="text-4xl font-bold mt-2 text-black">
+          <h1 className="text-4xl font-bold text-slate-900 mt-2">
             Recent Entries
           </h1>
 
@@ -230,7 +247,7 @@ export default function RecentEntriesPage() {
 
         {/* FILTERS */}
 
-        <div className="bg-white rounded-2xl shadow-md p-4 mb-6">
+        <div className="bg-white rounded-3xl shadow-sm border border-slate-200 p-4 mb-6 sticky top-24 z-30">
 
           <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
 
@@ -241,7 +258,7 @@ export default function RecentEntriesPage() {
                   e.target.value
                 )
               }
-              className="border p-3 rounded-xl"
+              className="border border-slate-200 p-3 rounded-2xl"
             >
 
               <option value="">
@@ -268,7 +285,7 @@ export default function RecentEntriesPage() {
                   e.target.value
                 )
               }
-              className="border p-3 rounded-xl"
+              className="border border-slate-200 p-3 rounded-2xl"
             >
 
               <option value="">
@@ -295,7 +312,7 @@ export default function RecentEntriesPage() {
                   e.target.value
                 )
               }
-              className="border p-3 rounded-xl"
+              className="border border-slate-200 p-3 rounded-2xl"
             >
 
               <option value="">
@@ -322,7 +339,7 @@ export default function RecentEntriesPage() {
                   e.target.value
                 )
               }
-              className="border p-3 rounded-xl"
+              className="border border-slate-200 p-3 rounded-2xl"
             >
 
               <option value="">
@@ -347,7 +364,7 @@ export default function RecentEntriesPage() {
                   e.target.value
                 )
               }
-              className="border p-3 rounded-xl"
+              className="border border-slate-200 p-3 rounded-2xl"
             />
 
             <input
@@ -359,98 +376,20 @@ export default function RecentEntriesPage() {
                   e.target.value
                 )
               }
-              className="border p-3 rounded-xl"
+              className="border border-slate-200 p-3 rounded-2xl"
             />
 
           </div>
 
         </div>
 
-        {/* MOBILE CARDS */}
+        {/* TABLE */}
 
-        <div className="md:hidden space-y-4">
-
-          {filteredEntries.map((entry) => (
-
-            <div
-              key={entry.id}
-              className="bg-white rounded-2xl shadow-md p-4"
-            >
-
-              <div className="space-y-2 text-sm">
-
-                <p>
-                  <strong>Date:</strong>{' '}
-                  {entry.production_date}
-                </p>
-
-                <p>
-                  <strong>Factory:</strong>{' '}
-                  {entry.factory}
-                </p>
-
-                <p>
-                  <strong>Machine:</strong>{' '}
-                  {entry.machine}
-                </p>
-
-                <p>
-                  <strong>Labour:</strong>{' '}
-                  {entry.labour_name}
-                </p>
-
-                <p>
-                  <strong>Bag:</strong>{' '}
-                  {entry.bag_name}
-                </p>
-
-                <p>
-                  <strong>Quantity:</strong>{' '}
-                  {entry.quantity}
-                </p>
-
-                <p>
-                  <strong>Amount:</strong>{' '}
-                  ₹{entry.amount}
-                </p>
-
-              </div>
-
-              <div className="flex gap-2 mt-4">
-
-                <button
-                  onClick={() =>
-                    startEdit(entry)
-                  }
-                  className="bg-black text-white px-4 py-2 rounded-xl"
-                >
-                  Edit
-                </button>
-
-                <button
-                  onClick={() =>
-                    deleteEntry(entry.id)
-                  }
-                  className="bg-red-500 text-white px-4 py-2 rounded-xl"
-                >
-                  Delete
-                </button>
-
-              </div>
-
-            </div>
-
-          ))}
-
-        </div>
-
-        {/* DESKTOP TABLE */}
-
-        <div className="hidden md:block overflow-x-auto bg-white rounded-2xl shadow-md">
+        <div className="overflow-x-auto bg-white rounded-3xl shadow-sm border border-slate-200">
 
           <table className="w-full text-sm">
 
-            <thead className="bg-black text-white">
+            <thead className="bg-slate-100 text-slate-700 border-b border-slate-200">
 
               <tr>
 
@@ -500,11 +439,13 @@ export default function RecentEntriesPage() {
 
             <tbody>
 
-              {filteredEntries.map((entry) => (
+              {filteredEntries
+                .slice(0, visibleCount)
+                .map((entry) => (
 
                 <tr
                   key={entry.id}
-                  className="border-b"
+                  className="border-b border-slate-100"
                 >
 
                   <td className="p-4">
@@ -539,7 +480,7 @@ export default function RecentEntriesPage() {
                     {entry.quantity}
                   </td>
 
-                  <td className="p-4">
+                  <td className="p-4 font-semibold">
                     ₹{entry.amount}
                   </td>
 
@@ -549,7 +490,7 @@ export default function RecentEntriesPage() {
                       onClick={() =>
                         startEdit(entry)
                       }
-                      className="bg-black text-white px-3 py-2 rounded-xl"
+                      className="bg-slate-800 text-white px-3 py-2 rounded-xl"
                     >
                       Edit
                     </button>
@@ -558,7 +499,7 @@ export default function RecentEntriesPage() {
                       onClick={() =>
                         deleteEntry(entry.id)
                       }
-                      className="bg-red-500 text-white px-3 py-2 rounded-xl"
+                      className="bg-red-400 text-white px-3 py-2 rounded-xl"
                     >
                       Delete
                     </button>
@@ -575,15 +516,37 @@ export default function RecentEntriesPage() {
 
         </div>
 
+        {/* LOAD MORE */}
+
+        <div className="flex justify-center mt-6">
+
+          {visibleCount <
+            filteredEntries.length && (
+
+            <button
+              onClick={() =>
+                setVisibleCount(
+                  visibleCount + 25
+                )
+              }
+              className="bg-white border border-slate-200 px-5 py-3 rounded-2xl shadow-sm"
+            >
+              Load More
+            </button>
+
+          )}
+
+        </div>
+
         {/* EDIT MODAL */}
 
         {editingId && (
 
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
 
-            <div className="bg-white rounded-2xl p-6 w-full max-w-2xl">
+            <div className="bg-white rounded-3xl p-6 w-full max-w-2xl">
 
-              <h2 className="text-2xl font-bold mb-4">
+              <h2 className="text-2xl font-bold mb-4 text-slate-900">
                 Edit Entry
               </h2>
 
@@ -611,7 +574,7 @@ export default function RecentEntriesPage() {
                         })
                       }
                       placeholder={key}
-                      className="border p-3 rounded-xl"
+                      className="border border-slate-200 p-3 rounded-2xl"
                     />
 
                   )
@@ -623,7 +586,7 @@ export default function RecentEntriesPage() {
 
                 <button
                   onClick={saveEdit}
-                  className="bg-black text-white px-5 py-3 rounded-xl"
+                  className="bg-slate-800 text-white px-5 py-3 rounded-2xl"
                 >
                   Save
                 </button>
@@ -632,7 +595,7 @@ export default function RecentEntriesPage() {
                   onClick={() =>
                     setEditingId(null)
                   }
-                  className="bg-gray-300 px-5 py-3 rounded-xl"
+                  className="bg-slate-200 px-5 py-3 rounded-2xl"
                 >
                   Cancel
                 </button>

@@ -1,12 +1,16 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import * as XLSX from 'xlsx'
 import { supabase } from '@/lib/supabase'
 
 export default function ReportsPage() {
 
   const [entries, setEntries] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+
+  const [visibleCount, setVisibleCount] =
+    useState(25)
 
   // FILTERS
 
@@ -52,6 +56,76 @@ export default function ReportsPage() {
     }
 
     setLoading(false)
+  }
+
+  // QUICK FILTERS
+
+  const applyTodayFilter = () => {
+
+    const today = new Date()
+      .toISOString()
+      .split('T')[0]
+
+    setStartDate(today)
+    setEndDate(today)
+  }
+
+  const applyThisWeekFilter = () => {
+
+    const now = new Date()
+
+    const firstDay = new Date(now)
+
+    firstDay.setDate(
+      now.getDate() - now.getDay()
+    )
+
+    const lastDay = new Date(now)
+
+    lastDay.setDate(
+      firstDay.getDate() + 6
+    )
+
+    setStartDate(
+      firstDay
+        .toISOString()
+        .split('T')[0]
+    )
+
+    setEndDate(
+      lastDay
+        .toISOString()
+        .split('T')[0]
+    )
+  }
+
+  const applyThisMonthFilter = () => {
+
+    const now = new Date()
+
+    const firstDay = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      1
+    )
+
+    const lastDay = new Date(
+      now.getFullYear(),
+      now.getMonth() + 1,
+      0
+    )
+
+    setStartDate(
+      firstDay
+        .toISOString()
+        .split('T')[0]
+    )
+
+    setEndDate(
+      lastDay
+        .toISOString()
+        .split('T')[0]
+    )
   }
 
   // FILTER OPTIONS
@@ -141,112 +215,60 @@ export default function ReportsPage() {
       bagTypeFilter,
     ])
 
-  // SUMMARYS
+  // SUMMARY
 
   const totalQuantity =
     filteredEntries.reduce(
       (sum, entry) =>
-        sum + Number(entry.quantity || 0),
+        sum +
+        Number(entry.quantity || 0),
       0
     )
 
   const totalAmount =
     filteredEntries.reduce(
       (sum, entry) =>
-        sum + Number(entry.amount || 0),
+        sum +
+        Number(entry.amount || 0),
       0
     )
 
-  const totalEntries =
-    filteredEntries.length
+  // EXCEL EXPORT
 
-  // CSV EXPORT
+  const exportExcel = () => {
 
-  const exportCSV = () => {
-
-    const headers = [
-      'Date',
-      'Factory',
-      'Machine',
-      'Labour',
-      'Shift',
-      'Mesh',
-      'Bag Type',
-      'Bag Name',
-      'Quantity',
-      'Rate',
-      'Amount',
-    ]
-
-    const rows =
-      filteredEntries.map((entry) => [
-
-        entry.production_date,
-        entry.factory,
-        entry.machine,
-        entry.labour_name,
-        entry.shift,
-        entry.mesh,
-        entry.bag_type,
-        entry.bag_name,
-        entry.quantity,
-        entry.rate,
-        entry.amount,
-
-      ])
-
-    const csvContent =
-
-      [
-        headers.join(','),
-
-        ...rows.map((row) =>
-          row.join(',')
-        ),
-
-      ].join('\n')
-
-    const blob =
-      new Blob(
-        [csvContent],
-        {
-          type: 'text/csv;charset=utf-8;',
-        }
+    const worksheet =
+      XLSX.utils.json_to_sheet(
+        filteredEntries
       )
 
-    const link =
-      document.createElement('a')
+    const workbook =
+      XLSX.utils.book_new()
 
-    const url =
-      URL.createObjectURL(blob)
-
-    link.setAttribute('href', url)
-
-    link.setAttribute(
-      'download',
-      'production-report.csv'
+    XLSX.utils.book_append_sheet(
+      workbook,
+      worksheet,
+      'Production Report'
     )
 
-    link.style.visibility = 'hidden'
-
-    document.body.appendChild(link)
-
-    link.click()
-
-    document.body.removeChild(link)
+    XLSX.writeFile(
+      workbook,
+      'production-report.xlsx'
+    )
   }
 
   if (loading) {
 
     return (
-      <main className="p-6">
-        Loading...
+      <main className="min-h-screen flex items-center justify-center text-slate-500 text-lg">
+        Loading reports...
       </main>
     )
   }
 
   return (
-    <main className="min-h-screen bg-gray-100 p-4">
+
+    <main className="min-h-screen bg-slate-100 p-4 md:p-6">
 
       <div className="max-w-7xl mx-auto">
 
@@ -254,19 +276,46 @@ export default function ReportsPage() {
 
         <div className="mb-6">
 
-          <p className="text-gray-500 text-sm">
+          <p className="text-slate-500 text-sm">
             Production Management
           </p>
 
-          <h1 className="text-4xl font-bold mt-2 text-black">
+          <h1 className="text-4xl font-bold text-slate-900 mt-2">
             Reports
           </h1>
 
         </div>
 
+        {/* QUICK FILTERS */}
+
+        <div className="flex flex-wrap gap-3 mb-4">
+
+          <button
+            onClick={applyTodayFilter}
+            className="bg-slate-800 text-white px-4 py-2 rounded-xl"
+          >
+            Today
+          </button>
+
+          <button
+            onClick={applyThisWeekFilter}
+            className="bg-white border border-slate-200 px-4 py-2 rounded-xl"
+          >
+            This Week
+          </button>
+
+          <button
+            onClick={applyThisMonthFilter}
+            className="bg-white border border-slate-200 px-4 py-2 rounded-xl"
+          >
+            This Month
+          </button>
+
+        </div>
+
         {/* FILTERS */}
 
-        <div className="bg-white rounded-2xl shadow-md p-4 mb-6">
+        <div className="bg-white rounded-3xl shadow-sm border border-slate-200 p-4 mb-6 sticky top-24 z-30">
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
 
@@ -278,7 +327,7 @@ export default function ReportsPage() {
                   e.target.value
                 )
               }
-              className="border p-3 rounded-xl"
+              className="border border-slate-200 p-3 rounded-2xl"
             />
 
             <input
@@ -289,7 +338,7 @@ export default function ReportsPage() {
                   e.target.value
                 )
               }
-              className="border p-3 rounded-xl"
+              className="border border-slate-200 p-3 rounded-2xl"
             />
 
             <select
@@ -299,7 +348,7 @@ export default function ReportsPage() {
                   e.target.value
                 )
               }
-              className="border p-3 rounded-xl"
+              className="border border-slate-200 p-3 rounded-2xl"
             >
 
               <option value="">
@@ -326,7 +375,7 @@ export default function ReportsPage() {
                   e.target.value
                 )
               }
-              className="border p-3 rounded-xl"
+              className="border border-slate-200 p-3 rounded-2xl"
             >
 
               <option value="">
@@ -353,7 +402,7 @@ export default function ReportsPage() {
                   e.target.value
                 )
               }
-              className="border p-3 rounded-xl"
+              className="border border-slate-200 p-3 rounded-2xl"
             >
 
               <option value="">
@@ -380,7 +429,7 @@ export default function ReportsPage() {
                   e.target.value
                 )
               }
-              className="border p-3 rounded-xl"
+              className="border border-slate-200 p-3 rounded-2xl"
             >
 
               <option value="">
@@ -404,7 +453,7 @@ export default function ReportsPage() {
                   e.target.value
                 )
               }
-              className="border p-3 rounded-xl"
+              className="border border-slate-200 p-3 rounded-2xl"
             >
 
               <option value="">
@@ -425,52 +474,40 @@ export default function ReportsPage() {
             </select>
 
             <button
-              onClick={exportCSV}
-              className="bg-black text-white rounded-xl p-3"
+              onClick={exportExcel}
+              className="bg-slate-800 text-white rounded-2xl p-3"
             >
-              Export CSV
+              Export Excel
             </button>
 
           </div>
 
         </div>
 
-        {/* SUMMARY CARDS */}
+        {/* SUMMARY */}
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
 
-          <div className="bg-white rounded-2xl shadow-md p-6">
+          <div className="bg-white rounded-3xl shadow-sm border border-slate-200 p-6">
 
-            <p className="text-gray-500">
+            <p className="text-slate-500">
               Total Quantity
             </p>
 
-            <h2 className="text-4xl font-bold mt-2">
+            <h2 className="text-4xl font-bold mt-2 text-slate-900">
               {totalQuantity}
             </h2>
 
           </div>
 
-          <div className="bg-white rounded-2xl shadow-md p-6">
+          <div className="bg-white rounded-3xl shadow-sm border border-slate-200 p-6">
 
-            <p className="text-gray-500">
+            <p className="text-slate-500">
               Total Amount
             </p>
 
-            <h2 className="text-4xl font-bold mt-2">
+            <h2 className="text-4xl font-bold mt-2 text-slate-900">
               ₹{totalAmount}
-            </h2>
-
-          </div>
-
-          <div className="bg-white rounded-2xl shadow-md p-6">
-
-            <p className="text-gray-500">
-              Total Entries
-            </p>
-
-            <h2 className="text-4xl font-bold mt-2">
-              {totalEntries}
             </h2>
 
           </div>
@@ -479,11 +516,11 @@ export default function ReportsPage() {
 
         {/* TABLE */}
 
-        <div className="overflow-x-auto bg-white rounded-2xl shadow-md">
+        <div className="overflow-x-auto bg-white rounded-3xl shadow-sm border border-slate-200">
 
           <table className="w-full text-sm">
 
-            <thead className="bg-black text-white">
+            <thead className="bg-slate-100 text-slate-700 border-b border-slate-200">
 
               <tr>
 
@@ -537,11 +574,13 @@ export default function ReportsPage() {
 
             <tbody>
 
-              {filteredEntries.map((entry) => (
+              {filteredEntries
+                .slice(0, visibleCount)
+                .map((entry) => (
 
                 <tr
                   key={entry.id}
-                  className="border-b"
+                  className="border-b border-slate-100"
                 >
 
                   <td className="p-4">
@@ -581,10 +620,10 @@ export default function ReportsPage() {
                   </td>
 
                   <td className="p-4">
-                    {entry.rate}
+                    ₹{entry.rate}
                   </td>
 
-                  <td className="p-4">
+                  <td className="p-4 font-semibold">
                     ₹{entry.amount}
                   </td>
 
@@ -592,9 +631,54 @@ export default function ReportsPage() {
 
               ))}
 
+              {/* TOTALS */}
+
+              <tr className="bg-slate-100 font-bold border-t border-slate-300">
+
+                <td
+                  className="p-4"
+                  colSpan={8}
+                >
+                  Totals
+                </td>
+
+                <td className="p-4">
+                  {totalQuantity}
+                </td>
+
+                <td className="p-4"></td>
+
+                <td className="p-4">
+                  ₹{totalAmount}
+                </td>
+
+              </tr>
+
             </tbody>
 
           </table>
+
+        </div>
+
+        {/* LOAD MORE */}
+
+        <div className="flex justify-center mt-6">
+
+          {visibleCount <
+            filteredEntries.length && (
+
+            <button
+              onClick={() =>
+                setVisibleCount(
+                  visibleCount + 25
+                )
+              }
+              className="bg-white border border-slate-200 px-5 py-3 rounded-2xl shadow-sm"
+            >
+              Load More
+            </button>
+
+          )}
 
         </div>
 
