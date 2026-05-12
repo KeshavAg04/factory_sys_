@@ -247,7 +247,7 @@ export default function RecentEntriesPage() {
 
         {/* FILTERS */}
 
-        <div className="bg-white rounded-3xl shadow-sm border border-slate-200 p-4 mb-6 sticky top-24 z-30">
+        <div className="bg-white rounded-3xl shadow-sm border border-slate-200 p-4 mb-6 sticky top-32 md:top-24 z-30">
 
           <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
 
