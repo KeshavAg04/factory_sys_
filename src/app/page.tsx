@@ -13,6 +13,9 @@ import {
   YAxis,
   Tooltip,
   ResponsiveContainer,
+  LineChart,
+  Line,
+  CartesianGrid,
 } from 'recharts'
 
 import { supabase } from '@/lib/supabase'
@@ -45,7 +48,7 @@ export default function DashboardPage() {
     setLoading(false)
   }
 
-  // TODAY FILTER
+  // TODAY
 
   const today =
     new Date()
@@ -111,6 +114,47 @@ export default function DashboardPage() {
               .quantity,
           amount:
             grouped[factory]
+              .amount,
+        })
+      )
+
+    }, [entries])
+
+  // MACHINE SUMMARY
+
+  const machineSummary =
+    useMemo(() => {
+
+      const grouped: any = {}
+
+      entries.forEach((entry) => {
+
+        if (!grouped[entry.machine]) {
+
+          grouped[entry.machine] = {
+            quantity: 0,
+            amount: 0,
+          }
+        }
+
+        grouped[entry.machine]
+          .quantity +=
+          Number(entry.quantity || 0)
+
+        grouped[entry.machine]
+          .amount +=
+          Number(entry.amount || 0)
+
+      })
+
+      return Object.keys(grouped).map(
+        (machine) => ({
+          machine,
+          quantity:
+            grouped[machine]
+              .quantity,
+          amount:
+            grouped[machine]
               .amount,
         })
       )
@@ -209,6 +253,53 @@ export default function DashboardPage() {
 
     }, [entries])
 
+  // MONTHLY TREND
+
+  const monthlyTrend =
+    useMemo(() => {
+
+      const grouped: any = {}
+
+      entries.forEach((entry) => {
+
+        const month =
+          entry.production_date?.slice(
+            0,
+            7
+          )
+
+        if (!grouped[month]) {
+
+          grouped[month] = {
+            quantity: 0,
+            amount: 0,
+          }
+        }
+
+        grouped[month]
+          .quantity +=
+          Number(entry.quantity || 0)
+
+        grouped[month]
+          .amount +=
+          Number(entry.amount || 0)
+
+      })
+
+      return Object.keys(grouped).map(
+        (month) => ({
+          month,
+          quantity:
+            grouped[month]
+              .quantity,
+          amount:
+            grouped[month]
+              .amount,
+        })
+      )
+
+    }, [entries])
+
   if (loading) {
 
     return (
@@ -280,18 +371,18 @@ export default function DashboardPage() {
           <div className="bg-white rounded-2xl shadow-md p-6">
 
             <p className="text-gray-500">
-              Total Factories
+              Total Machines
             </p>
 
             <h2 className="text-4xl font-bold mt-2">
-              {factorySummary.length}
+              {machineSummary.length}
             </h2>
 
           </div>
 
         </div>
 
-        {/* FACTORY + LABOUR */}
+        {/* FACTORY + MACHINE */}
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
 
@@ -326,7 +417,7 @@ export default function DashboardPage() {
                         </h3>
 
                         <p className="text-gray-500">
-                          Quantity:{' '}
+                          Qty:{' '}
                           {
                             factory.quantity
                           }
@@ -352,22 +443,22 @@ export default function DashboardPage() {
 
           </div>
 
-          {/* LABOUR */}
+          {/* MACHINE */}
 
           <div className="bg-white rounded-2xl shadow-md p-6">
 
             <h2 className="text-2xl font-bold mb-4">
-              Labour Summary
+              Machine Summary
             </h2>
 
-            <div className="space-y-4 max-h-[500px] overflow-y-auto">
+            <div className="space-y-4">
 
-              {labourSummary.map(
-                (labour) => (
+              {machineSummary.map(
+                (machine) => (
 
                   <div
                     key={
-                      labour.labour
+                      machine.machine
                     }
                     className="border rounded-xl p-4"
                   >
@@ -378,14 +469,14 @@ export default function DashboardPage() {
 
                         <h3 className="font-bold text-lg">
                           {
-                            labour.labour
+                            machine.machine
                           }
                         </h3>
 
                         <p className="text-gray-500">
-                          Quantity:{' '}
+                          Qty:{' '}
                           {
-                            labour.quantity
+                            machine.quantity
                           }
                         </p>
 
@@ -394,7 +485,7 @@ export default function DashboardPage() {
                       <h3 className="text-xl font-bold">
                         ₹
                         {
-                          labour.amount
+                          machine.amount
                         }
                       </h3>
 
@@ -411,34 +502,123 @@ export default function DashboardPage() {
 
         </div>
 
-        {/* CHART */}
+        {/* LABOUR */}
 
-        <div className="bg-white rounded-2xl shadow-md p-6">
+        <div className="bg-white rounded-2xl shadow-md p-6 mb-6">
 
-          <h2 className="text-2xl font-bold mb-6">
-            Daily Production Trend
+          <h2 className="text-2xl font-bold mb-4">
+            Labour Summary
           </h2>
 
-          <div className="h-[400px]">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
 
-            <ResponsiveContainer
-              width="100%"
-              height="100%"
-            >
+            {labourSummary.map(
+              (labour) => (
 
-              <BarChart data={dailyTrend}>
+                <div
+                  key={labour.labour}
+                  className="border rounded-xl p-4"
+                >
 
-                <XAxis dataKey="date" />
+                  <h3 className="font-bold text-lg">
+                    {labour.labour}
+                  </h3>
 
-                <YAxis />
+                  <p className="text-gray-500 mt-2">
+                    Quantity:{' '}
+                    {labour.quantity}
+                  </p>
 
-                <Tooltip />
+                  <h3 className="text-xl font-bold mt-2">
+                    ₹
+                    {labour.amount}
+                  </h3>
 
-                <Bar dataKey="amount" />
+                </div>
 
-              </BarChart>
+              )
+            )}
 
-            </ResponsiveContainer>
+          </div>
+
+        </div>
+
+        {/* CHARTS */}
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+          {/* DAILY */}
+
+          <div className="bg-white rounded-2xl shadow-md p-6">
+
+            <h2 className="text-2xl font-bold mb-6">
+              Daily Trend
+            </h2>
+
+            <div className="h-[350px]">
+
+              <ResponsiveContainer
+                width="100%"
+                height="100%"
+              >
+
+                <BarChart data={dailyTrend}>
+
+                  <XAxis dataKey="date" />
+
+                  <YAxis />
+
+                  <Tooltip />
+
+                  <Bar dataKey="amount" />
+
+                </BarChart>
+
+              </ResponsiveContainer>
+
+            </div>
+
+          </div>
+
+          {/* MONTHLY */}
+
+          <div className="bg-white rounded-2xl shadow-md p-6">
+
+            <h2 className="text-2xl font-bold mb-6">
+              Monthly Trend
+            </h2>
+
+            <div className="h-[350px]">
+
+              <ResponsiveContainer
+                width="100%"
+                height="100%"
+              >
+
+                <LineChart
+                  data={monthlyTrend}
+                >
+
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                  />
+
+                  <XAxis dataKey="month" />
+
+                  <YAxis />
+
+                  <Tooltip />
+
+                  <Line
+                    type="monotone"
+                    dataKey="amount"
+                  />
+
+                </LineChart>
+
+              </ResponsiveContainer>
+
+            </div>
 
           </div>
 
