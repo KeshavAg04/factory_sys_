@@ -173,7 +173,7 @@ export default function RootLayout({
 
           {/* PAGE CONTENT */}
 
-          <main className="flex-1">
+          <main className="flex-1 pt-32 md: pt-0">
 
             {children}
 
