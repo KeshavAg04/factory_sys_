@@ -1,188 +1,218 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '@/lib/supabase'
-
-interface Entry {
-  id: string
-  production_date: string
-  factory: string
-  labour_name: string
-  machine: string
-  shift: string
-  mesh: string
-  bag_type: string
-  bag_name: string
-  quantity: number
-  rate: number
-  amount: number
-}
 
 export default function RecentEntriesPage() {
 
-  const [entries, setEntries] = useState<Entry[]>([])
+  const [entries, setEntries] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
-  const [bags, setBags] = useState<any[]>([])
-  const [labours, setLabours] = useState<any[]>([])
-  const [machines, setMachines] = useState<any[]>([])
-  const [factories, setFactories] = useState<any[]>([])
+  // FILTERS
 
-  const [editingEntry, setEditingEntry] =
-    useState<Entry | null>(null)
-
-  const [editDate, setEditDate] =
+  const [factoryFilter, setFactoryFilter] =
     useState('')
 
-  const [editFactory, setEditFactory] =
+  const [machineFilter, setMachineFilter] =
     useState('')
 
-  const [editLabour, setEditLabour] =
+  const [labourFilter, setLabourFilter] =
     useState('')
 
-  const [editMachine, setEditMachine] =
+  const [shiftFilter, setShiftFilter] =
     useState('')
 
-  const [editShift, setEditShift] =
+  const [dateFilter, setDateFilter] =
     useState('')
 
-  const [editMesh, setEditMesh] =
+  const [search, setSearch] =
     useState('')
 
-  const [editBagType, setEditBagType] =
-    useState('')
+  // EDIT
 
-  const [editBagName, setEditBagName] =
-    useState('')
+  const [editingId, setEditingId] =
+    useState<string | null>(null)
 
-  const [editQuantity, setEditQuantity] =
-    useState('')
-
-  const [editRate, setEditRate] =
-    useState('')
+  const [editData, setEditData] =
+    useState<any>({})
 
   useEffect(() => {
-
     fetchEntries()
-
-    fetchMasters()
-
   }, [])
-
-  const fetchMasters = async () => {
-
-    const { data: bagsData } =
-      await supabase
-        .from('bag_master')
-        .select('*')
-
-    const { data: labourData } =
-      await supabase
-        .from('labour_master')
-        .select('*')
-
-    const { data: machineData } =
-      await supabase
-        .from('machine_master')
-        .select('*')
-
-    const { data: factoryData } =
-      await supabase
-        .from('factory_master')
-        .select('*')
-
-    setBags(bagsData || [])
-    setLabours(labourData || [])
-    setMachines(machineData || [])
-    setFactories(factoryData || [])
-  }
 
   const fetchEntries = async () => {
 
-    const { data, error } = await supabase
-      .from('production_entries')
-      .select('*')
-      .order('created_at', {
-        ascending: false,
-      })
-      .limit(15)
+    setLoading(true)
 
-    if (error) {
-      console.log(error)
-      return
+    const { data, error } =
+      await supabase
+        .from('production_entries')
+        .select('*')
+        .order('created_at', {
+          ascending: false,
+        })
+
+    if (!error) {
+      setEntries(data || [])
     }
 
-    setEntries(data || [])
     setLoading(false)
   }
+
+  // UNIQUE FILTER VALUES
+
+  const factories =
+    [...new Set(
+      entries.map(
+        (entry) => entry.factory
+      )
+    )]
+
+  const machines =
+    [...new Set(
+      entries.map(
+        (entry) => entry.machine
+      )
+    )]
+
+  const labours =
+    [...new Set(
+      entries.map(
+        (entry) => entry.labour_name
+      )
+    )]
+
+  // FILTERED ENTRIES
+
+  const filteredEntries =
+    useMemo(() => {
+
+      return entries.filter((entry) => {
+
+        const matchesFactory =
+          !factoryFilter ||
+          entry.factory === factoryFilter
+
+        const matchesMachine =
+          !machineFilter ||
+          entry.machine === machineFilter
+
+        const matchesLabour =
+          !labourFilter ||
+          entry.labour_name === labourFilter
+
+        const matchesShift =
+          !shiftFilter ||
+          entry.shift === shiftFilter
+
+        const matchesDate =
+          !dateFilter ||
+          entry.production_date === dateFilter
+
+        const matchesSearch =
+          !search ||
+
+          entry.bag_name
+            ?.toLowerCase()
+            .includes(search.toLowerCase()) ||
+
+          entry.labour_name
+            ?.toLowerCase()
+            .includes(search.toLowerCase())
+
+        return (
+          matchesFactory &&
+          matchesMachine &&
+          matchesLabour &&
+          matchesShift &&
+          matchesDate &&
+          matchesSearch
+        )
+      })
+
+    }, [
+      entries,
+      factoryFilter,
+      machineFilter,
+      labourFilter,
+      shiftFilter,
+      dateFilter,
+      search,
+    ])
+
+  // DELETE
 
   const deleteEntry = async (
     id: string
   ) => {
 
-    const confirmDelete = confirm(
-      'Delete this entry?'
-    )
+    const confirmDelete =
+      confirm(
+        'Delete this entry?'
+      )
 
     if (!confirmDelete) return
 
-    const { error } = await supabase
-      .from('production_entries')
-      .delete()
-      .eq('id', id)
+    const { error } =
+      await supabase
+        .from('production_entries')
+        .delete()
+        .eq('id', id)
 
-    if (error) {
-      alert(error.message)
-      return
+    if (!error) {
+      fetchEntries()
     }
-
-    fetchEntries()
   }
 
-  const updateEntry = async () => {
+  // EDIT
 
-    if (!editingEntry) return
+  const startEdit = (
+    entry: any
+  ) => {
 
-    const quantity =
-      Number(editQuantity)
+    setEditingId(entry.id)
 
-    const rate =
-      Number(editRate)
+    setEditData({
+      ...entry,
+    })
+  }
+
+  const saveEdit = async () => {
 
     const amount =
-      quantity * rate
+      Number(editData.quantity || 0) *
+      Number(editData.rate || 0)
 
-    const { error } = await supabase
-      .from('production_entries')
-      .update({
-        production_date: editDate,
-        factory: editFactory,
-        labour_name: editLabour,
-        machine: editMachine,
-        shift: editShift,
-        mesh: editMesh,
-        bag_type: editBagType,
-        bag_name: editBagName,
-        quantity,
-        rate,
-        amount,
-      })
-      .eq('id', editingEntry.id)
+    const { error } =
+      await supabase
+        .from('production_entries')
+        .update({
+          ...editData,
+          amount,
+        })
+        .eq('id', editingId)
 
-    if (error) {
-      alert(error.message)
-      return
+    if (!error) {
+
+      setEditingId(null)
+
+      fetchEntries()
     }
+  }
 
-    setEditingEntry(null)
+  if (loading) {
 
-    fetchEntries()
+    return (
+      <main className="p-6">
+        Loading...
+      </main>
+    )
   }
 
   return (
     <main className="min-h-screen bg-gray-100 p-4">
 
-      <div className="max-w-5xl mx-auto">
+      <div className="max-w-7xl mx-auto">
 
         {/* HEADER */}
 
@@ -198,383 +228,411 @@ export default function RecentEntriesPage() {
 
         </div>
 
-        {/* CONTENT */}
+        {/* FILTERS */}
 
-        {loading ? (
+        <div className="bg-white rounded-2xl shadow-md p-4 mb-6">
 
-          <div className="bg-white rounded-2xl p-6 shadow-md text-black">
-            Loading...
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
+
+            <select
+              value={factoryFilter}
+              onChange={(e) =>
+                setFactoryFilter(
+                  e.target.value
+                )
+              }
+              className="border p-3 rounded-xl"
+            >
+
+              <option value="">
+                All Factories
+              </option>
+
+              {factories.map((factory) => (
+
+                <option
+                  key={factory}
+                  value={factory}
+                >
+                  {factory}
+                </option>
+
+              ))}
+
+            </select>
+
+            <select
+              value={machineFilter}
+              onChange={(e) =>
+                setMachineFilter(
+                  e.target.value
+                )
+              }
+              className="border p-3 rounded-xl"
+            >
+
+              <option value="">
+                All Machines
+              </option>
+
+              {machines.map((machine) => (
+
+                <option
+                  key={machine}
+                  value={machine}
+                >
+                  {machine}
+                </option>
+
+              ))}
+
+            </select>
+
+            <select
+              value={labourFilter}
+              onChange={(e) =>
+                setLabourFilter(
+                  e.target.value
+                )
+              }
+              className="border p-3 rounded-xl"
+            >
+
+              <option value="">
+                All Labours
+              </option>
+
+              {labours.map((labour) => (
+
+                <option
+                  key={labour}
+                  value={labour}
+                >
+                  {labour}
+                </option>
+
+              ))}
+
+            </select>
+
+            <select
+              value={shiftFilter}
+              onChange={(e) =>
+                setShiftFilter(
+                  e.target.value
+                )
+              }
+              className="border p-3 rounded-xl"
+            >
+
+              <option value="">
+                All Shifts
+              </option>
+
+              <option value="Day">
+                Day
+              </option>
+
+              <option value="Night">
+                Night
+              </option>
+
+            </select>
+
+            <input
+              type="date"
+              value={dateFilter}
+              onChange={(e) =>
+                setDateFilter(
+                  e.target.value
+                )
+              }
+              className="border p-3 rounded-xl"
+            />
+
+            <input
+              type="text"
+              placeholder="Search..."
+              value={search}
+              onChange={(e) =>
+                setSearch(
+                  e.target.value
+                )
+              }
+              className="border p-3 rounded-xl"
+            />
+
           </div>
 
-        ) : (
+        </div>
 
-          <div className="space-y-4">
+        {/* MOBILE CARDS */}
 
-            {entries.map((entry) => (
+        <div className="md:hidden space-y-4">
 
-              <div
-                key={entry.id}
-                className="bg-white rounded-2xl shadow-md p-6 text-black"
-              >
+          {filteredEntries.map((entry) => (
 
-                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div
+              key={entry.id}
+              className="bg-white rounded-2xl shadow-md p-4"
+            >
 
-                  <div>
+              <div className="space-y-2 text-sm">
 
-                    <h2 className="text-2xl font-bold">
-                      {entry.bag_name}
-                    </h2>
+                <p>
+                  <strong>Date:</strong>{' '}
+                  {entry.production_date}
+                </p>
 
-                    <p className="text-gray-500 mt-1">
-                      {entry.production_date}
-                    </p>
+                <p>
+                  <strong>Factory:</strong>{' '}
+                  {entry.factory}
+                </p>
 
-                    <div className="grid grid-cols-2 gap-3 mt-4 text-sm">
+                <p>
+                  <strong>Machine:</strong>{' '}
+                  {entry.machine}
+                </p>
 
-                      <div>
-                        <span className="font-semibold">
-                          Factory:
-                        </span>{' '}
-                        {entry.factory}
-                      </div>
+                <p>
+                  <strong>Labour:</strong>{' '}
+                  {entry.labour_name}
+                </p>
 
-                      <div>
-                        <span className="font-semibold">
-                          Labour:
-                        </span>{' '}
-                        {entry.labour_name}
-                      </div>
+                <p>
+                  <strong>Bag:</strong>{' '}
+                  {entry.bag_name}
+                </p>
 
-                      <div>
-                        <span className="font-semibold">
-                          Machine:
-                        </span>{' '}
-                        {entry.machine}
-                      </div>
+                <p>
+                  <strong>Quantity:</strong>{' '}
+                  {entry.quantity}
+                </p>
 
-                      <div>
-                        <span className="font-semibold">
-                          Shift:
-                        </span>{' '}
-                        {entry.shift}
-                      </div>
-
-                      <div>
-                        <span className="font-semibold">
-                          Mesh:
-                        </span>{' '}
-                        {entry.mesh}
-                      </div>
-
-                      <div>
-                        <span className="font-semibold">
-                          Bag Type:
-                        </span>{' '}
-                        {entry.bag_type}
-                      </div>
-
-                    </div>
-
-                  </div>
-
-                  <div className="flex flex-col items-start md:items-end gap-3">
-
-                    <div>
-
-                      <p className="text-gray-500 text-sm">
-                        Quantity
-                      </p>
-
-                      <h2 className="text-3xl font-bold">
-                        {entry.quantity}
-                      </h2>
-
-                    </div>
-
-                    <div>
-
-                      <p className="text-gray-500 text-sm">
-                        Amount
-                      </p>
-
-                      <h2 className="text-2xl font-bold">
-                        ₹{entry.amount}
-                      </h2>
-
-                    </div>
-
-                    <div className="flex gap-2">
-
-                      <button
-                        onClick={() => {
-
-                          setEditingEntry(entry)
-
-                          setEditDate(
-                            entry.production_date || ''
-                          )
-
-                          setEditFactory(
-                            entry.factory || ''
-                          )
-
-                          setEditLabour(
-                            entry.labour_name || ''
-                          )
-
-                          setEditMachine(
-                            entry.machine || ''
-                          )
-
-                          setEditShift(
-                            entry.shift || ''
-                          )
-
-                          setEditMesh(
-                            entry.mesh || ''
-                          )
-
-                          setEditBagType(
-                            entry.bag_type || ''
-                          )
-
-                          setEditBagName(
-                            entry.bag_name || ''
-                          )
-
-                          setEditQuantity(
-                            entry.quantity?.toString() || ''
-                          )
-
-                          setEditRate(
-                            entry.rate?.toString() || ''
-                          )
-                        }}
-                        className="bg-black text-white px-4 py-2 rounded-xl"
-                      >
-                        Edit
-                      </button>
-
-                      <button
-                        onClick={() =>
-                          deleteEntry(entry.id)
-                        }
-                        className="bg-red-500 text-white px-4 py-2 rounded-xl"
-                      >
-                        Delete
-                      </button>
-
-                    </div>
-
-                  </div>
-
-                </div>
+                <p>
+                  <strong>Amount:</strong>{' '}
+                  ₹{entry.amount}
+                </p>
 
               </div>
 
-            ))}
+              <div className="flex gap-2 mt-4">
 
-          </div>
+                <button
+                  onClick={() =>
+                    startEdit(entry)
+                  }
+                  className="bg-black text-white px-4 py-2 rounded-xl"
+                >
+                  Edit
+                </button>
 
-        )}
+                <button
+                  onClick={() =>
+                    deleteEntry(entry.id)
+                  }
+                  className="bg-red-500 text-white px-4 py-2 rounded-xl"
+                >
+                  Delete
+                </button>
+
+              </div>
+
+            </div>
+
+          ))}
+
+        </div>
+
+        {/* DESKTOP TABLE */}
+
+        <div className="hidden md:block overflow-x-auto bg-white rounded-2xl shadow-md">
+
+          <table className="w-full text-sm">
+
+            <thead className="bg-black text-white">
+
+              <tr>
+
+                <th className="p-4 text-left">
+                  Date
+                </th>
+
+                <th className="p-4 text-left">
+                  Factory
+                </th>
+
+                <th className="p-4 text-left">
+                  Machine
+                </th>
+
+                <th className="p-4 text-left">
+                  Labour
+                </th>
+
+                <th className="p-4 text-left">
+                  Shift
+                </th>
+
+                <th className="p-4 text-left">
+                  Mesh
+                </th>
+
+                <th className="p-4 text-left">
+                  Bag
+                </th>
+
+                <th className="p-4 text-left">
+                  Qty
+                </th>
+
+                <th className="p-4 text-left">
+                  Amount
+                </th>
+
+                <th className="p-4 text-left">
+                  Actions
+                </th>
+
+              </tr>
+
+            </thead>
+
+            <tbody>
+
+              {filteredEntries.map((entry) => (
+
+                <tr
+                  key={entry.id}
+                  className="border-b"
+                >
+
+                  <td className="p-4">
+                    {entry.production_date}
+                  </td>
+
+                  <td className="p-4">
+                    {entry.factory}
+                  </td>
+
+                  <td className="p-4">
+                    {entry.machine}
+                  </td>
+
+                  <td className="p-4">
+                    {entry.labour_name}
+                  </td>
+
+                  <td className="p-4">
+                    {entry.shift}
+                  </td>
+
+                  <td className="p-4">
+                    {entry.mesh}
+                  </td>
+
+                  <td className="p-4">
+                    {entry.bag_name}
+                  </td>
+
+                  <td className="p-4">
+                    {entry.quantity}
+                  </td>
+
+                  <td className="p-4">
+                    ₹{entry.amount}
+                  </td>
+
+                  <td className="p-4 flex gap-2">
+
+                    <button
+                      onClick={() =>
+                        startEdit(entry)
+                      }
+                      className="bg-black text-white px-3 py-2 rounded-xl"
+                    >
+                      Edit
+                    </button>
+
+                    <button
+                      onClick={() =>
+                        deleteEntry(entry.id)
+                      }
+                      className="bg-red-500 text-white px-3 py-2 rounded-xl"
+                    >
+                      Delete
+                    </button>
+
+                  </td>
+
+                </tr>
+
+              ))}
+
+            </tbody>
+
+          </table>
+
+        </div>
 
         {/* EDIT MODAL */}
 
-        {editingEntry && (
+        {editingId && (
 
-          <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50 overflow-y-auto">
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
 
-            <div className="bg-white rounded-2xl p-6 w-full max-w-2xl text-black">
+            <div className="bg-white rounded-2xl p-6 w-full max-w-2xl">
 
-              <h2 className="text-2xl font-bold mb-6">
+              <h2 className="text-2xl font-bold mb-4">
                 Edit Entry
               </h2>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
-                <input
-                  type="date"
-                  value={editDate}
-                  onChange={(e) =>
-                    setEditDate(e.target.value)
-                  }
-                  className="border p-4 rounded-xl"
-                />
+                {Object.keys(editData).map((key) => {
 
-                <input
-                  list="factories"
-                  value={editFactory}
-                  onChange={(e) =>
-                    setEditFactory(e.target.value)
-                  }
-                  placeholder="Factory"
-                  className="border p-4 rounded-xl"
-                />
+                  if (
+                    key === 'id' ||
+                    key === 'created_at'
+                  ) return null
 
-                <datalist id="factories">
-                  {factories.map((factory) => (
-                    <option
-                      key={factory.id}
-                      value={factory.factory_name}
+                  return (
+
+                    <input
+                      key={key}
+                      value={
+                        editData[key] ?? ''
+                      }
+                      onChange={(e) =>
+                        setEditData({
+                          ...editData,
+                          [key]:
+                            e.target.value,
+                        })
+                      }
+                      placeholder={key}
+                      className="border p-3 rounded-xl"
                     />
-                  ))}
-                </datalist>
 
-                <input
-                  list="labours"
-                  value={editLabour}
-                  onChange={(e) =>
-                    setEditLabour(e.target.value)
-                  }
-                  placeholder="Labour"
-                  className="border p-4 rounded-xl"
-                />
-
-                <datalist id="labours">
-                  {labours.map((labour) => (
-                    <option
-                      key={labour.id}
-                      value={labour.labour_name}
-                    />
-                  ))}
-                </datalist>
-
-                <input
-                  list="machines"
-                  value={editMachine}
-                  onChange={(e) =>
-                    setEditMachine(e.target.value)
-                  }
-                  placeholder="Machine"
-                  className="border p-4 rounded-xl"
-                />
-
-                <datalist id="machines">
-                  {machines.map((machine) => (
-                    <option
-                      key={machine.id}
-                      value={machine.machine_name}
-                    />
-                  ))}
-                </datalist>
-
-                <select
-                  value={editShift}
-                  onChange={(e) =>
-                    setEditShift(e.target.value)
-                  }
-                  className="border p-4 rounded-xl"
-                >
-                  <option value="">
-                    Select Shift
-                  </option>
-
-                  <option value="Day">
-                    Day
-                  </option>
-
-                  <option value="Night">
-                    Night
-                  </option>
-                </select>
-
-                <input
-                  value={editMesh}
-                  onChange={(e) =>
-                    setEditMesh(e.target.value)
-                  }
-                  placeholder="Mesh"
-                  className="border p-4 rounded-xl"
-                />
-
-                <input
-                  list="bagTypes"
-                  value={editBagType}
-                  onChange={(e) =>
-                    setEditBagType(e.target.value)
-                  }
-                  placeholder="Bag Type"
-                  className="border p-4 rounded-xl"
-                />
-
-                <datalist id="bagTypes">
-                  {bags.map((bag) => (
-                    <option
-                      key={bag.id}
-                      value={bag.bag_type}
-                    />
-                  ))}
-                </datalist>
-
-                <input
-                  list="bagNames"
-                  value={editBagName}
-                  onChange={(e) =>
-                    setEditBagName(e.target.value)
-                  }
-                  placeholder="Bag Name"
-                  className="border p-4 rounded-xl"
-                />
-
-                <datalist id="bagNames">
-                  {bags.map((bag) => (
-                    <option
-                      key={bag.id}
-                      value={bag.bag_name}
-                    />
-                  ))}
-                </datalist>
-
-                <input
-                  type="number"
-                  value={editQuantity}
-                  onChange={(e) =>
-                    setEditQuantity(e.target.value)
-                  }
-                  placeholder="Quantity"
-                  className="border p-4 rounded-xl"
-                />
-
-                <input
-                  type="number"
-                  value={editRate}
-                  onChange={(e) =>
-                    setEditRate(e.target.value)
-                  }
-                  placeholder="Rate"
-                  className="border p-4 rounded-xl"
-                />
+                  )
+                })}
 
               </div>
 
-              <div className="mt-6 bg-gray-100 rounded-2xl p-6">
-
-                <p className="text-gray-500">
-                  Calculated Amount
-                </p>
-
-                <h2 className="text-4xl font-bold mt-2">
-                  ₹
-                  {(Number(editQuantity || 0) *
-                    Number(editRate || 0)).toFixed(2)}
-                </h2>
-
-              </div>
-
-              <div className="flex gap-4 mt-6">
+              <div className="flex gap-3 mt-6">
 
                 <button
-                  onClick={updateEntry}
-                  className="flex-1 bg-black text-white p-4 rounded-xl"
+                  onClick={saveEdit}
+                  className="bg-black text-white px-5 py-3 rounded-xl"
                 >
-                  Save Changes
+                  Save
                 </button>
 
                 <button
                   onClick={() =>
-                    setEditingEntry(null)
+                    setEditingId(null)
                   }
-                  className="flex-1 bg-gray-300 p-4 rounded-xl"
+                  className="bg-gray-300 px-5 py-3 rounded-xl"
                 >
                   Cancel
                 </button>
