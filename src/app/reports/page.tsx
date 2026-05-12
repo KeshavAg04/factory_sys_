@@ -1,369 +1,605 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '@/lib/supabase'
-import * as XLSX from 'xlsx'
-
-interface Entry {
-  id: string
-  production_date: string
-  factory: string
-  labour_name: string
-  machine: string
-  shift: string
-  bag_name: string
-  quantity: number
-  amount: number
-}
-
-interface Factory {
-  id: string
-  factory_name: string
-}
 
 export default function ReportsPage() {
-  const [entries, setEntries] = useState<Entry[]>([])
-  const [factories, setFactories] = useState<Factory[]>([])
 
+  const [entries, setEntries] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
-  const [filters, setFilters] = useState({
-    factory: '',
-    startDate: '',
-    endDate: '',
-  })
+  // FILTERS
+
+  const [startDate, setStartDate] =
+    useState('')
+
+  const [endDate, setEndDate] =
+    useState('')
+
+  const [factoryFilter, setFactoryFilter] =
+    useState('')
+
+  const [machineFilter, setMachineFilter] =
+    useState('')
+
+  const [labourFilter, setLabourFilter] =
+    useState('')
+
+  const [shiftFilter, setShiftFilter] =
+    useState('')
+
+  const [bagTypeFilter, setBagTypeFilter] =
+    useState('')
 
   useEffect(() => {
-    fetchFactories()
     fetchEntries()
   }, [])
 
-  const fetchFactories = async () => {
-    const { data } = await supabase
-      .from('factory_master')
-      .select('*')
-
-    if (data) {
-      setFactories(data)
-    }
-  }
-
   const fetchEntries = async () => {
+
     setLoading(true)
 
-    let query = supabase
-      .from('production_entries')
-      .select('*')
-      .order('production_date', {
-        ascending: false,
-      })
+    const { data, error } =
+      await supabase
+        .from('production_entries')
+        .select('*')
+        .order('production_date', {
+          ascending: false,
+        })
 
-    if (filters.factory) {
-      query = query.eq(
-        'factory',
-        filters.factory
-      )
+    if (!error) {
+      setEntries(data || [])
     }
 
-    if (filters.startDate) {
-      query = query.gte(
-        'production_date',
-        filters.startDate
-      )
-    }
-
-    if (filters.endDate) {
-      query = query.lte(
-        'production_date',
-        filters.endDate
-      )
-    }
-
-    const { data, error } = await query
-
-    if (error) {
-      console.log(error)
-      return
-    }
-
-    setEntries(data || [])
     setLoading(false)
   }
 
-  const exportToExcel = () => {
-    const worksheet = XLSX.utils.json_to_sheet(
-      entries.map((entry) => ({
-        Date: entry.production_date,
-        Factory: entry.factory,
-        Labour: entry.labour_name,
-        Machine: entry.machine,
-        Shift: entry.shift,
-        Bag: entry.bag_name,
-        Quantity: entry.quantity,
-        Amount: entry.amount,
-      }))
+  // FILTER OPTIONS
+
+  const factories =
+    [...new Set(
+      entries.map(
+        (entry) => entry.factory
+      )
+    )]
+
+  const machines =
+    [...new Set(
+      entries.map(
+        (entry) => entry.machine
+      )
+    )]
+
+  const labours =
+    [...new Set(
+      entries.map(
+        (entry) => entry.labour_name
+      )
+    )]
+
+  const bagTypes =
+    [...new Set(
+      entries.map(
+        (entry) => entry.bag_type
+      )
+    )]
+
+  // FILTERED DATA
+
+  const filteredEntries =
+    useMemo(() => {
+
+      return entries.filter((entry) => {
+
+        const matchesStartDate =
+          !startDate ||
+          entry.production_date >= startDate
+
+        const matchesEndDate =
+          !endDate ||
+          entry.production_date <= endDate
+
+        const matchesFactory =
+          !factoryFilter ||
+          entry.factory === factoryFilter
+
+        const matchesMachine =
+          !machineFilter ||
+          entry.machine === machineFilter
+
+        const matchesLabour =
+          !labourFilter ||
+          entry.labour_name === labourFilter
+
+        const matchesShift =
+          !shiftFilter ||
+          entry.shift === shiftFilter
+
+        const matchesBagType =
+          !bagTypeFilter ||
+          entry.bag_type === bagTypeFilter
+
+        return (
+          matchesStartDate &&
+          matchesEndDate &&
+          matchesFactory &&
+          matchesMachine &&
+          matchesLabour &&
+          matchesShift &&
+          matchesBagType
+        )
+      })
+
+    }, [
+      entries,
+      startDate,
+      endDate,
+      factoryFilter,
+      machineFilter,
+      labourFilter,
+      shiftFilter,
+      bagTypeFilter,
+    ])
+
+  // SUMMARYS
+
+  const totalQuantity =
+    filteredEntries.reduce(
+      (sum, entry) =>
+        sum + Number(entry.quantity || 0),
+      0
     )
 
-    const workbook = XLSX.utils.book_new()
-
-    XLSX.utils.book_append_sheet(
-      workbook,
-      worksheet,
-      'Production Report'
+  const totalAmount =
+    filteredEntries.reduce(
+      (sum, entry) =>
+        sum + Number(entry.amount || 0),
+      0
     )
 
-    XLSX.writeFile(
-      workbook,
-      'production-report.xlsx'
+  const totalEntries =
+    filteredEntries.length
+
+  // CSV EXPORT
+
+  const exportCSV = () => {
+
+    const headers = [
+      'Date',
+      'Factory',
+      'Machine',
+      'Labour',
+      'Shift',
+      'Mesh',
+      'Bag Type',
+      'Bag Name',
+      'Quantity',
+      'Rate',
+      'Amount',
+    ]
+
+    const rows =
+      filteredEntries.map((entry) => [
+
+        entry.production_date,
+        entry.factory,
+        entry.machine,
+        entry.labour_name,
+        entry.shift,
+        entry.mesh,
+        entry.bag_type,
+        entry.bag_name,
+        entry.quantity,
+        entry.rate,
+        entry.amount,
+
+      ])
+
+    const csvContent =
+
+      [
+        headers.join(','),
+
+        ...rows.map((row) =>
+          row.join(',')
+        ),
+
+      ].join('\n')
+
+    const blob =
+      new Blob(
+        [csvContent],
+        {
+          type: 'text/csv;charset=utf-8;',
+        }
+      )
+
+    const link =
+      document.createElement('a')
+
+    const url =
+      URL.createObjectURL(blob)
+
+    link.setAttribute('href', url)
+
+    link.setAttribute(
+      'download',
+      'production-report.csv'
+    )
+
+    link.style.visibility = 'hidden'
+
+    document.body.appendChild(link)
+
+    link.click()
+
+    document.body.removeChild(link)
+  }
+
+  if (loading) {
+
+    return (
+      <main className="p-6">
+        Loading...
+      </main>
     )
   }
 
-  const totalQuantity = entries.reduce(
-    (sum, entry) => sum + entry.quantity,
-    0
-  )
-
-  const totalAmount = entries.reduce(
-    (sum, entry) => sum + entry.amount,
-    0
-  )
-
   return (
     <main className="min-h-screen bg-gray-100 p-4">
-  
+
       <div className="max-w-7xl mx-auto">
-  
+
         {/* HEADER */}
-  
+
         <div className="mb-6">
-  
+
           <p className="text-gray-500 text-sm">
             Production Management
           </p>
-  
-          <h1 className="text-4xl font-bold mt-2">
-            Production Reports
+
+          <h1 className="text-4xl font-bold mt-2 text-black">
+            Reports
           </h1>
-  
+
         </div>
-  
+
         {/* FILTERS */}
-  
-        <div className="bg-white rounded-2xl shadow-md p-6 mb-6">
-  
-          <h2 className="text-xl font-semibold mb-4">
-            Filters
-          </h2>
-  
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-  
-            <select
-              value={filters.factory}
+
+        <div className="bg-white rounded-2xl shadow-md p-4 mb-6">
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+
+            <input
+              type="date"
+              value={startDate}
               onChange={(e) =>
-                setFilters({
-                  ...filters,
-                  factory: e.target.value,
-                })
+                setStartDate(
+                  e.target.value
+                )
               }
-              className="border p-4 rounded-xl"
+              className="border p-3 rounded-xl"
+            />
+
+            <input
+              type="date"
+              value={endDate}
+              onChange={(e) =>
+                setEndDate(
+                  e.target.value
+                )
+              }
+              className="border p-3 rounded-xl"
+            />
+
+            <select
+              value={factoryFilter}
+              onChange={(e) =>
+                setFactoryFilter(
+                  e.target.value
+                )
+              }
+              className="border p-3 rounded-xl"
             >
+
               <option value="">
                 All Factories
               </option>
-  
+
               {factories.map((factory) => (
+
                 <option
-                  key={factory.id}
-                  value={factory.factory_name}
+                  key={factory}
+                  value={factory}
                 >
-                  {factory.factory_name}
+                  {factory}
                 </option>
+
               ))}
+
             </select>
-  
-            <input
-              type="date"
-              value={filters.startDate}
+
+            <select
+              value={machineFilter}
               onChange={(e) =>
-                setFilters({
-                  ...filters,
-                  startDate: e.target.value,
-                })
+                setMachineFilter(
+                  e.target.value
+                )
               }
-              className="border p-4 rounded-xl"
-            />
-  
-            <input
-              type="date"
-              value={filters.endDate}
-              onChange={(e) =>
-                setFilters({
-                  ...filters,
-                  endDate: e.target.value,
-                })
-              }
-              className="border p-4 rounded-xl"
-            />
-  
-            <button
-              onClick={fetchEntries}
-              className="bg-black text-white rounded-xl text-lg font-semibold"
+              className="border p-3 rounded-xl"
             >
-              Search
+
+              <option value="">
+                All Machines
+              </option>
+
+              {machines.map((machine) => (
+
+                <option
+                  key={machine}
+                  value={machine}
+                >
+                  {machine}
+                </option>
+
+              ))}
+
+            </select>
+
+            <select
+              value={labourFilter}
+              onChange={(e) =>
+                setLabourFilter(
+                  e.target.value
+                )
+              }
+              className="border p-3 rounded-xl"
+            >
+
+              <option value="">
+                All Labours
+              </option>
+
+              {labours.map((labour) => (
+
+                <option
+                  key={labour}
+                  value={labour}
+                >
+                  {labour}
+                </option>
+
+              ))}
+
+            </select>
+
+            <select
+              value={shiftFilter}
+              onChange={(e) =>
+                setShiftFilter(
+                  e.target.value
+                )
+              }
+              className="border p-3 rounded-xl"
+            >
+
+              <option value="">
+                All Shifts
+              </option>
+
+              <option value="Day">
+                Day
+              </option>
+
+              <option value="Night">
+                Night
+              </option>
+
+            </select>
+
+            <select
+              value={bagTypeFilter}
+              onChange={(e) =>
+                setBagTypeFilter(
+                  e.target.value
+                )
+              }
+              className="border p-3 rounded-xl"
+            >
+
+              <option value="">
+                All Bag Types
+              </option>
+
+              {bagTypes.map((bagType) => (
+
+                <option
+                  key={bagType}
+                  value={bagType}
+                >
+                  {bagType}
+                </option>
+
+              ))}
+
+            </select>
+
+            <button
+              onClick={exportCSV}
+              className="bg-black text-white rounded-xl p-3"
+            >
+              Export CSV
             </button>
-  
+
           </div>
-  
-          <button
-            onClick={exportToExcel}
-            className="mt-4 bg-green-600 text-white px-6 py-3 rounded-xl font-semibold"
-          >
-            Export Excel
-          </button>
-  
+
         </div>
-  
-        {/* TOTALS */}
-  
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-  
+
+        {/* SUMMARY CARDS */}
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+
           <div className="bg-white rounded-2xl shadow-md p-6">
-  
+
             <p className="text-gray-500">
               Total Quantity
             </p>
-  
+
             <h2 className="text-4xl font-bold mt-2">
               {totalQuantity}
             </h2>
-  
+
           </div>
-  
-          <div className="bg-black text-white rounded-2xl shadow-md p-6">
-  
-            <p className="text-gray-300">
+
+          <div className="bg-white rounded-2xl shadow-md p-6">
+
+            <p className="text-gray-500">
               Total Amount
             </p>
-  
+
             <h2 className="text-4xl font-bold mt-2">
               ₹{totalAmount}
             </h2>
-  
+
           </div>
-  
+
+          <div className="bg-white rounded-2xl shadow-md p-6">
+
+            <p className="text-gray-500">
+              Total Entries
+            </p>
+
+            <h2 className="text-4xl font-bold mt-2">
+              {totalEntries}
+            </h2>
+
+          </div>
+
         </div>
-  
+
         {/* TABLE */}
-  
-        <div className="bg-white rounded-2xl shadow-md overflow-hidden">
-  
-          <div className="overflow-x-auto">
-  
-            {loading ? (
-              <div className="p-6">
-                Loading...
-              </div>
-            ) : (
-  
-              <table className="w-full">
-  
-                <thead className="bg-gray-100">
-  
-                  <tr>
-  
-                    <th className="p-4 text-left">
-                      Date
-                    </th>
-  
-                    <th className="p-4 text-left">
-                      Factory
-                    </th>
-  
-                    <th className="p-4 text-left">
-                      Labour
-                    </th>
-  
-                    <th className="p-4 text-left">
-                      Machine
-                    </th>
-  
-                    <th className="p-4 text-left">
-                      Shift
-                    </th>
-  
-                    <th className="p-4 text-left">
-                      Bag
-                    </th>
-  
-                    <th className="p-4 text-left">
-                      Qty
-                    </th>
-  
-                    <th className="p-4 text-left">
-                      Amount
-                    </th>
-  
-                  </tr>
-  
-                </thead>
-  
-                <tbody>
-  
-                  {entries.map((entry) => (
-  
-                    <tr
-                      key={entry.id}
-                      className="border-t hover:bg-gray-50"
-                    >
-  
-                      <td className="p-4">
-                        {entry.production_date}
-                      </td>
-  
-                      <td className="p-4">
-                        {entry.factory}
-                      </td>
-  
-                      <td className="p-4">
-                        {entry.labour_name}
-                      </td>
-  
-                      <td className="p-4">
-                        {entry.machine}
-                      </td>
-  
-                      <td className="p-4">
-                        {entry.shift}
-                      </td>
-  
-                      <td className="p-4">
-                        {entry.bag_name}
-                      </td>
-  
-                      <td className="p-4 font-semibold">
-                        {entry.quantity}
-                      </td>
-  
-                      <td className="p-4 font-semibold">
-                        ₹{entry.amount}
-                      </td>
-  
-                    </tr>
-  
-                  ))}
-  
-                </tbody>
-  
-              </table>
-  
-            )}
-  
-          </div>
-  
+
+        <div className="overflow-x-auto bg-white rounded-2xl shadow-md">
+
+          <table className="w-full text-sm">
+
+            <thead className="bg-black text-white">
+
+              <tr>
+
+                <th className="p-4 text-left">
+                  Date
+                </th>
+
+                <th className="p-4 text-left">
+                  Factory
+                </th>
+
+                <th className="p-4 text-left">
+                  Machine
+                </th>
+
+                <th className="p-4 text-left">
+                  Labour
+                </th>
+
+                <th className="p-4 text-left">
+                  Shift
+                </th>
+
+                <th className="p-4 text-left">
+                  Mesh
+                </th>
+
+                <th className="p-4 text-left">
+                  Bag Type
+                </th>
+
+                <th className="p-4 text-left">
+                  Bag Name
+                </th>
+
+                <th className="p-4 text-left">
+                  Qty
+                </th>
+
+                <th className="p-4 text-left">
+                  Rate
+                </th>
+
+                <th className="p-4 text-left">
+                  Amount
+                </th>
+
+              </tr>
+
+            </thead>
+
+            <tbody>
+
+              {filteredEntries.map((entry) => (
+
+                <tr
+                  key={entry.id}
+                  className="border-b"
+                >
+
+                  <td className="p-4">
+                    {entry.production_date}
+                  </td>
+
+                  <td className="p-4">
+                    {entry.factory}
+                  </td>
+
+                  <td className="p-4">
+                    {entry.machine}
+                  </td>
+
+                  <td className="p-4">
+                    {entry.labour_name}
+                  </td>
+
+                  <td className="p-4">
+                    {entry.shift}
+                  </td>
+
+                  <td className="p-4">
+                    {entry.mesh}
+                  </td>
+
+                  <td className="p-4">
+                    {entry.bag_type}
+                  </td>
+
+                  <td className="p-4">
+                    {entry.bag_name}
+                  </td>
+
+                  <td className="p-4">
+                    {entry.quantity}
+                  </td>
+
+                  <td className="p-4">
+                    {entry.rate}
+                  </td>
+
+                  <td className="p-4">
+                    ₹{entry.amount}
+                  </td>
+
+                </tr>
+
+              ))}
+
+            </tbody>
+
+          </table>
+
         </div>
-  
+
       </div>
-  
+
     </main>
   )
 }
