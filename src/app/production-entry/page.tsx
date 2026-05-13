@@ -7,283 +7,331 @@ import {
 
 import toast from 'react-hot-toast'
 
-import { supabase } from '@/lib/supabase'
+import {
+  supabase,
+} from '@/lib/supabase'
 
 export default function ProductionEntryPage() {
 
-  const [factories, setFactories] =
-    useState<any[]>([])
+  const [
+    date,
+    setDate,
+  ] = useState('')
 
-  const [machines, setMachines] =
-    useState<any[]>([])
+  const [
+    factory,
+    setFactory,
+  ] = useState('')
 
-  const [meshes, setMeshes] =
-    useState<any[]>([])
+  const [
+    machine,
+    setMachine,
+  ] = useState('')
 
-  const [bagTypes, setBagTypes] =
-    useState<any[]>([])
+  const [
+    labourName,
+    setLabourName,
+  ] = useState('')
 
-  const [bagNames, setBagNames] =
-    useState<any[]>([])
+  const [
+    shift,
+    setShift,
+  ] = useState('Day')
 
-  const [rates, setRates] =
-    useState<any[]>([])
+  const [
+    mesh,
+    setMesh,
+  ] = useState('')
 
-  const [formData, setFormData] =
-    useState({
+  const [
+    bagType,
+    setBagType,
+  ] = useState('')
 
-      production_date:
-        new Date()
-          .toISOString()
-          .split('T')[0],
+  const [
+    bagName,
+    setBagName,
+  ] = useState('')
 
-      factory: '',
-      machine: '',
-      labour_name: '',
-      shift: 'Day',
+  const [
+    quantity,
+    setQuantity,
+  ] = useState(0)
 
-      mesh: '',
-      bag_type: '',
-      bag_name: '',
+  const [
+    rate,
+    setRate,
+  ] = useState(0)
 
-      quantity: '',
+  const [
+    amount,
+    setAmount,
+  ] = useState(0)
 
-      rate: 0,
-      amount: 0,
-    })
+  const [
+    factories,
+    setFactories,
+  ] = useState<any[]>([])
 
-  const [loading, setLoading] =
-    useState(false)
+  const [
+    machines,
+    setMachines,
+  ] = useState<any[]>([])
+
+  const [
+    meshes,
+    setMeshes,
+  ] = useState<any[]>([])
+
+  const [
+    bagTypes,
+    setBagTypes,
+  ] = useState<any[]>([])
+
+  const [
+    bagNames,
+    setBagNames,
+  ] = useState<any[]>([])
+
+  const [
+    rates,
+    setRates,
+  ] = useState<any[]>([])
+
+  const [
+    entries,
+    setEntries,
+  ] = useState<any[]>([])
 
   useEffect(() => {
+
+    const today =
+      new Date()
+        .toISOString()
+        .split('T')[0]
+
+    setDate(today)
+
     fetchMasterData()
+
+    fetchEntries()
+
   }, [])
-
-  const fetchMasterData = async () => {
-
-    const {
-      data: factoriesData,
-    } = await supabase
-      .from('factory_master')
-      .select('*')
-
-    const {
-      data: machinesData,
-    } = await supabase
-      .from('machine_master')
-      .select('*')
-
-    const {
-      data: meshesData,
-    } = await supabase
-      .from('mesh_master')
-      .select('*')
-
-    const {
-      data: bagTypesData,
-    } = await supabase
-      .from('bag_type_master')
-      .select('*')
-
-    const {
-      data: bagNamesData,
-    } = await supabase
-      .from('bag_name_master')
-      .select('*')
-
-    const {
-      data: ratesData,
-    } = await supabase
-      .from('rate_master')
-      .select('*')
-
-    setFactories(
-      factoriesData || []
-    )
-
-    setMachines(
-      machinesData || []
-    )
-
-    setMeshes(
-      meshesData || []
-    )
-
-    setBagTypes(
-      bagTypesData || []
-    )
-
-    setBagNames(
-      bagNamesData || []
-    )
-
-    setRates(
-      ratesData || []
-    )
-  }
-
-  const filteredMachines =
-
-    formData.factory
-
-      ? machines.filter(
-          (machine) =>
-            machine.factory ===
-            formData.factory
-        )
-
-      : machines
 
   useEffect(() => {
 
     const matchedRate =
       rates.find(
-        (rate) =>
-
-          rate.mesh ===
-            formData.mesh &&
-
-          rate.bag_type ===
-            formData.bag_type
+        (r) =>
+          r.mesh === mesh &&
+          r.bag_type === bagType
       )
 
     if (matchedRate) {
 
-      const amount =
-        Number(formData.quantity || 0) *
-        Number(matchedRate.rate)
+      setRate(
+        matchedRate.rate
+      )
 
-      setFormData((prev) => ({
-        ...prev,
-        rate:
-          matchedRate.rate,
-        amount,
-      }))
+    } else {
+
+      setRate(0)
     }
 
   }, [
-    formData.mesh,
-    formData.bag_type,
-    formData.quantity,
+    mesh,
+    bagType,
     rates,
   ])
 
-  const handleChange = (
-    field: string,
-    value: any
-  ) => {
+  useEffect(() => {
 
-    setFormData((prev) => ({
+    setAmount(
+      quantity * rate
+    )
 
-      ...prev,
+  }, [
+    quantity,
+    rate,
+  ])
 
-      [field]: value,
+  async function fetchEntries() {
 
-    }))
+    const {
+      data,
+    } = await supabase
+      .from('production_entries')
+      .select('labour_name')
+
+    setEntries(data || [])
   }
 
-  const handleSubmit = async (
-    e: any
-  ) => {
+  async function fetchMasterData() {
 
-    e.preventDefault()
-
-    setLoading(true)
-
-    const { error } =
+    const factoriesRes =
       await supabase
-        .from('production_entries')
-        .insert([formData])
+        .from('factory_master')
+        .select('*')
 
-    setLoading(false)
+    const machinesRes =
+      await supabase
+        .from('machine_master')
+        .select('*')
 
-    if (!error) {
+    const meshesRes =
+      await supabase
+        .from('mesh_master')
+        .select('*')
 
-      toast.success(
-        'Production entry added'
+    const bagTypesRes =
+      await supabase
+        .from('bag_type_master')
+        .select('*')
+
+    const bagNamesRes =
+      await supabase
+        .from('bag_name_master')
+        .select('*')
+
+    const ratesRes =
+      await supabase
+        .from('rate_master')
+        .select('*')
+
+    setFactories(
+      factoriesRes.data || []
+    )
+
+    setMachines(
+      machinesRes.data || []
+    )
+
+    setMeshes(
+      meshesRes.data || []
+    )
+
+    setBagTypes(
+      bagTypesRes.data || []
+    )
+
+    setBagNames(
+      bagNamesRes.data || []
+    )
+
+    setRates(
+      ratesRes.data || []
+    )
+  }
+
+  async function saveEntry() {
+
+    if (
+      !factory ||
+      !machine ||
+      !labourName ||
+      !mesh ||
+      !bagType ||
+      !bagName ||
+      !quantity
+    ) {
+
+      toast.error(
+        'Please fill all fields'
       )
 
-      setFormData({
-
-        production_date:
-          new Date()
-            .toISOString()
-            .split('T')[0],
-
-        factory: '',
-        machine: '',
-        labour_name: '',
-        shift: 'Day',
-
-        mesh: '',
-        bag_type: '',
-        bag_name: '',
-
-        quantity: '',
-
-        rate: 0,
-        amount: 0,
-      })
+      return
     }
+
+    const {
+      error,
+    } = await supabase
+      .from('production_entries')
+      .insert([{
+
+        date,
+        factory,
+        machine,
+        labour_name:
+          labourName,
+        shift,
+        mesh,
+        bag_type:
+          bagType,
+        bag_name:
+          bagName,
+        quantity,
+        rate,
+        amount,
+
+      }])
+
+    if (error) {
+
+      toast.error(
+        'Failed to save entry'
+      )
+
+      return
+    }
+
+    toast.success(
+      'Entry saved successfully'
+    )
+
+    setLabourName('')
+    setQuantity(0)
+    setAmount(0)
+
+    fetchEntries()
   }
 
   return (
 
-    <main className="min-h-screen bg-slate-100 p-4 md:p-6">
+    <div className="p-4 md:p-6">
 
-      <div className="max-w-5xl mx-auto">
+      <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-5 md:p-6 max-w-4xl">
 
-        <div className="mb-8">
+        <p className="text-slate-500 text-sm mb-1">
+          Production Management
+        </p>
 
-          <p className="text-slate-500 text-sm">
-            Production Management
-          </p>
+        <h1 className="text-3xl font-bold text-slate-900 mb-6">
+          Production Entry
+        </h1>
 
-          <h1 className="text-4xl font-bold text-slate-900 mt-2">
-            Production Entry
-          </h1>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
-        </div>
+          {/* DATE */}
 
-        <form
-          onSubmit={handleSubmit}
-          className="bg-white rounded-3xl shadow-sm border border-slate-200 p-6 md:p-8"
-        >
+          <input
+            type="date"
+            value={date}
+            onChange={(e) =>
+              setDate(
+                e.target.value
+              )
+            }
+            className="rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none"
+          />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          {/* FACTORY */}
 
-            <input
-              type="date"
-              value={
-                formData.production_date
-              }
-              onChange={(e) =>
-                handleChange(
-                  'production_date',
-                  e.target.value
-                )
-              }
-              className="border border-slate-200 p-4 rounded-2xl"
-            />
+          <select
+            value={factory}
+            onChange={(e) =>
+              setFactory(
+                e.target.value
+              )
+            }
+            className="rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none"
+          >
 
-            {/* FACTORY */}
+            <option value="">
+              Select Factory
+            </option>
 
-            <select
-              value={formData.factory}
-              onChange={(e) =>
-                handleChange(
-                  'factory',
-                  e.target.value
-                )
-              }
-              className="border border-slate-200 p-4 rounded-2xl"
-            >
-
-              <option value="">
-                Select Factory
-              </option>
-
-              {factories.map((factory) => (
+            {factories.map(
+              (factory) => (
 
                 <option
                   key={factory.id}
@@ -291,31 +339,33 @@ export default function ProductionEntryPage() {
                     factory.factory_name
                   }
                 >
-                  {factory.factory_name}
+                  {
+                    factory.factory_name
+                  }
                 </option>
+              )
+            )}
 
-              ))}
+          </select>
 
-            </select>
+          {/* MACHINE */}
 
-            {/* MACHINE */}
+          <select
+            value={machine}
+            onChange={(e) =>
+              setMachine(
+                e.target.value
+              )
+            }
+            className="rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none"
+          >
 
-            <select
-              value={formData.machine}
-              onChange={(e) =>
-                handleChange(
-                  'machine',
-                  e.target.value
-                )
-              }
-              className="border border-slate-200 p-4 rounded-2xl"
-            >
+            <option value="">
+              Select Machine
+            </option>
 
-              <option value="">
-                Select Machine
-              </option>
-
-              {filteredMachines.map((machine) => (
+            {machines.map(
+              (machine) => (
 
                 <option
                   key={machine.id}
@@ -323,204 +373,232 @@ export default function ProductionEntryPage() {
                     machine.machine_name
                   }
                 >
-                  {machine.machine_name}
+                  {
+                    machine.machine_name
+                  }
                 </option>
+              )
+            )}
 
-              ))}
+          </select>
 
-            </select>
+          {/* LABOUR */}
+
+          <div>
 
             <input
               type="text"
+              list="labours"
+              autoComplete='off'
               placeholder="Labour Name"
-              value={
-                formData.labour_name
-              }
+              value={labourName}
               onChange={(e) =>
-                handleChange(
-                  'labour_name',
+                setLabourName(
                   e.target.value
                 )
               }
-              className="border border-slate-200 p-4 rounded-2xl"
+              className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none"
             />
 
-            {/* SHIFT */}
+            <datalist id="labours">
 
-            <select
-              value={formData.shift}
-              onChange={(e) =>
-                handleChange(
-                  'shift',
-                  e.target.value
-                )
-              }
-              className="border border-slate-200 p-4 rounded-2xl"
-            >
+              {[
 
-              <option value="Day">
-                Day
-              </option>
+                ...new Set(
 
-              <option value="Night">
-                Night
-              </option>
+                  entries
+                    .map(
+                      (e) =>
+                        e.labour_name
+                    )
+                    .filter(Boolean)
 
-            </select>
+                ),
 
-            {/* MESH */}
-
-            <select
-              value={formData.mesh}
-              onChange={(e) =>
-                handleChange(
-                  'mesh',
-                  e.target.value
-                )
-              }
-              className="border border-slate-200 p-4 rounded-2xl"
-            >
-
-              <option value="">
-                Select Mesh
-              </option>
-
-              {meshes.map((mesh) => (
-
-<option
-  key={mesh.id}
-  value={
-    mesh.mesh_name ||
-    mesh.mesh_size ||
-    mesh.mesh
-  }
->
-  {
-    mesh.mesh_name ||
-    mesh.mesh_size ||
-    mesh.mesh
-  }
-</option>
-
-))}
-
-            </select>
-
-            {/* BAG TYPE */}
-
-            <select
-              value={formData.bag_type}
-              onChange={(e) =>
-                handleChange(
-                  'bag_type',
-                  e.target.value
-                )
-              }
-              className="border border-slate-200 p-4 rounded-2xl"
-            >
-
-              <option value="">
-                Select Bag Type
-              </option>
-
-              {bagTypes.map((bagType) => (
-
-<option
-  key={bagType.id}
-  value={
-    bagType.bag_type ||
-    bagType.type ||
-    bagType.name
-  }
->
-  {
-    bagType.bag_type ||
-    bagType.type ||
-    bagType.name
-  }
-</option>
-
-))}
-
-            </select>
-
-            {/* BAG NAME */}
-
-            <select
-              value={formData.bag_name}
-              onChange={(e) =>
-                handleChange(
-                  'bag_name',
-                  e.target.value
-                )
-              }
-              className="border border-slate-200 p-4 rounded-2xl"
-            >
-
-              <option value="">
-                Select Bag Name
-              </option>
-
-              {bagNames.map((bagName) => (
+              ].map((name) => (
 
                 <option
-                  key={bagName.id}
-                  value={
-                    bagName.bag_name
-                  }
-                >
-                  {bagName.bag_name}
-                </option>
+                  key={name}
+                  value={name}
+                />
 
               ))}
 
-            </select>
-
-            <input
-              type="number"
-              placeholder="Quantity"
-              value={formData.quantity}
-              onChange={(e) =>
-                handleChange(
-                  'quantity',
-                  e.target.value
-                )
-              }
-              className="border border-slate-200 p-4 rounded-2xl"
-            />
-
-            <input
-              type="number"
-              value={formData.rate}
-              readOnly
-              className="bg-slate-100 border border-slate-200 p-4 rounded-2xl"
-            />
-
-            <input
-              type="number"
-              value={formData.amount}
-              readOnly
-              className="bg-slate-100 border border-slate-200 p-4 rounded-2xl"
-            />
+            </datalist>
 
           </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="mt-8 bg-slate-800 text-white px-6 py-4 rounded-2xl font-semibold"
+          {/* SHIFT */}
+
+          <select
+            value={shift}
+            onChange={(e) =>
+              setShift(
+                e.target.value
+              )
+            }
+            className="rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none"
           >
 
-            {loading
-              ? 'Saving...'
-              : 'Save Entry'}
+            <option>
+              Day
+            </option>
 
-          </button>
+            <option>
+              Night
+            </option>
 
-        </form>
+          </select>
+
+          {/* MESH */}
+
+          <select
+            value={mesh}
+            onChange={(e) =>
+              setMesh(
+                e.target.value
+              )
+            }
+            className="rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none"
+          >
+
+            <option value="">
+              Select Mesh
+            </option>
+
+            {meshes.map(
+              (mesh) => (
+
+                <option
+                  key={mesh.id}
+                  value={
+                    mesh.mesh_name
+                  }
+                >
+                  {
+                    mesh.mesh_name
+                  }
+                </option>
+              )
+            )}
+
+          </select>
+
+          {/* BAG TYPE */}
+
+          <select
+            value={bagType}
+            onChange={(e) =>
+              setBagType(
+                e.target.value
+              )
+            }
+            className="rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none"
+          >
+
+            <option value="">
+              Select Bag Type
+            </option>
+
+            {bagTypes.map(
+              (bagType) => (
+
+                <option
+                  key={bagType.id}
+                  value={
+                    bagType.bag_type
+                  }
+                >
+                  {
+                    bagType.bag_type
+                  }
+                </option>
+              )
+            )}
+
+          </select>
+
+          {/* BAG NAME */}
+
+          <select
+            value={bagName}
+            onChange={(e) =>
+              setBagName(
+                e.target.value
+              )
+            }
+            className="rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none"
+          >
+
+            <option value="">
+              Select Bag Name
+            </option>
+
+            {bagNames.map(
+              (bag) => (
+
+                <option
+                  key={bag.id}
+                  value={
+                    bag.bag_name
+                  }
+                >
+                  {
+                    bag.bag_name
+                  }
+                </option>
+              )
+            )}
+
+          </select>
+
+          {/* QUANTITY */}
+
+          <input
+            type="number"
+            placeholder="Quantity"
+            value={quantity}
+            onChange={(e) =>
+              setQuantity(
+                Number(
+                  e.target.value
+                )
+              )
+            }
+            className="rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none"
+          />
+
+          {/* RATE */}
+
+          <input
+            type="number"
+            value={rate}
+            readOnly
+            className="rounded-2xl border border-slate-200 bg-slate-100 px-4 py-3 outline-none"
+          />
+
+          {/* AMOUNT */}
+
+          <input
+            type="number"
+            value={amount}
+            readOnly
+            className="rounded-2xl border border-slate-200 bg-slate-100 px-4 py-3 outline-none"
+          />
+
+        </div>
+
+        <button
+          onClick={saveEntry}
+          className="mt-6 bg-slate-800 hover:bg-slate-700 text-white px-6 py-3 rounded-2xl font-medium transition"
+        >
+
+          Save Entry
+
+        </button>
 
       </div>
 
-    </main>
+    </div>
   )
 }
