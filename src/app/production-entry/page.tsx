@@ -370,37 +370,42 @@ export default function ProductionEntryPage() {
             </select>
 
             <select
-              value={machine}
-              onChange={(e) =>
-                setMachine(
-                  e.target.value
-                )
-              }
-              className="h-14 rounded-2xl border border-slate-200 px-4 outline-none focus:ring-2 focus:ring-slate-400"
-            >
+  value={machine}
+  onChange={(e) =>
+    setMachine(
+      e.target.value
+    )
+  }
+  className="h-14 rounded-2xl border border-slate-200 px-4 outline-none focus:ring-2 focus:ring-slate-400"
+>
 
-              <option value="">
-                Select Machine
-              </option>
+  <option value="">
+    Select Machine
+  </option>
 
-              {machines.map(
-                (item) => (
+  {machines
+    .filter(
+      (item) =>
+        !factory ||
+        item.factory ===
+          factory
+    )
+    .map((item) => (
 
-                  <option
-                    key={item.id}
-                    value={
-                      item.machine_name
-                    }
-                  >
-                    {
-                      item.machine_name
-                    }
-                  </option>
+      <option
+        key={item.id}
+        value={
+          item.machine_name
+        }
+      >
+        {
+          item.machine_name
+        }
+      </option>
 
-                )
-              )}
+    ))}
 
-            </select>
+</select>
 
             <input
               list="labours"

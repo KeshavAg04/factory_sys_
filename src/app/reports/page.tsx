@@ -137,81 +137,71 @@ export default function ReportsPage() {
   }
 
   const filteredEntries =
-    useMemo(() => {
+  useMemo(() => {
 
-      return entries.filter(
-        (entry) => {
+    return entries.filter(
+      (entry) => {
 
-          const matchesSearch =
-            !search ||
-            entry.labour
-              ?.toLowerCase()
-              .includes(
-                search.toLowerCase()
-              ) ||
-            entry.machine
-              ?.toLowerCase()
-              .includes(
-                search.toLowerCase()
-              )
+        const entryDate =
+          new Date(entry.date)
 
-          const matchesFactory =
-            !factoryFilter ||
-            entry.factory ===
-              factoryFilter
+        const fromOk =
+          !fromDate ||
+          entryDate >=
+            new Date(fromDate)
 
-          const matchesMachine =
-            !machineFilter ||
-            entry.machine ===
-              machineFilter
-
-          const matchesLabour =
-            !labourFilter ||
-            entry.labour ===
-              labourFilter
-
-          const matchesShift =
-            !shiftFilter ||
-            entry.shift ===
-              shiftFilter
-
-          const matchesBagType =
-            !bagTypeFilter ||
-            entry.bag_type ===
-              bagTypeFilter
-
-          const matchesFrom =
-            !fromDate ||
-            entry.date >= fromDate
-
-          const matchesTo =
-            !toDate ||
-            entry.date <= toDate
-
-          return (
-            matchesSearch &&
-            matchesFactory &&
-            matchesMachine &&
-            matchesLabour &&
-            matchesShift &&
-            matchesBagType &&
-            matchesFrom &&
-            matchesTo
+        const toOk =
+          !toDate ||
+          entryDate <=
+          new Date(
+            new Date(toDate).setHours(
+              23,
+              59,
+              59
+            )
           )
-        }
-      )
 
-    }, [
-      entries,
-      search,
-      factoryFilter,
-      machineFilter,
-      labourFilter,
-      shiftFilter,
-      bagTypeFilter,
-      fromDate,
-      toDate,
-    ])
+        const factoryOk =
+          !factoryFilter ||
+          entry.factory ===
+            factoryFilter
+
+        const machineOk =
+          !machineFilter ||
+          entry.machine ===
+            machineFilter
+
+        const searchOk =
+          !search ||
+          entry.labour
+            ?.toLowerCase()
+            .includes(
+              search.toLowerCase()
+            ) ||
+          entry.bag_type
+            ?.toLowerCase()
+            .includes(
+              search.toLowerCase()
+            )
+
+        return (
+          fromOk &&
+          toOk &&
+          factoryOk &&
+          machineOk &&
+          searchOk
+        )
+      }
+    )
+
+  }, [
+    entries,
+    fromDate,
+    toDate,
+    factoryFilter,
+    machineFilter,
+    search,
+  ])
 
   const totalAmount =
     filteredEntries.reduce(

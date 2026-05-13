@@ -7,43 +7,53 @@ import {
 } from 'react'
 
 import {
-  PieChart,
-  Pie,
-  Cell,
-  ResponsiveContainer,
-  BarChart,
   Bar,
+  BarChart,
+  Cell,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
   XAxis,
   YAxis,
-  Tooltip,
 } from 'recharts'
 
-import {
-  supabase,
-} from '@/lib/supabase'
+import { supabase } from '@/lib/supabase'
 
-const COLORS = [
+function calculateTons(
+  bagType: string,
+  qty: number
+) {
 
-  '#bfdbfe',
-  '#fecaca',
-  '#bbf7d0',
-  '#fde68a',
-  '#ddd6fe',
-  '#fbcfe8',
+  const type =
+    bagType?.toLowerCase() || ''
 
-]
+  if (type.includes('50')) {
+    return qty * 0.05
+  }
+
+  if (type.includes('1250')) {
+    return qty * 1.25
+  }
+
+  if (type.includes('1350')) {
+    return qty * 1.35
+  }
+
+  if (type.includes('1400')) {
+    return qty * 1.4
+  }
+
+  return 0
+}
 
 export default function DashboardPage() {
 
-  const [
-    entries,
-    setEntries,
-  ] = useState<any[]>([])
+  const [entries, setEntries] =
+    useState<any[]>([])
 
-  const [
-    selectedRange,
-    setSelectedRange,
-  ] = useState('month')
+  const [range, setRange] =
+    useState('month')
 
   useEffect(() => {
 
@@ -53,59 +63,14 @@ export default function DashboardPage() {
 
   async function fetchEntries() {
 
-    const {
-      data,
-    } = await supabase
-      .from(
-        'production_entries'
-      )
-      .select('*')
+    const { data } =
+      await supabase
+        .from(
+          'production_entries'
+        )
+        .select('*')
 
     setEntries(data || [])
-  }
-
-  function calculateTons(
-    bagType: string,
-    quantity: number,
-  ) {
-
-    const qty =
-      Number(quantity || 0)
-
-    const type =
-      String(
-        bagType || ''
-      ).toLowerCase()
-
-    if (
-      type.includes('50')
-    ) {
-
-      return qty * 0.05
-    }
-
-    if (
-      type.includes('1250')
-    ) {
-
-      return qty * 1.25
-    }
-
-    if (
-      type.includes('1350')
-    ) {
-
-      return qty * 1.35
-    }
-
-    if (
-      type.includes('1400')
-    ) {
-
-      return qty * 1.4
-    }
-
-    return qty
   }
 
   const filteredEntries =
@@ -115,53 +80,38 @@ export default function DashboardPage() {
         new Date()
 
       return entries.filter(
-        (entry) => {
+        (item) => {
 
-          const entryDate =
-            new Date(
-              entry.date
-            )
+          const date =
+            new Date(item.date)
 
-          if (
-            selectedRange ===
-            'today'
-          ) {
+          if (range === 'today') {
 
             return (
-              entryDate
-                .toDateString() ===
+              date.toDateString() ===
               now.toDateString()
             )
           }
 
-          if (
-            selectedRange ===
-            'week'
-          ) {
+          if (range === 'week') {
 
-            const weekAgo =
-              new Date()
+            const diff =
+              (now.getTime() -
+                date.getTime()) /
+              (1000 *
+                60 *
+                60 *
+                24)
 
-            weekAgo.setDate(
-              now.getDate() -
-                7
-            )
-
-            return (
-              entryDate >=
-              weekAgo
-            )
+            return diff <= 7
           }
 
-          if (
-            selectedRange ===
-            'month'
-          ) {
+          if (range === 'month') {
 
             return (
-              entryDate.getMonth() ===
+              date.getMonth() ===
                 now.getMonth() &&
-              entryDate.getFullYear() ===
+              date.getFullYear() ===
                 now.getFullYear()
             )
           }
@@ -170,155 +120,106 @@ export default function DashboardPage() {
         }
       )
 
-    }, [
-      entries,
-      selectedRange,
-    ])
+    }, [entries, range])
 
-  const totalTons =
+  const totalGoods =
     filteredEntries.reduce(
-      (sum, entry) => {
-
-        return (
-          sum +
-          calculateTons(
-            entry.bag_type,
-            Number(
-              entry.quantity
-            )
+      (sum, item) =>
+        sum +
+        calculateTons(
+          item.bag_type,
+          Number(
+            item.quantity
           )
-        )
-
-      },
+        ),
       0
     )
 
-  const machineCount =
+  const totalMachines =
     new Set(
-
-      filteredEntries
-        .map(
-          (entry) =>
-            entry.machine
-        )
-        .filter(Boolean)
-
+      filteredEntries.map(
+        (item) => item.machine
+      )
     ).size
 
   const categoryData =
-    useMemo(() => {
+    Object.values(
 
-      const grouped:
-      Record<
-        string,
-        number
-      > = {}
-
-      filteredEntries.forEach(
-        (entry) => {
+      filteredEntries.reduce(
+        (acc: any, item) => {
 
           const key =
-            `${entry.bag_type} (${entry.mesh}#)`
+            item.bag_type
 
-          const tons =
+          if (!acc[key]) {
+
+            acc[key] = {
+
+              name: key,
+              value: 0,
+            }
+          }
+
+          acc[key].value +=
             calculateTons(
-              entry.bag_type,
+              item.bag_type,
               Number(
-                entry.quantity
+                item.quantity
               )
             )
 
-          if (!grouped[key]) {
+          return acc
 
-            grouped[key] = 0
-          }
-
-          grouped[key] += tons
-        }
+        },
+        {}
       )
 
-      return Object.entries(
-        grouped
-      ).map(
-        ([name, value]) => ({
-
-          name,
-          value:
-            Number(
-              value.toFixed(2)
-            ),
-
-        })
-      )
-
-    }, [filteredEntries])
+    )
 
   const machineData =
-    useMemo(() => {
+    Object.values(
 
-      const grouped:
-      Record<
-        string,
-        number
-      > = {}
+      filteredEntries.reduce(
+        (acc: any, item) => {
 
-      filteredEntries.forEach(
-        (entry) => {
+          const key =
+            item.machine
 
-          const machine =
-            entry.machine ||
-            'Unknown'
+          if (!acc[key]) {
 
-          const tons =
-            calculateTons(
-              entry.bag_type,
-              Number(
-                entry.quantity
-              )
-            )
+            acc[key] = {
 
-          if (
-            !grouped[machine]
-          ) {
-
-            grouped[machine] = 0
+              name: key,
+              value: 0,
+            }
           }
 
-          grouped[machine] += tons
-        }
-      )
-
-      return Object.entries(
-        grouped
-      ).map(
-        ([name, value]) => ({
-
-          name,
-          value:
+          acc[key].value +=
             Number(
-              value.toFixed(2)
-            ),
+              item.quantity
+            )
 
-        })
+          return acc
+
+        },
+        {}
       )
 
-    }, [filteredEntries])
+    )
 
   return (
 
-    <div className="p-4 md:p-6 space-y-5">
+    <div className="space-y-6">
 
-      {/* TOP */}
-
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div className="flex justify-between items-center">
 
         <div>
 
-          <p className="text-slate-500 text-sm">
+          <p className="text-slate-500">
             Production Management
           </p>
 
-          <h1 className="text-3xl font-bold text-slate-900">
+          <h1 className="text-5xl font-bold text-slate-900">
             Dashboard
           </h1>
 
@@ -328,15 +229,12 @@ export default function DashboardPage() {
 
           <button
             onClick={() =>
-              setSelectedRange(
-                'today'
-              )
+              setRange('today')
             }
-            className={`px-4 py-2 rounded-xl text-sm font-medium ${
-              selectedRange ===
-              'today'
-                ? 'bg-slate-800 text-white'
-                : 'bg-white border border-slate-200'
+            className={`px-5 py-3 rounded-2xl ${
+              range === 'today'
+                ? 'bg-slate-900 text-white'
+                : 'bg-white'
             }`}
           >
             Today
@@ -344,15 +242,12 @@ export default function DashboardPage() {
 
           <button
             onClick={() =>
-              setSelectedRange(
-                'week'
-              )
+              setRange('week')
             }
-            className={`px-4 py-2 rounded-xl text-sm font-medium ${
-              selectedRange ===
-              'week'
-                ? 'bg-slate-800 text-white'
-                : 'bg-white border border-slate-200'
+            className={`px-5 py-3 rounded-2xl ${
+              range === 'week'
+                ? 'bg-slate-900 text-white'
+                : 'bg-white'
             }`}
           >
             This Week
@@ -360,15 +255,12 @@ export default function DashboardPage() {
 
           <button
             onClick={() =>
-              setSelectedRange(
-                'month'
-              )
+              setRange('month')
             }
-            className={`px-4 py-2 rounded-xl text-sm font-medium ${
-              selectedRange ===
-              'month'
-                ? 'bg-slate-800 text-white'
-                : 'bg-white border border-slate-200'
+            className={`px-5 py-3 rounded-2xl ${
+              range === 'month'
+                ? 'bg-slate-900 text-white'
+                : 'bg-white'
             }`}
           >
             This Month
@@ -378,57 +270,43 @@ export default function DashboardPage() {
 
       </div>
 
-      {/* CARDS */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        <div className="bg-white rounded-3xl p-6 border">
 
-        <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-5">
-
-          <p className="text-slate-500 text-sm">
+          <p className="text-slate-500">
             Goods Produced
           </p>
 
-          <h2 className="text-4xl font-bold text-slate-900 mt-2">
-
-            {totalTons.toFixed(2)}
-            {' '}
-            T
-
+          <h2 className="text-5xl font-bold">
+            {totalGoods.toFixed(2)} T
           </h2>
 
         </div>
 
-        <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-5">
+        <div className="bg-white rounded-3xl p-6 border">
 
-          <p className="text-slate-500 text-sm">
+          <p className="text-slate-500">
             Active Machines
           </p>
 
-          <h2 className="text-4xl font-bold text-slate-900 mt-2">
-
-            {machineCount}
-
+          <h2 className="text-5xl font-bold">
+            {totalMachines}
           </h2>
 
         </div>
 
       </div>
 
-      {/* CHARTS */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
+        <div className="bg-white rounded-3xl p-6 border">
 
-        {/* PIE */}
-
-        <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-5">
-
-          <h2 className="text-2xl font-bold text-slate-900 mb-4">
-
+          <h2 className="text-3xl font-bold mb-6">
             Category Wise
-
           </h2>
 
-          <div className="h-[320px]">
+          <div className="h-[300px]">
 
             <ResponsiveContainer
               width="100%"
@@ -438,33 +316,21 @@ export default function DashboardPage() {
               <PieChart>
 
                 <Pie
-                  data={
-                    categoryData
-                  }
+                  data={categoryData}
                   dataKey="value"
                   nameKey="name"
-                  outerRadius={110}
-                  label={({
-                    value,
-                  }) =>
-                    `${value}T`
-                  }
+                  outerRadius={100}
+                  label
                 >
 
                   {categoryData.map(
                     (
-                      entry,
+                      _: any,
                       index
                     ) => (
 
                       <Cell
                         key={index}
-                        fill={
-                          COLORS[
-                            index %
-                              COLORS.length
-                          ]
-                        }
                       />
 
                     )
@@ -482,17 +348,13 @@ export default function DashboardPage() {
 
         </div>
 
-        {/* BAR */}
+        <div className="bg-white rounded-3xl p-6 border">
 
-        <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-5">
-
-          <h2 className="text-2xl font-bold text-slate-900 mb-4">
-
+          <h2 className="text-3xl font-bold mb-6">
             Machine Production
-
           </h2>
 
-          <div className="h-[320px]">
+          <div className="h-[300px]">
 
             <ResponsiveContainer
               width="100%"
@@ -500,28 +362,16 @@ export default function DashboardPage() {
             >
 
               <BarChart
-                data={
-                  machineData
-                }
+                data={machineData}
               >
 
-                <XAxis
-                  dataKey="name"
-                />
+                <XAxis dataKey="name" />
 
                 <YAxis />
 
                 <Tooltip />
 
-                <Bar
-                  dataKey="value"
-                  radius={[
-                    8,
-                    8,
-                    0,
-                    0,
-                  ]}
-                />
+                <Bar dataKey="value" />
 
               </BarChart>
 
