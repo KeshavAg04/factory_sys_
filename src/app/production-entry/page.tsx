@@ -2,71 +2,20 @@
 
 import {
   useEffect,
+  useMemo,
   useState,
 } from 'react'
-
-import toast from 'react-hot-toast'
 
 import {
   supabase,
 } from '@/lib/supabase'
 
-export default function ProductionEntryPage() {
+export default function ReportsPage() {
 
   const [
-    date,
-    setDate,
-  ] = useState('')
-
-  const [
-    factory,
-    setFactory,
-  ] = useState('')
-
-  const [
-    machine,
-    setMachine,
-  ] = useState('')
-
-  const [
-    labourName,
-    setLabourName,
-  ] = useState('')
-
-  const [
-    shift,
-    setShift,
-  ] = useState('Day')
-
-  const [
-    mesh,
-    setMesh,
-  ] = useState('')
-
-  const [
-    bagType,
-    setBagType,
-  ] = useState('')
-
-  const [
-    bagName,
-    setBagName,
-  ] = useState('')
-
-  const [
-    quantity,
-    setQuantity,
-  ] = useState(0)
-
-  const [
-    rate,
-    setRate,
-  ] = useState(0)
-
-  const [
-    amount,
-    setAmount,
-  ] = useState(0)
+    entries,
+    setEntries,
+  ] = useState<any[]>([])
 
   const [
     factories,
@@ -79,40 +28,38 @@ export default function ProductionEntryPage() {
   ] = useState<any[]>([])
 
   const [
-    meshes,
-    setMeshes,
-  ] = useState<any[]>([])
+    loading,
+    setLoading,
+  ] = useState(true)
 
   const [
-    bagTypes,
-    setBagTypes,
-  ] = useState<any[]>([])
+    selectedFactory,
+    setSelectedFactory,
+  ] = useState('')
 
   const [
-    bagNames,
-    setBagNames,
-  ] = useState<any[]>([])
+    selectedMachine,
+    setSelectedMachine,
+  ] = useState('')
 
   const [
-    rates,
-    setRates,
-  ] = useState<any[]>([])
+    search,
+    setSearch,
+  ] = useState('')
 
   const [
-    entries,
-    setEntries,
-  ] = useState<any[]>([])
+    fromDate,
+    setFromDate,
+  ] = useState('')
+
+  const [
+    toDate,
+    setToDate,
+  ] = useState('')
 
   useEffect(() => {
 
-    const today =
-      new Date()
-        .toISOString()
-        .split('T')[0]
-
-    setDate(today)
-
-    fetchMasterData()
+    fetchMasters()
 
     fetchEntries()
 
@@ -120,53 +67,16 @@ export default function ProductionEntryPage() {
 
   useEffect(() => {
 
-    const matchedRate =
-      rates.find(
-        (r) =>
-          r.mesh === mesh &&
-          r.bag_type === bagType
-      )
-
-    if (matchedRate) {
-
-      setRate(
-        matchedRate.rate
-      )
-
-    } else {
-
-      setRate(0)
-    }
+    fetchEntries()
 
   }, [
-    mesh,
-    bagType,
-    rates,
+    selectedFactory,
+    selectedMachine,
+    fromDate,
+    toDate,
   ])
 
-  useEffect(() => {
-
-    setAmount(
-      quantity * rate
-    )
-
-  }, [
-    quantity,
-    rate,
-  ])
-
-  async function fetchEntries() {
-
-    const {
-      data,
-    } = await supabase
-      .from('production_entries')
-      .select('labour_name')
-
-    setEntries(data || [])
-  }
-
-  async function fetchMasterData() {
+  async function fetchMasters() {
 
     const factoriesRes =
       await supabase
@@ -178,26 +88,6 @@ export default function ProductionEntryPage() {
         .from('machine_master')
         .select('*')
 
-    const meshesRes =
-      await supabase
-        .from('mesh_master')
-        .select('*')
-
-    const bagTypesRes =
-      await supabase
-        .from('bag_type_master')
-        .select('*')
-
-    const bagNamesRes =
-      await supabase
-        .from('bag_name_master')
-        .select('*')
-
-    const ratesRes =
-      await supabase
-        .from('rate_master')
-        .select('*')
-
     setFactories(
       factoriesRes.data || []
     )
@@ -205,399 +95,578 @@ export default function ProductionEntryPage() {
     setMachines(
       machinesRes.data || []
     )
-
-    setMeshes(
-      meshesRes.data || []
-    )
-
-    setBagTypes(
-      bagTypesRes.data || []
-    )
-
-    setBagNames(
-      bagNamesRes.data || []
-    )
-
-    setRates(
-      ratesRes.data || []
-    )
   }
 
-  async function saveEntry() {
+  async function fetchEntries() {
 
-    if (
-      !factory ||
-      !machine ||
-      !labourName ||
-      !mesh ||
-      !bagType ||
-      !bagName ||
-      !quantity
-    ) {
+    setLoading(true)
 
-      toast.error(
-        'Please fill all fields'
-      )
+    let query =
+      supabase
+        .from(
+          'production_entries'
+        )
+        .select('*')
+        .order('date', {
+          ascending: false,
+        })
 
-      return
+    if (selectedFactory) {
+
+      query =
+        query.eq(
+          'factory',
+          selectedFactory
+        )
+    }
+
+    if (selectedMachine) {
+
+      query =
+        query.eq(
+          'machine',
+          selectedMachine
+        )
+    }
+
+    if (fromDate) {
+
+      query =
+        query.gte(
+          'date',
+          fromDate
+        )
+    }
+
+    if (toDate) {
+
+      query =
+        query.lte(
+          'date',
+          toDate
+        )
     }
 
     const {
-      error,
-    } = await supabase
-      .from('production_entries')
-      .insert([{
+      data,
+    } = await query
 
-        date,
-        factory,
-        machine,
-        labour_name:
-          labourName,
-        shift,
-        mesh,
-        bag_type:
-          bagType,
-        bag_name:
-          bagName,
-        quantity,
-        rate,
-        amount,
+    setEntries(data || [])
 
-      }])
+    setLoading(false)
+  }
 
-    if (error) {
+  const filteredEntries =
+    entries.filter((entry) => {
 
-      toast.error(
-        'Failed to save entry'
+      if (!search)
+        return true
+
+      return JSON.stringify(
+        entry
       )
+        .toLowerCase()
+        .includes(
+          search.toLowerCase()
+        )
+    })
 
-      return
-    }
+  function calculateTons(
+    bagType: string,
+    quantity: number,
+  ) {
 
-    toast.success(
-      'Entry saved successfully'
+    const type =
+      bagType?.toLowerCase() || ''
+
+    if (type.includes('50'))
+      return quantity * 0.05
+
+    if (type.includes('1250'))
+      return quantity * 1.25
+
+    if (type.includes('1350'))
+      return quantity * 1.35
+
+    if (type.includes('1400'))
+      return quantity * 1.4
+
+    return 0
+  }
+
+  const totalTons =
+    filteredEntries.reduce(
+      (sum, entry) => {
+
+        return (
+          sum +
+          calculateTons(
+            entry.bag_type,
+            Number(
+              entry.quantity
+            )
+          )
+        )
+
+      },
+      0
     )
 
-    setLabourName('')
-    setQuantity(0)
-    setAmount(0)
+  const totalAmount =
+    filteredEntries.reduce(
+      (sum, entry) => {
 
-    fetchEntries()
-  }
+        return (
+          sum +
+          Number(
+            entry.amount || 0
+          )
+        )
+
+      },
+      0
+    )
+
+  const categorySummary =
+    useMemo(() => {
+
+      const grouped:
+      Record<
+        string,
+        {
+          bags: number
+          tons: number
+        }
+      > = {}
+
+      filteredEntries.forEach(
+        (entry) => {
+
+          const key =
+            `${entry.bag_type} (${entry.mesh}#)`
+
+          if (
+            !grouped[key]
+          ) {
+
+            grouped[key] = {
+
+              bags: 0,
+              tons: 0,
+
+            }
+          }
+
+          grouped[key].bags +=
+            Number(
+              entry.quantity
+            )
+
+          grouped[key].tons +=
+            calculateTons(
+              entry.bag_type,
+              Number(
+                entry.quantity
+              )
+            )
+        }
+      )
+
+      return Object.entries(
+        grouped
+      )
+
+    }, [filteredEntries])
 
   return (
 
-    <div className="p-4 md:p-6">
+    <div className="p-4 md:p-6 space-y-6">
 
-      <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-5 md:p-6 max-w-4xl">
+      <div>
 
-        <p className="text-slate-500 text-sm mb-1">
+        <p className="text-slate-500 text-sm">
           Production Management
         </p>
 
-        <h1 className="text-3xl font-bold text-slate-900 mb-6">
-          Production Entry
+        <h1 className="text-4xl font-bold text-slate-900">
+          Reports
         </h1>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      </div>
 
-          {/* DATE */}
+      {/* FILTERS */}
+
+      <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-5">
+
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
 
           <input
             type="date"
-            value={date}
+            value={fromDate}
             onChange={(e) =>
-              setDate(
+              setFromDate(
                 e.target.value
               )
             }
-            className="rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none"
+            className="rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:ring-2 focus:ring-slate-400"
           />
 
-          {/* FACTORY */}
-
-          <select
-            value={factory}
+          <input
+            type="date"
+            value={toDate}
             onChange={(e) =>
-              setFactory(
+              setToDate(
                 e.target.value
               )
             }
-            className="rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none"
+            className="rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:ring-2 focus:ring-slate-400"
+          />
+
+          <select
+            value={
+              selectedFactory
+            }
+            onChange={(e) =>
+              setSelectedFactory(
+                e.target.value
+              )
+            }
+            className="rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:ring-2 focus:ring-slate-400"
           >
 
             <option value="">
-              Select Factory
+              All Factories
             </option>
 
             {factories.map(
-              (factory) => (
+              (item) => (
 
                 <option
-                  key={factory.id}
+                  key={item.id}
                   value={
-                    factory.factory_name
+                    item.factory_name
                   }
                 >
                   {
-                    factory.factory_name
+                    item.factory_name
                   }
                 </option>
+
               )
             )}
 
           </select>
 
-          {/* MACHINE */}
-
           <select
-            value={machine}
+            value={
+              selectedMachine
+            }
             onChange={(e) =>
-              setMachine(
+              setSelectedMachine(
                 e.target.value
               )
             }
-            className="rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none"
+            className="rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:ring-2 focus:ring-slate-400"
           >
 
             <option value="">
-              Select Machine
+              All Machines
             </option>
 
             {machines.map(
-              (machine) => (
+              (item) => (
 
                 <option
-                  key={machine.id}
+                  key={item.id}
                   value={
-                    machine.machine_name
+                    item.machine_name
                   }
                 >
                   {
-                    machine.machine_name
+                    item.machine_name
                   }
                 </option>
+
               )
             )}
 
           </select>
-
-          {/* LABOUR */}
-
-          <div>
-
-            <input
-              type="text"
-              list="labours"
-              autoComplete='off'
-              placeholder="Labour Name"
-              value={labourName}
-              onChange={(e) =>
-                setLabourName(
-                  e.target.value
-                )
-              }
-              className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none"
-            />
-
-            <datalist id="labours">
-
-              {[
-
-                ...new Set(
-
-                  entries
-                    .map(
-                      (e) =>
-                        e.labour_name
-                    )
-                    .filter(Boolean)
-
-                ),
-
-              ].map((name) => (
-
-                <option
-                  key={name}
-                  value={name}
-                />
-
-              ))}
-
-            </datalist>
-
-          </div>
-
-          {/* SHIFT */}
-
-          <select
-            value={shift}
-            onChange={(e) =>
-              setShift(
-                e.target.value
-              )
-            }
-            className="rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none"
-          >
-
-            <option>
-              Day
-            </option>
-
-            <option>
-              Night
-            </option>
-
-          </select>
-
-          {/* MESH */}
-
-          <select
-            value={mesh}
-            onChange={(e) =>
-              setMesh(
-                e.target.value
-              )
-            }
-            className="rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none"
-          >
-
-            <option value="">
-              Select Mesh
-            </option>
-
-            {meshes.map(
-              (mesh) => (
-
-                <option
-                  key={mesh.id}
-                  value={
-                    mesh.mesh_name
-                  }
-                >
-                  {
-                    mesh.mesh_name
-                  }
-                </option>
-              )
-            )}
-
-          </select>
-
-          {/* BAG TYPE */}
-
-          <select
-            value={bagType}
-            onChange={(e) =>
-              setBagType(
-                e.target.value
-              )
-            }
-            className="rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none"
-          >
-
-            <option value="">
-              Select Bag Type
-            </option>
-
-            {bagTypes.map(
-              (bagType) => (
-
-                <option
-                  key={bagType.id}
-                  value={
-                    bagType.bag_type
-                  }
-                >
-                  {
-                    bagType.bag_type
-                  }
-                </option>
-              )
-            )}
-
-          </select>
-
-          {/* BAG NAME */}
-
-          <select
-            value={bagName}
-            onChange={(e) =>
-              setBagName(
-                e.target.value
-              )
-            }
-            className="rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none"
-          >
-
-            <option value="">
-              Select Bag Name
-            </option>
-
-            {bagNames.map(
-              (bag) => (
-
-                <option
-                  key={bag.id}
-                  value={
-                    bag.bag_name
-                  }
-                >
-                  {
-                    bag.bag_name
-                  }
-                </option>
-              )
-            )}
-
-          </select>
-
-          {/* QUANTITY */}
 
           <input
-            type="number"
-            placeholder="Quantity"
-            value={quantity}
+            type="text"
+            placeholder="Search..."
+            value={search}
             onChange={(e) =>
-              setQuantity(
-                Number(
-                  e.target.value
-                )
+              setSearch(
+                e.target.value
               )
             }
-            className="rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none"
-          />
-
-          {/* RATE */}
-
-          <input
-            type="number"
-            value={rate}
-            readOnly
-            className="rounded-2xl border border-slate-200 bg-slate-100 px-4 py-3 outline-none"
-          />
-
-          {/* AMOUNT */}
-
-          <input
-            type="number"
-            value={amount}
-            readOnly
-            className="rounded-2xl border border-slate-200 bg-slate-100 px-4 py-3 outline-none"
+            className="rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:ring-2 focus:ring-slate-400"
           />
 
         </div>
 
-        <button
-          onClick={saveEntry}
-          className="mt-6 bg-slate-800 hover:bg-slate-700 text-white px-6 py-3 rounded-2xl font-medium transition"
-        >
+      </div>
 
-          Save Entry
+      {/* SUMMARY */}
 
-        </button>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+
+        <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6">
+
+          <p className="text-slate-500 text-sm">
+            Total Goods Produced
+          </p>
+
+          <h2 className="text-4xl font-bold mt-2 text-slate-900">
+
+            {totalTons.toFixed(2)} T
+
+          </h2>
+
+        </div>
+
+        <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6">
+
+          <p className="text-slate-500 text-sm">
+            Total Amount
+          </p>
+
+          <h2 className="text-4xl font-bold mt-2 text-slate-900">
+
+            ₹
+            {totalAmount.toLocaleString()}
+
+          </h2>
+
+        </div>
 
       </div>
+
+      {/* CATEGORY SUMMARY */}
+
+      <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+
+        <div className="px-6 py-5 border-b border-slate-200">
+
+          <h2 className="text-2xl font-bold text-slate-900">
+
+            Category Wise Production
+
+          </h2>
+
+        </div>
+
+        <div className="overflow-x-auto">
+
+          <table className="min-w-[900px] w-full">
+
+            <thead>
+
+              <tr className="bg-slate-100">
+
+                <th className="text-left px-6 py-4">
+                  Category
+                </th>
+
+                <th className="text-left px-6 py-4">
+                  Bags Produced
+                </th>
+
+                <th className="text-left px-6 py-4">
+                  Goods Produced
+                </th>
+
+              </tr>
+
+            </thead>
+
+            <tbody>
+
+              {categorySummary.map(
+                ([key, value]) => (
+
+                  <tr
+                    key={key}
+                    className="border-t border-slate-100"
+                  >
+
+                    <td className="px-6 py-4">
+                      {key}
+                    </td>
+
+                    <td className="px-6 py-4">
+                      {value.bags}
+                    </td>
+
+                    <td className="px-6 py-4 font-medium">
+                      {value.tons.toFixed(
+                        2
+                      )}{' '}
+                      T
+                    </td>
+
+                  </tr>
+
+                )
+              )}
+
+            </tbody>
+
+          </table>
+
+        </div>
+
+      </div>
+
+      {/* TABLE */}
+
+      <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+
+        <div className="px-6 py-5 border-b border-slate-200">
+
+          <h2 className="text-2xl font-bold text-slate-900">
+
+            Production Entries
+
+          </h2>
+
+        </div>
+
+        <div className="overflow-x-auto">
+
+          <table className="min-w-[1200px] w-full">
+
+            <thead>
+
+              <tr className="bg-slate-100">
+
+                <th className="text-left px-6 py-4">
+                  Date
+                </th>
+
+                <th className="text-left px-6 py-4">
+                  Factory
+                </th>
+
+                <th className="text-left px-6 py-4">
+                  Machine
+                </th>
+
+                <th className="text-left px-6 py-4">
+                  Labour
+                </th>
+
+                <th className="text-left px-6 py-4">
+                  Category
+                </th>
+
+                <th className="text-left px-6 py-4">
+                  Qty
+                </th>
+
+                <th className="text-left px-6 py-4">
+                  Tons
+                </th>
+
+                <th className="text-left px-6 py-4">
+                  Amount
+                </th>
+
+              </tr>
+
+            </thead>
+
+            <tbody>
+
+              {filteredEntries.map(
+                (entry) => (
+
+                  <tr
+                    key={entry.id}
+                    className="border-t border-slate-100"
+                  >
+
+                    <td className="px-6 py-4">
+                      {entry.date}
+                    </td>
+
+                    <td className="px-6 py-4">
+                      {entry.factory}
+                    </td>
+
+                    <td className="px-6 py-4">
+                      {entry.machine}
+                    </td>
+
+                    <td className="px-6 py-4">
+                      {
+                        entry.labour_name
+                      }
+                    </td>
+
+                    <td className="px-6 py-4">
+
+                      {
+                        entry.bag_type
+                      }
+                      {' '}
+                      (
+                      {entry.mesh}
+                      #)
+
+                    </td>
+
+                    <td className="px-6 py-4">
+                      {
+                        entry.quantity
+                      }
+                    </td>
+
+                    <td className="px-6 py-4 font-medium">
+
+                      {calculateTons(
+                        entry.bag_type,
+                        Number(
+                          entry.quantity
+                        )
+                      ).toFixed(2)}
+                      {' '}
+                      T
+
+                    </td>
+
+                    <td className="px-6 py-4">
+
+                      ₹
+                      {Number(
+                        entry.amount
+                      ).toLocaleString()}
+
+                    </td>
+
+                  </tr>
+
+                )
+              )}
+
+            </tbody>
+
+          </table>
+
+        </div>
+
+      </div>
+
+      {loading && (
+
+        <div className="text-slate-500">
+
+          Loading...
+
+        </div>
+
+      )}
 
     </div>
   )

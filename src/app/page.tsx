@@ -7,43 +7,30 @@ import {
 } from 'react'
 
 import {
-  supabase,
-} from '@/lib/supabase'
-
-import {
-  ResponsiveContainer,
   PieChart,
   Pie,
   Cell,
-  Tooltip,
+  ResponsiveContainer,
   BarChart,
   Bar,
   XAxis,
   YAxis,
-  CartesianGrid,
+  Tooltip,
 } from 'recharts'
 
-type Entry = {
-  id: string
-  date: string
-  factory: string
-  machine: string
-  labour_name: string
-  shift: string
-  mesh: string
-  bag_type: string
-  bag_name: string
-  quantity: number
-  amount: number
-}
+import {
+  supabase,
+} from '@/lib/supabase'
 
 const COLORS = [
-  '#93c5fd',
-  '#86efac',
-  '#fca5a5',
+
+  '#bfdbfe',
+  '#fecaca',
+  '#bbf7d0',
   '#fde68a',
-  '#c4b5fd',
-  '#67e8f9',
+  '#ddd6fe',
+  '#fbcfe8',
+
 ]
 
 export default function DashboardPage() {
@@ -51,7 +38,7 @@ export default function DashboardPage() {
   const [
     entries,
     setEntries,
-  ] = useState<Entry[]>([])
+  ] = useState<any[]>([])
 
   const [
     loading,
@@ -70,12 +57,21 @@ export default function DashboardPage() {
 
     const {
       data,
+      error,
     } = await supabase
-      .from('production_entries')
+      .from(
+        'production_entries'
+      )
       .select('*')
-      .order('date', {
-        ascending: false,
-      })
+
+    if (error) {
+
+      console.log(error)
+
+      setLoading(false)
+
+      return
+    }
 
     setEntries(data || [])
 
@@ -86,102 +82,159 @@ export default function DashboardPage() {
     bagType: string,
     quantity: number,
   ) {
-
+  
+    const qty =
+      Number(quantity || 0)
+  
     const type =
-      bagType.toLowerCase()
-
-    if (type.includes('50'))
-      return quantity * 0.05
-
-    if (type.includes('1250'))
-      return quantity * 1.25
-
-    if (type.includes('1350'))
-      return quantity * 1.35
-
-    if (type.includes('1400'))
-      return quantity * 1.4
-
-    return 0
+      String(
+        bagType || ''
+      ).toLowerCase()
+  
+    // 50 KG
+  
+    if (
+      type.includes('50')
+    ) {
+  
+      return qty * 0.05
+    }
+  
+    // 1250 KG
+  
+    if (
+      type.includes('1250')
+    ) {
+  
+      return qty * 1.25
+    }
+  
+    // 1350 KG
+  
+    if (
+      type.includes('1350')
+    ) {
+  
+      return qty * 1.35
+    }
+  
+    // 1400 KG
+  
+    if (
+      type.includes('1400')
+    ) {
+  
+      return qty * 1.4
+    }
+  
+    // fallback
+  
+    return qty
   }
 
   const totalTons =
-    entries.reduce((sum, entry) => {
+    entries.reduce(
+      (sum, entry) => {
 
-      return (
-        sum +
-        calculateTons(
-          entry.bag_type,
-          entry.quantity,
+        return (
+          sum +
+          calculateTons(
+            entry.bag_type,
+            Number(
+              entry.quantity
+            )
+          )
         )
-      )
 
-    }, 0)
+      },
+      0
+    )
 
-  const totalMachines =
-    new Set(
-      entries.map(
-        (e) => e.machine
-      )
-    ).size
-
-  const todayEntries =
-    entries.filter((entry) => {
-
-      const today =
-        new Date()
-          .toISOString()
-          .split('T')[0]
-
-      return (
-        entry.date === today
-      )
-    })
+  const today =
+    new Date()
+      .toISOString()
+      .split('T')[0]
 
   const todayTons =
-    todayEntries.reduce((sum, entry) => {
+    entries
+      .filter(
+        (entry) =>
+          entry.date === today
+      )
+      .reduce(
+        (sum, entry) => {
 
-      return (
-        sum +
-        calculateTons(
-          entry.bag_type,
-          entry.quantity,
-        )
+          return (
+            sum +
+            calculateTons(
+              entry.bag_type,
+              Number(
+                entry.quantity
+              )
+            )
+          )
+
+        },
+        0
       )
 
-    }, 0)
+  const machineCount =
+    new Set(
 
-  const bagCategoryData =
+      entries
+        .map(
+          (entry) =>
+            entry.machine
+        )
+        .filter(Boolean)
+
+    ).size
+
+  const categoryData =
     useMemo(() => {
 
       const grouped:
-      Record<string, number> = {}
+      Record<
+        string,
+        number
+      > = {}
 
-      entries.forEach((entry) => {
+      entries.forEach(
+        (entry) => {
 
-        const key =
-          `${entry.bag_type} ${entry.mesh}#`
+          const key =
+            `${entry.bag_type} (${entry.mesh}#)`
 
-        const tons =
-          calculateTons(
-            entry.bag_type,
-            entry.quantity,
-          )
+          const tons =
+            calculateTons(
+              entry.bag_type,
+              Number(
+                entry.quantity
+              )
+            )
 
-        grouped[key] =
-          (grouped[key] || 0) +
-          tons
-      })
+          if (!grouped[key]) {
 
-      return Object.entries(grouped)
-        .map(([name, value]) => ({
+            grouped[key] = 0
+          }
+
+          grouped[key] += tons
+        }
+      )
+
+      return Object.entries(
+        grouped
+      ).map(
+        ([name, value]) => ({
+
           name,
           value:
             Number(
               value.toFixed(2)
             ),
-        }))
-        .slice(0, 6)
+
+        })
+      )
 
     }, [entries])
 
@@ -189,89 +242,102 @@ export default function DashboardPage() {
     useMemo(() => {
 
       const grouped:
-      Record<string, number> = {}
+      Record<
+        string,
+        number
+      > = {}
 
-      entries.forEach((entry) => {
+      entries.forEach(
+        (entry) => {
 
-        const tons =
-          calculateTons(
-            entry.bag_type,
-            entry.quantity,
-          )
+          const machine =
+            entry.machine ||
+            'Unknown'
 
-        grouped[entry.machine || 'Unknown'] =
-          (grouped[entry.machine || 'Unknown'] || 0) +
-          tons
-      })
+          const tons =
+            calculateTons(
+              entry.bag_type,
+              Number(
+                entry.quantity
+              )
+            )
 
-      return Object.entries(grouped)
-        .map(([machine, tons]) => ({
-          machine,
-          tons:
+          if (
+            !grouped[machine]
+          ) {
+
+            grouped[machine] = 0
+          }
+
+          grouped[machine] += tons
+        }
+      )
+
+      return Object.entries(
+        grouped
+      ).map(
+        ([name, value]) => ({
+
+          name,
+          value:
             Number(
-              tons.toFixed(2)
+              value.toFixed(2)
             ),
-        }))
+
+        })
+      )
 
     }, [entries])
-
-  if (loading) {
-
-    return (
-
-      <div className="p-6 text-slate-500">
-
-        Loading dashboard...
-
-      </div>
-    )
-  }
 
   return (
 
     <div className="p-4 md:p-6 space-y-6">
 
-      {/* TOP CARDS */}
+      {/* SUMMARY */}
 
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
 
-        <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-5">
+        <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6">
 
           <p className="text-slate-500 text-sm">
             Total Goods Produced
           </p>
 
-          <h2 className="text-3xl font-bold text-slate-900 mt-2">
+          <h2 className="text-5xl font-bold text-slate-900 mt-2">
 
-            {totalTons.toFixed(2)} T
+            {totalTons.toFixed(2)}
+            {' '}
+            T
 
           </h2>
 
         </div>
 
-        <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-5">
+        <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6">
 
           <p className="text-slate-500 text-sm">
             Today's Production
           </p>
 
-          <h2 className="text-3xl font-bold text-slate-900 mt-2">
+          <h2 className="text-5xl font-bold text-slate-900 mt-2">
 
-            {todayTons.toFixed(2)} T
+            {todayTons.toFixed(2)}
+            {' '}
+            T
 
           </h2>
 
         </div>
 
-        <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-5 col-span-2 md:col-span-1">
+        <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6">
 
           <p className="text-slate-500 text-sm">
             Total Machines
           </p>
 
-          <h2 className="text-3xl font-bold text-slate-900 mt-2">
+          <h2 className="text-5xl font-bold text-slate-900 mt-2">
 
-            {totalMachines}
+            {machineCount}
 
           </h2>
 
@@ -281,111 +347,132 @@ export default function DashboardPage() {
 
       {/* CHARTS */}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
 
         {/* PIE */}
 
-        <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-5">
+        <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6">
 
-          <h2 className="text-xl font-bold text-slate-900 mb-5">
+          <h2 className="text-3xl font-bold text-slate-900 mb-6">
 
             Production Category Wise
 
           </h2>
 
-          <ResponsiveContainer
-            width="100%"
-            height={320}
-          >
+          <div className="h-[420px]">
 
-            <PieChart>
+            <ResponsiveContainer
+              width="100%"
+              height="100%"
+            >
 
-              <Pie
-                data={bagCategoryData}
-                dataKey="value"
-                nameKey="name"
-                outerRadius={110}
-                label={(entry) =>
-                  `${entry.value}T`
-                }
-              >
+              <PieChart>
 
-                {bagCategoryData.map(
-                  (_, index) => (
+                <Pie
+                  data={
+                    categoryData
+                  }
+                  dataKey="value"
+                  nameKey="name"
+                  outerRadius={140}
+                  label={({
+                    value,
+                  }) =>
+                    `${value}T`
+                  }
+                >
 
-                    <Cell
-                      key={index}
-                      fill={
-                        COLORS[
-                          index %
-                          COLORS.length
-                        ]
-                      }
-                    />
-                  )
-                )}
+                  {categoryData.map(
+                    (
+                      entry,
+                      index
+                    ) => (
 
-              </Pie>
+                      <Cell
+                        key={index}
+                        fill={
+                          COLORS[
+                            index %
+                              COLORS.length
+                          ]
+                        }
+                      />
 
-              <Tooltip />
+                    )
+                  )}
 
-            </PieChart>
+                </Pie>
 
-          </ResponsiveContainer>
+                <Tooltip />
+
+              </PieChart>
+
+            </ResponsiveContainer>
+
+          </div>
 
         </div>
 
-        {/* MACHINE BAR */}
+        {/* BAR */}
 
-        <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-5">
+        <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6">
 
-          <h2 className="text-xl font-bold text-slate-900 mb-5">
+          <h2 className="text-3xl font-bold text-slate-900 mb-6">
 
             Machine Production
 
           </h2>
 
-          <ResponsiveContainer
-            width="100%"
-            height={320}
-          >
+          <div className="h-[420px]">
 
-            <BarChart
-              data={machineData}
+            <ResponsiveContainer
+              width="100%"
+              height="100%"
             >
 
-              <CartesianGrid
-                strokeDasharray="3 3"
-              />
+              <BarChart
+                data={
+                  machineData
+                }
+              >
 
-              <XAxis
-                dataKey="machine"
-                tick={{
-                  fill: '#000',
-                }}
-              />
+                <XAxis
+                  dataKey="name"
+                />
 
-              <YAxis
-                tick={{
-                  fill: '#000',
-                }}
-              />
+                <YAxis />
 
-              <Tooltip />
+                <Tooltip />
 
-              <Bar
-                dataKey="tons"
-                fill="#93c5fd"
-                radius={[8, 8, 0, 0]}
-              />
+                <Bar
+                  dataKey="value"
+                  radius={[
+                    10,
+                    10,
+                    0,
+                    0,
+                  ]}
+                />
 
-            </BarChart>
+              </BarChart>
 
-          </ResponsiveContainer>
+            </ResponsiveContainer>
+
+          </div>
 
         </div>
 
       </div>
+
+      {loading && (
+
+        <div className="text-slate-500">
+
+          Loading dashboard...
+
+        </div>
+
+      )}
 
     </div>
   )

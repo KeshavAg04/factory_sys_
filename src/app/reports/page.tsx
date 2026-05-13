@@ -104,23 +104,54 @@ export default function ReportsPage() {
     bagType: string,
     quantity: number,
   ) {
-
+  
+    const qty =
+      Number(quantity || 0)
+  
     const type =
-      bagType.toLowerCase()
-
-    if (type.includes('50'))
-      return quantity * 0.05
-
-    if (type.includes('1250'))
-      return quantity * 1.25
-
-    if (type.includes('1350'))
-      return quantity * 1.35
-
-    if (type.includes('1400'))
-      return quantity * 1.4
-
-    return 0
+      String(
+        bagType || ''
+      ).toLowerCase()
+  
+    // 50 KG
+  
+    if (
+      type.includes('50')
+    ) {
+  
+      return qty * 0.05
+    }
+  
+    // 1250 KG
+  
+    if (
+      type.includes('1250')
+    ) {
+  
+      return qty * 1.25
+    }
+  
+    // 1350 KG
+  
+    if (
+      type.includes('1350')
+    ) {
+  
+      return qty * 1.35
+    }
+  
+    // 1400 KG
+  
+    if (
+      type.includes('1400')
+    ) {
+  
+      return qty * 1.4
+    }
+  
+    // fallback
+  
+    return qty
   }
 
   const totalTons =
