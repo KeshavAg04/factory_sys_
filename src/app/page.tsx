@@ -41,9 +41,9 @@ export default function DashboardPage() {
   ] = useState<any[]>([])
 
   const [
-    loading,
-    setLoading,
-  ] = useState(true)
+    selectedRange,
+    setSelectedRange,
+  ] = useState('month')
 
   useEffect(() => {
 
@@ -53,87 +53,130 @@ export default function DashboardPage() {
 
   async function fetchEntries() {
 
-    setLoading(true)
-
     const {
       data,
-      error,
     } = await supabase
       .from(
         'production_entries'
       )
       .select('*')
 
-    if (error) {
-
-      console.log(error)
-
-      setLoading(false)
-
-      return
-    }
-
     setEntries(data || [])
-
-    setLoading(false)
   }
 
   function calculateTons(
     bagType: string,
     quantity: number,
   ) {
-  
+
     const qty =
       Number(quantity || 0)
-  
+
     const type =
       String(
         bagType || ''
       ).toLowerCase()
-  
-    // 50 KG
-  
+
     if (
       type.includes('50')
     ) {
-  
+
       return qty * 0.05
     }
-  
-    // 1250 KG
-  
+
     if (
       type.includes('1250')
     ) {
-  
+
       return qty * 1.25
     }
-  
-    // 1350 KG
-  
+
     if (
       type.includes('1350')
     ) {
-  
+
       return qty * 1.35
     }
-  
-    // 1400 KG
-  
+
     if (
       type.includes('1400')
     ) {
-  
+
       return qty * 1.4
     }
-  
-    // fallback
-  
+
     return qty
   }
 
+  const filteredEntries =
+    useMemo(() => {
+
+      const now =
+        new Date()
+
+      return entries.filter(
+        (entry) => {
+
+          const entryDate =
+            new Date(
+              entry.date
+            )
+
+          if (
+            selectedRange ===
+            'today'
+          ) {
+
+            return (
+              entryDate
+                .toDateString() ===
+              now.toDateString()
+            )
+          }
+
+          if (
+            selectedRange ===
+            'week'
+          ) {
+
+            const weekAgo =
+              new Date()
+
+            weekAgo.setDate(
+              now.getDate() -
+                7
+            )
+
+            return (
+              entryDate >=
+              weekAgo
+            )
+          }
+
+          if (
+            selectedRange ===
+            'month'
+          ) {
+
+            return (
+              entryDate.getMonth() ===
+                now.getMonth() &&
+              entryDate.getFullYear() ===
+                now.getFullYear()
+            )
+          }
+
+          return true
+        }
+      )
+
+    }, [
+      entries,
+      selectedRange,
+    ])
+
   const totalTons =
-    entries.reduce(
+    filteredEntries.reduce(
       (sum, entry) => {
 
         return (
@@ -150,38 +193,10 @@ export default function DashboardPage() {
       0
     )
 
-  const today =
-    new Date()
-      .toISOString()
-      .split('T')[0]
-
-  const todayTons =
-    entries
-      .filter(
-        (entry) =>
-          entry.date === today
-      )
-      .reduce(
-        (sum, entry) => {
-
-          return (
-            sum +
-            calculateTons(
-              entry.bag_type,
-              Number(
-                entry.quantity
-              )
-            )
-          )
-
-        },
-        0
-      )
-
   const machineCount =
     new Set(
 
-      entries
+      filteredEntries
         .map(
           (entry) =>
             entry.machine
@@ -199,7 +214,7 @@ export default function DashboardPage() {
         number
       > = {}
 
-      entries.forEach(
+      filteredEntries.forEach(
         (entry) => {
 
           const key =
@@ -236,7 +251,7 @@ export default function DashboardPage() {
         })
       )
 
-    }, [entries])
+    }, [filteredEntries])
 
   const machineData =
     useMemo(() => {
@@ -247,7 +262,7 @@ export default function DashboardPage() {
         number
       > = {}
 
-      entries.forEach(
+      filteredEntries.forEach(
         (entry) => {
 
           const machine =
@@ -287,23 +302,93 @@ export default function DashboardPage() {
         })
       )
 
-    }, [entries])
+    }, [filteredEntries])
 
   return (
 
-    <div className="p-4 md:p-6 space-y-6">
+    <div className="p-4 md:p-6 space-y-5">
 
-      {/* SUMMARY */}
+      {/* TOP */}
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
 
-        <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6">
+        <div>
 
           <p className="text-slate-500 text-sm">
-            Total Goods Produced
+            Production Management
           </p>
 
-          <h2 className="text-5xl font-bold text-slate-900 mt-2">
+          <h1 className="text-3xl font-bold text-slate-900">
+            Dashboard
+          </h1>
+
+        </div>
+
+        <div className="flex gap-3">
+
+          <button
+            onClick={() =>
+              setSelectedRange(
+                'today'
+              )
+            }
+            className={`px-4 py-2 rounded-xl text-sm font-medium ${
+              selectedRange ===
+              'today'
+                ? 'bg-slate-800 text-white'
+                : 'bg-white border border-slate-200'
+            }`}
+          >
+            Today
+          </button>
+
+          <button
+            onClick={() =>
+              setSelectedRange(
+                'week'
+              )
+            }
+            className={`px-4 py-2 rounded-xl text-sm font-medium ${
+              selectedRange ===
+              'week'
+                ? 'bg-slate-800 text-white'
+                : 'bg-white border border-slate-200'
+            }`}
+          >
+            This Week
+          </button>
+
+          <button
+            onClick={() =>
+              setSelectedRange(
+                'month'
+              )
+            }
+            className={`px-4 py-2 rounded-xl text-sm font-medium ${
+              selectedRange ===
+              'month'
+                ? 'bg-slate-800 text-white'
+                : 'bg-white border border-slate-200'
+            }`}
+          >
+            This Month
+          </button>
+
+        </div>
+
+      </div>
+
+      {/* CARDS */}
+
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+
+        <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-5">
+
+          <p className="text-slate-500 text-sm">
+            Goods Produced
+          </p>
+
+          <h2 className="text-4xl font-bold text-slate-900 mt-2">
 
             {totalTons.toFixed(2)}
             {' '}
@@ -313,29 +398,13 @@ export default function DashboardPage() {
 
         </div>
 
-        <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6">
+        <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-5">
 
           <p className="text-slate-500 text-sm">
-            Today's Production
+            Active Machines
           </p>
 
-          <h2 className="text-5xl font-bold text-slate-900 mt-2">
-
-            {todayTons.toFixed(2)}
-            {' '}
-            T
-
-          </h2>
-
-        </div>
-
-        <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6">
-
-          <p className="text-slate-500 text-sm">
-            Total Machines
-          </p>
-
-          <h2 className="text-5xl font-bold text-slate-900 mt-2">
+          <h2 className="text-4xl font-bold text-slate-900 mt-2">
 
             {machineCount}
 
@@ -347,19 +416,19 @@ export default function DashboardPage() {
 
       {/* CHARTS */}
 
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
 
         {/* PIE */}
 
-        <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6">
+        <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-5">
 
-          <h2 className="text-3xl font-bold text-slate-900 mb-6">
+          <h2 className="text-2xl font-bold text-slate-900 mb-4">
 
-            Production Category Wise
+            Category Wise
 
           </h2>
 
-          <div className="h-[420px]">
+          <div className="h-[320px]">
 
             <ResponsiveContainer
               width="100%"
@@ -374,7 +443,7 @@ export default function DashboardPage() {
                   }
                   dataKey="value"
                   nameKey="name"
-                  outerRadius={140}
+                  outerRadius={110}
                   label={({
                     value,
                   }) =>
@@ -415,15 +484,15 @@ export default function DashboardPage() {
 
         {/* BAR */}
 
-        <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6">
+        <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-5">
 
-          <h2 className="text-3xl font-bold text-slate-900 mb-6">
+          <h2 className="text-2xl font-bold text-slate-900 mb-4">
 
             Machine Production
 
           </h2>
 
-          <div className="h-[420px]">
+          <div className="h-[320px]">
 
             <ResponsiveContainer
               width="100%"
@@ -447,8 +516,8 @@ export default function DashboardPage() {
                 <Bar
                   dataKey="value"
                   radius={[
-                    10,
-                    10,
+                    8,
+                    8,
                     0,
                     0,
                   ]}
@@ -463,16 +532,6 @@ export default function DashboardPage() {
         </div>
 
       </div>
-
-      {loading && (
-
-        <div className="text-slate-500">
-
-          Loading dashboard...
-
-        </div>
-
-      )}
 
     </div>
   )

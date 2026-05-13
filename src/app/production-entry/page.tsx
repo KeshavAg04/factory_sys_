@@ -2,79 +2,132 @@
 
 import {
   useEffect,
-  useMemo,
+  useRef,
   useState,
 } from 'react'
 
-import {
-  supabase,
-} from '@/lib/supabase'
+import { supabase } from '@/lib/supabase'
 
-export default function ReportsPage() {
+export default function ProductionEntryPage() {
 
-  const [
-    entries,
-    setEntries,
-  ] = useState<any[]>([])
+  const [date, setDate] =
+    useState('')
 
-  const [
-    factories,
-    setFactories,
-  ] = useState<any[]>([])
+  const [factory, setFactory] =
+    useState('')
 
-  const [
-    machines,
-    setMachines,
-  ] = useState<any[]>([])
+  const [machine, setMachine] =
+    useState('')
 
-  const [
-    loading,
-    setLoading,
-  ] = useState(true)
+  const [labour, setLabour] =
+    useState('')
 
-  const [
-    selectedFactory,
-    setSelectedFactory,
-  ] = useState('')
+  const [shift, setShift] =
+    useState('Day')
 
-  const [
-    selectedMachine,
-    setSelectedMachine,
-  ] = useState('')
+  const [mesh, setMesh] =
+    useState('')
 
-  const [
-    search,
-    setSearch,
-  ] = useState('')
+  const [bagType, setBagType] =
+    useState('')
 
-  const [
-    fromDate,
-    setFromDate,
-  ] = useState('')
+  const [bagName, setBagName] =
+    useState('')
 
-  const [
-    toDate,
-    setToDate,
-  ] = useState('')
+  const [quantity, setQuantity] =
+    useState('')
+
+  const [rate, setRate] =
+    useState(0)
+
+  const [amount, setAmount] =
+    useState(0)
+
+  const [factories, setFactories] =
+    useState<any[]>([])
+
+  const [machines, setMachines] =
+    useState<any[]>([])
+
+  const [meshes, setMeshes] =
+    useState<any[]>([])
+
+  const [bagTypes, setBagTypes] =
+    useState<any[]>([])
+
+  const [bagNames, setBagNames] =
+    useState<any[]>([])
+
+  const [rates, setRates] =
+    useState<any[]>([])
+
+  const [labours, setLabours] =
+    useState<string[]>([])
+
+  const formRef = useRef<HTMLFormElement>(null)
 
   useEffect(() => {
 
     fetchMasters()
 
-    fetchEntries()
+    setTodayDate()
 
   }, [])
 
   useEffect(() => {
 
-    fetchEntries()
+    const foundRate =
+      rates.find(
+        (item) =>
+          item.bag_type ===
+            bagType &&
+          item.mesh === mesh
+      )
+
+    if (foundRate) {
+
+      setRate(
+        Number(foundRate.rate)
+      )
+
+      setAmount(
+        Number(quantity || 0) *
+          Number(foundRate.rate)
+      )
+
+    } else {
+
+      setRate(0)
+
+      setAmount(0)
+    }
 
   }, [
-    selectedFactory,
-    selectedMachine,
-    fromDate,
-    toDate,
+    quantity,
+    bagType,
+    mesh,
+    rates,
   ])
+
+  function setTodayDate() {
+
+    const today = new Date()
+
+    const yyyy =
+      today.getFullYear()
+
+    const mm = String(
+      today.getMonth() + 1
+    ).padStart(2, '0')
+
+    const dd = String(
+      today.getDate()
+    ).padStart(2, '0')
+
+    setDate(
+      `${yyyy}-${mm}-${dd}`
+    )
+  }
 
   async function fetchMasters() {
 
@@ -88,6 +141,33 @@ export default function ReportsPage() {
         .from('machine_master')
         .select('*')
 
+    const meshRes =
+      await supabase
+        .from('rate_master')
+        .select('mesh')
+
+    const bagTypeRes =
+      await supabase
+        .from('rate_master')
+        .select('bag_type')
+
+    const bagNameRes =
+      await supabase
+        .from('bag_name_master')
+        .select('*')
+
+    const rateRes =
+      await supabase
+        .from('rate_master')
+        .select('*')
+
+    const labourRes =
+      await supabase
+        .from(
+          'production_entries'
+        )
+        .select('labour')
+
     setFactories(
       factoriesRes.data || []
     )
@@ -95,578 +175,406 @@ export default function ReportsPage() {
     setMachines(
       machinesRes.data || []
     )
+
+    setMeshes([
+      ...new Set(
+        (meshRes.data || []).map(
+          (item: any) =>
+            item.mesh
+        )
+      ),
+    ])
+
+    setBagTypes([
+      ...new Set(
+        (
+          bagTypeRes.data ||
+          []
+        ).map(
+          (item: any) =>
+            item.bag_type
+        )
+      ),
+    ])
+
+    setBagNames(
+      bagNameRes.data || []
+    )
+
+    setRates(rateRes.data || [])
+
+    setLabours([
+      ...new Set(
+        (
+          labourRes.data ||
+          []
+        )
+          .map(
+            (item: any) =>
+              item.labour
+          )
+          .filter(Boolean)
+      ),
+    ])
   }
 
-  async function fetchEntries() {
+  async function saveEntry(
+    e?: any
+  ) {
 
-    setLoading(true)
+    if (e) {
 
-    let query =
-      supabase
-        .from(
-          'production_entries'
-        )
-        .select('*')
-        .order('date', {
-          ascending: false,
-        })
-
-    if (selectedFactory) {
-
-      query =
-        query.eq(
-          'factory',
-          selectedFactory
-        )
+      e.preventDefault()
     }
 
-    if (selectedMachine) {
+    if (
+      !factory ||
+      !machine ||
+      !labour ||
+      !mesh ||
+      !bagType ||
+      !bagName ||
+      !quantity
+    ) {
 
-      query =
-        query.eq(
-          'machine',
-          selectedMachine
-        )
+      alert(
+        'Please fill all fields'
+      )
+
+      return
     }
 
-    if (fromDate) {
+    const payload = {
 
-      query =
-        query.gte(
-          'date',
-          fromDate
-        )
-    }
+      date,
+      factory,
+      machine,
+      labour,
+      shift,
+      mesh,
+      bag_type: bagType,
+      bag_name: bagName,
+      quantity:
+        Number(quantity),
+      rate,
+      amount,
 
-    if (toDate) {
-
-      query =
-        query.lte(
-          'date',
-          toDate
-        )
     }
 
     const {
-      data,
-    } = await query
+      error,
+    } = await supabase
+      .from(
+        'production_entries'
+      )
+      .insert([payload])
 
-    setEntries(data || [])
+    if (error) {
 
-    setLoading(false)
+      console.log(error)
+
+      alert(
+        'Failed to save entry'
+      )
+
+      return
+    }
+
+    alert('Entry saved')
+
+    setLabour('')
+
+    setMesh('')
+
+    setBagType('')
+
+    setBagName('')
+
+    setQuantity('')
+
+    setRate(0)
+
+    setAmount(0)
+
+    fetchMasters()
   }
-
-  const filteredEntries =
-    entries.filter((entry) => {
-
-      if (!search)
-        return true
-
-      return JSON.stringify(
-        entry
-      )
-        .toLowerCase()
-        .includes(
-          search.toLowerCase()
-        )
-    })
-
-  function calculateTons(
-    bagType: string,
-    quantity: number,
-  ) {
-
-    const type =
-      bagType?.toLowerCase() || ''
-
-    if (type.includes('50'))
-      return quantity * 0.05
-
-    if (type.includes('1250'))
-      return quantity * 1.25
-
-    if (type.includes('1350'))
-      return quantity * 1.35
-
-    if (type.includes('1400'))
-      return quantity * 1.4
-
-    return 0
-  }
-
-  const totalTons =
-    filteredEntries.reduce(
-      (sum, entry) => {
-
-        return (
-          sum +
-          calculateTons(
-            entry.bag_type,
-            Number(
-              entry.quantity
-            )
-          )
-        )
-
-      },
-      0
-    )
-
-  const totalAmount =
-    filteredEntries.reduce(
-      (sum, entry) => {
-
-        return (
-          sum +
-          Number(
-            entry.amount || 0
-          )
-        )
-
-      },
-      0
-    )
-
-  const categorySummary =
-    useMemo(() => {
-
-      const grouped:
-      Record<
-        string,
-        {
-          bags: number
-          tons: number
-        }
-      > = {}
-
-      filteredEntries.forEach(
-        (entry) => {
-
-          const key =
-            `${entry.bag_type} (${entry.mesh}#)`
-
-          if (
-            !grouped[key]
-          ) {
-
-            grouped[key] = {
-
-              bags: 0,
-              tons: 0,
-
-            }
-          }
-
-          grouped[key].bags +=
-            Number(
-              entry.quantity
-            )
-
-          grouped[key].tons +=
-            calculateTons(
-              entry.bag_type,
-              Number(
-                entry.quantity
-              )
-            )
-        }
-      )
-
-      return Object.entries(
-        grouped
-      )
-
-    }, [filteredEntries])
 
   return (
 
-    <div className="p-4 md:p-6 space-y-6">
+    <div className="min-h-screen flex justify-center px-4 py-8">
 
-      <div>
+      <div className="w-full max-w-4xl">
 
-        <p className="text-slate-500 text-sm">
-          Production Management
-        </p>
+        <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 md:p-8">
 
-        <h1 className="text-4xl font-bold text-slate-900">
-          Reports
-        </h1>
+          <div className="mb-8">
 
-      </div>
+            <p className="text-slate-500 text-sm">
+              Production Management
+            </p>
 
-      {/* FILTERS */}
+            <h1 className="text-4xl font-bold text-slate-900 mt-2">
+              Production Entry
+            </h1>
 
-      <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-5">
+          </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-
-          <input
-            type="date"
-            value={fromDate}
-            onChange={(e) =>
-              setFromDate(
-                e.target.value
-              )
-            }
-            className="rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:ring-2 focus:ring-slate-400"
-          />
-
-          <input
-            type="date"
-            value={toDate}
-            onChange={(e) =>
-              setToDate(
-                e.target.value
-              )
-            }
-            className="rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:ring-2 focus:ring-slate-400"
-          />
-
-          <select
-            value={
-              selectedFactory
-            }
-            onChange={(e) =>
-              setSelectedFactory(
-                e.target.value
-              )
-            }
-            className="rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:ring-2 focus:ring-slate-400"
+          <form
+            ref={formRef}
+            onSubmit={saveEntry}
+            className="grid grid-cols-1 md:grid-cols-2 gap-5"
           >
 
-            <option value="">
-              All Factories
-            </option>
+            <input
+              type="date"
+              value={date}
+              onChange={(e) =>
+                setDate(
+                  e.target.value
+                )
+              }
+              className="h-14 rounded-2xl border border-slate-200 px-4 outline-none focus:ring-2 focus:ring-slate-400"
+            />
 
-            {factories.map(
-              (item) => (
+            <select
+              value={factory}
+              onChange={(e) =>
+                setFactory(
+                  e.target.value
+                )
+              }
+              className="h-14 rounded-2xl border border-slate-200 px-4 outline-none focus:ring-2 focus:ring-slate-400"
+            >
 
-                <option
-                  key={item.id}
-                  value={
-                    item.factory_name
-                  }
-                >
-                  {
-                    item.factory_name
-                  }
-                </option>
+              <option value="">
+                Select Factory
+              </option>
 
-              )
-            )}
+              {factories.map(
+                (item) => (
 
-          </select>
-
-          <select
-            value={
-              selectedMachine
-            }
-            onChange={(e) =>
-              setSelectedMachine(
-                e.target.value
-              )
-            }
-            className="rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:ring-2 focus:ring-slate-400"
-          >
-
-            <option value="">
-              All Machines
-            </option>
-
-            {machines.map(
-              (item) => (
-
-                <option
-                  key={item.id}
-                  value={
-                    item.machine_name
-                  }
-                >
-                  {
-                    item.machine_name
-                  }
-                </option>
-
-              )
-            )}
-
-          </select>
-
-          <input
-            type="text"
-            placeholder="Search..."
-            value={search}
-            onChange={(e) =>
-              setSearch(
-                e.target.value
-              )
-            }
-            className="rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:ring-2 focus:ring-slate-400"
-          />
-
-        </div>
-
-      </div>
-
-      {/* SUMMARY */}
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-
-        <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6">
-
-          <p className="text-slate-500 text-sm">
-            Total Goods Produced
-          </p>
-
-          <h2 className="text-4xl font-bold mt-2 text-slate-900">
-
-            {totalTons.toFixed(2)} T
-
-          </h2>
-
-        </div>
-
-        <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6">
-
-          <p className="text-slate-500 text-sm">
-            Total Amount
-          </p>
-
-          <h2 className="text-4xl font-bold mt-2 text-slate-900">
-
-            ₹
-            {totalAmount.toLocaleString()}
-
-          </h2>
-
-        </div>
-
-      </div>
-
-      {/* CATEGORY SUMMARY */}
-
-      <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
-
-        <div className="px-6 py-5 border-b border-slate-200">
-
-          <h2 className="text-2xl font-bold text-slate-900">
-
-            Category Wise Production
-
-          </h2>
-
-        </div>
-
-        <div className="overflow-x-auto">
-
-          <table className="min-w-[900px] w-full">
-
-            <thead>
-
-              <tr className="bg-slate-100">
-
-                <th className="text-left px-6 py-4">
-                  Category
-                </th>
-
-                <th className="text-left px-6 py-4">
-                  Bags Produced
-                </th>
-
-                <th className="text-left px-6 py-4">
-                  Goods Produced
-                </th>
-
-              </tr>
-
-            </thead>
-
-            <tbody>
-
-              {categorySummary.map(
-                ([key, value]) => (
-
-                  <tr
-                    key={key}
-                    className="border-t border-slate-100"
+                  <option
+                    key={item.id}
+                    value={
+                      item.factory_name
+                    }
                   >
-
-                    <td className="px-6 py-4">
-                      {key}
-                    </td>
-
-                    <td className="px-6 py-4">
-                      {value.bags}
-                    </td>
-
-                    <td className="px-6 py-4 font-medium">
-                      {value.tons.toFixed(
-                        2
-                      )}{' '}
-                      T
-                    </td>
-
-                  </tr>
+                    {
+                      item.factory_name
+                    }
+                  </option>
 
                 )
               )}
 
-            </tbody>
+            </select>
 
-          </table>
+            <select
+              value={machine}
+              onChange={(e) =>
+                setMachine(
+                  e.target.value
+                )
+              }
+              className="h-14 rounded-2xl border border-slate-200 px-4 outline-none focus:ring-2 focus:ring-slate-400"
+            >
 
-        </div>
+              <option value="">
+                Select Machine
+              </option>
 
-      </div>
+              {machines.map(
+                (item) => (
 
-      {/* TABLE */}
-
-      <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
-
-        <div className="px-6 py-5 border-b border-slate-200">
-
-          <h2 className="text-2xl font-bold text-slate-900">
-
-            Production Entries
-
-          </h2>
-
-        </div>
-
-        <div className="overflow-x-auto">
-
-          <table className="min-w-[1200px] w-full">
-
-            <thead>
-
-              <tr className="bg-slate-100">
-
-                <th className="text-left px-6 py-4">
-                  Date
-                </th>
-
-                <th className="text-left px-6 py-4">
-                  Factory
-                </th>
-
-                <th className="text-left px-6 py-4">
-                  Machine
-                </th>
-
-                <th className="text-left px-6 py-4">
-                  Labour
-                </th>
-
-                <th className="text-left px-6 py-4">
-                  Category
-                </th>
-
-                <th className="text-left px-6 py-4">
-                  Qty
-                </th>
-
-                <th className="text-left px-6 py-4">
-                  Tons
-                </th>
-
-                <th className="text-left px-6 py-4">
-                  Amount
-                </th>
-
-              </tr>
-
-            </thead>
-
-            <tbody>
-
-              {filteredEntries.map(
-                (entry) => (
-
-                  <tr
-                    key={entry.id}
-                    className="border-t border-slate-100"
+                  <option
+                    key={item.id}
+                    value={
+                      item.machine_name
+                    }
                   >
-
-                    <td className="px-6 py-4">
-                      {entry.date}
-                    </td>
-
-                    <td className="px-6 py-4">
-                      {entry.factory}
-                    </td>
-
-                    <td className="px-6 py-4">
-                      {entry.machine}
-                    </td>
-
-                    <td className="px-6 py-4">
-                      {
-                        entry.labour_name
-                      }
-                    </td>
-
-                    <td className="px-6 py-4">
-
-                      {
-                        entry.bag_type
-                      }
-                      {' '}
-                      (
-                      {entry.mesh}
-                      #)
-
-                    </td>
-
-                    <td className="px-6 py-4">
-                      {
-                        entry.quantity
-                      }
-                    </td>
-
-                    <td className="px-6 py-4 font-medium">
-
-                      {calculateTons(
-                        entry.bag_type,
-                        Number(
-                          entry.quantity
-                        )
-                      ).toFixed(2)}
-                      {' '}
-                      T
-
-                    </td>
-
-                    <td className="px-6 py-4">
-
-                      ₹
-                      {Number(
-                        entry.amount
-                      ).toLocaleString()}
-
-                    </td>
-
-                  </tr>
+                    {
+                      item.machine_name
+                    }
+                  </option>
 
                 )
               )}
 
-            </tbody>
+            </select>
 
-          </table>
+            <input
+              list="labours"
+              value={labour}
+              onChange={(e) =>
+                setLabour(
+                  e.target.value
+                )
+              }
+              placeholder="Labour Name"
+              className="h-14 rounded-2xl border border-slate-200 px-4 outline-none focus:ring-2 focus:ring-slate-400"
+            />
+
+            <datalist id="labours">
+
+              {labours.map(
+                (item) => (
+
+                  <option
+                    key={item}
+                    value={item}
+                  />
+
+                )
+              )}
+
+            </datalist>
+
+            <select
+              value={shift}
+              onChange={(e) =>
+                setShift(
+                  e.target.value
+                )
+              }
+              className="h-14 rounded-2xl border border-slate-200 px-4 outline-none focus:ring-2 focus:ring-slate-400"
+            >
+
+              <option>
+                Day
+              </option>
+
+              <option>
+                Night
+              </option>
+
+            </select>
+
+            <select
+              value={mesh}
+              onChange={(e) =>
+                setMesh(
+                  e.target.value
+                )
+              }
+              className="h-14 rounded-2xl border border-slate-200 px-4 outline-none focus:ring-2 focus:ring-slate-400"
+            >
+
+              <option value="">
+                Select Mesh
+              </option>
+
+              {meshes.map(
+                (item) => (
+
+                  <option
+                    key={item}
+                    value={item}
+                  >
+                    {item}
+                    #
+                  </option>
+
+                )
+              )}
+
+            </select>
+
+            <select
+              value={bagType}
+              onChange={(e) =>
+                setBagType(
+                  e.target.value
+                )
+              }
+              className="h-14 rounded-2xl border border-slate-200 px-4 outline-none focus:ring-2 focus:ring-slate-400"
+            >
+
+              <option value="">
+                Select Bag Type
+              </option>
+
+              {bagTypes.map(
+                (item) => (
+
+                  <option
+                    key={item}
+                    value={item}
+                  >
+                    {item}
+                  </option>
+
+                )
+              )}
+
+            </select>
+
+            <select
+              value={bagName}
+              onChange={(e) =>
+                setBagName(
+                  e.target.value
+                )
+              }
+              className="h-14 rounded-2xl border border-slate-200 px-4 outline-none focus:ring-2 focus:ring-slate-400"
+            >
+
+              <option value="">
+                Select Bag Name
+              </option>
+
+              {bagNames.map(
+                (item) => (
+
+                  <option
+                    key={item.id}
+                    value={
+                      item.bag_name
+                    }
+                  >
+                    {item.bag_name}
+                  </option>
+
+                )
+              )}
+
+            </select>
+
+            <input
+              type="number"
+              value={quantity}
+              onChange={(e) =>
+                setQuantity(
+                  e.target.value
+                )
+              }
+              placeholder="Quantity"
+              className="h-14 rounded-2xl border border-slate-200 px-4 outline-none focus:ring-2 focus:ring-slate-400"
+            />
+
+            <input
+              type="number"
+              value={amount}
+              readOnly
+              placeholder="Amount"
+              className="h-14 rounded-2xl bg-slate-100 border border-slate-200 px-4 outline-none"
+            />
+
+            <div className="md:col-span-2 flex justify-center pt-2">
+
+              <button
+                type="submit"
+                className="h-14 px-10 rounded-2xl bg-slate-900 text-white font-semibold hover:bg-slate-800 transition"
+              >
+                Save Entry
+              </button>
+
+            </div>
+
+          </form>
 
         </div>
 
       </div>
-
-      {loading && (
-
-        <div className="text-slate-500">
-
-          Loading...
-
-        </div>
-
-      )}
 
     </div>
   )
