@@ -166,7 +166,7 @@ export default function ProductionEntryPage() {
         .from(
           'production_entries'
         )
-        .select('labour')
+        .select('labour_name')
 
     setFactories(
       factoriesRes.data || []
@@ -211,7 +211,7 @@ export default function ProductionEntryPage() {
         )
           .map(
             (item: any) =>
-              item.labour
+              item.labour_name
           )
           .filter(Boolean)
       ),
@@ -246,20 +246,35 @@ export default function ProductionEntryPage() {
 
     const payload = {
 
-      date,
+      production_date: date,
+    
+      labour_name: labour,
+    
       factory,
       machine,
-      labour,
       shift,
+    
       mesh,
+    
       bag_type: bagType,
+    
       bag_name: bagName,
+    
       quantity:
         Number(quantity),
-      rate,
-      amount,
-
+    
+      rate:
+        Number(rate),
+    
+      amount:
+        Number(amount),
+    
     }
+
+    console.log(
+      'SAVE PAYLOAD',
+      payload
+      )
 
     const {
       error,
@@ -271,7 +286,7 @@ export default function ProductionEntryPage() {
 
     if (error) {
 
-      console.log(error)
+      console.log('SAVE ERROR',error)
 
       alert(
         'Failed to save entry'
