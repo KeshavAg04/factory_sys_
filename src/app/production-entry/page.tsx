@@ -476,7 +476,6 @@ export default function ProductionEntryPage() {
                     value={item}
                   >
                     {item}
-                    #
                   </option>
 
                 )
@@ -555,6 +554,14 @@ export default function ProductionEntryPage() {
               placeholder="Quantity"
               className="h-14 rounded-2xl border border-slate-200 px-4 outline-none focus:ring-2 focus:ring-slate-400"
             />
+
+              <input
+                type="number"
+                value={rate}
+                readOnly
+                placeholder="Rate"
+                className="h-14 rounded-2xl bg-slate-100 border border-slate-200 px-4 outline-none"
+              />
 
             <input
               type="number"
