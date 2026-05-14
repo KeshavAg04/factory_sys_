@@ -16,6 +16,8 @@ const [shift,setShift]=useState('')
 const [mesh,setMesh]=useState('')
 const [bagType,setBagType]=useState('')
 const [bagName,setBagName]=useState('')
+const [fromDate,setFromDate]=useState('')
+const [toDate,setToDate]=useState('')
 
 useEffect(()=>{loadEntries()},[])
 
@@ -50,8 +52,10 @@ const filtered=useMemo(()=>entries.filter(e=>{
  if(mesh && e.mesh!==mesh) return false
  if(bagType && e.bag_type!==bagType) return false
  if(bagName && e.bag_name!==bagName) return false
+ if(fromDate && e.production_date<fromDate) return false
+ if(toDate && e.production_date>toDate) return false
  return true
-}),[entries,search,factory,machine,labour,shift,mesh,bagType,bagName])
+}),[entries,search,factory,machine,labour,shift,mesh,bagType,bagName,fromDate,toDate])
 
 const totalQty=filtered.reduce((a,b)=>a+Number(b.quantity||0),0)
 const totalAmount=filtered.reduce((a,b)=>a+Number(b.amount||0),0)
@@ -102,6 +106,8 @@ return <div className='p-4 md:p-6 space-y-6'>
 <select value={mesh} onChange={e=>setMesh(e.target.value)} className='border rounded-xl p-3'><option value=''>All Mesh</option>{values('mesh').map((v:any)=><option key={v}>{v}</option>)}</select>
 <select value={bagType} onChange={e=>setBagType(e.target.value)} className='border rounded-xl p-3'><option value=''>All Bag Types</option>{values('bag_type').map((v:any)=><option key={v}>{v}</option>)}</select>
 <select value={bagName} onChange={e=>setBagName(e.target.value)} className='border rounded-xl p-3'><option value=''>All Bag Names</option>{values('bag_name').map((v:any)=><option key={v}>{v}</option>)}</select>
+<input type='date' value={fromDate} onChange={e=>setFromDate(e.target.value)} className='border rounded-xl p-3'/>
+<input type='date' value={toDate} onChange={e=>setToDate(e.target.value)} className='border rounded-xl p-3'/>
 </div>
 
 <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
