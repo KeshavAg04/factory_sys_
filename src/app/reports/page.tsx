@@ -81,12 +81,94 @@ const summary=Object.values(filtered.reduce((acc:any,e)=>{
  return acc
 },{}))
 
-function exportExcel(data:any[],name:string){
- const ws=XLSX.utils.json_to_sheet(data)
- const wb=XLSX.utils.book_new()
- XLSX.utils.book_append_sheet(wb,ws,'Report')
- XLSX.writeFile(wb,`${name}.xlsx`)
-}
+function exportExcel(
+    data:any[],
+    name:string
+    ){
+    
+    const ws=
+    XLSX.utils.json_to_sheet(
+    data
+    )
+    
+    const wb=
+    XLSX.utils.book_new()
+    
+    XLSX.utils.book_append_sheet(
+    wb,
+    ws,
+    'Report'
+    )
+    
+    let fileName=name
+    
+    // add summary mode name
+    
+    if(
+    mode==='summary'
+    ){
+    
+    fileName+=
+    `-${summaryBy}`
+    
+    }
+    
+    // add labour
+    
+    if(labour){
+    
+    fileName+=
+    `-${labour}`
+    
+    }
+    
+    // add factory
+    
+    if(factory){
+    
+    fileName+=
+    `-${factory}`
+    
+    }
+    
+    // add machine
+    
+    if(machine){
+    
+    fileName+=
+    `-${machine}`
+    
+    }
+    
+    // add dates
+    
+    if(fromDate){
+    
+    fileName+=
+    `-${fromDate}`
+    
+    }
+    
+    if(toDate){
+    
+    fileName+=
+    `-to-${toDate}`
+    
+    }
+    
+    fileName=
+    fileName
+    .replaceAll(
+    ' ',
+    '-'
+    )
+    
+    XLSX.writeFile(
+    wb,
+    `${fileName}.xlsx`
+    )
+    
+    }
 
 return <div className='p-4 md:p-6 space-y-6'>
 <div className='flex flex-col md:flex-row justify-between gap-4'>
