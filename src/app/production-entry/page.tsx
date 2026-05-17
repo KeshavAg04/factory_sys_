@@ -218,6 +218,36 @@ export default function ProductionEntryPage() {
     ])
   }
 
+  function normalizeShift(
+    shift:string
+  ){
+  
+  const value=
+  shift
+  .toLowerCase()
+  .trim()
+  
+  if(
+  value==="दिन" ||
+  value==="दीन" ||
+  value==="दिन की पाली" ||
+  value==="day"
+  ){
+  return "Day"
+  }
+  
+  if(
+  value==="रात" ||
+  value==="रात्रि" ||
+  value==="नाइट" ||
+  value==="night"
+  ){
+  return "Night"
+  }
+  
+  return shift
+  }
+
   async function saveEntry(
     e?: any
   ) {
@@ -252,7 +282,8 @@ export default function ProductionEntryPage() {
     
       factory,
       machine,
-      shift,
+      shift:
+      normalizeShift(shift),
     
       mesh,
     
