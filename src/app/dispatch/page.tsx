@@ -209,9 +209,7 @@ setFactory(factory)
 
     useEffect(()=>{
 
-      setLoadingAmount(
-      
-      String(
+      const amount =
       
       Number(quantity || 0)
       
@@ -219,8 +217,8 @@ setFactory(factory)
       
       Number(loadingRate || 0)
       
-      )
-      
+      setLoadingAmount(
+      amount.toFixed(1)
       )
       
       },[
