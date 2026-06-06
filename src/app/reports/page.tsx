@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import * as XLSX from 'xlsx'
 import { supabase } from '@/lib/supabase'
+import RoleGuard
+from '@/components/RoleGuard'
 
 export default function ReportsPage(){
 const [entries,setEntries]=useState<any[]>([])
@@ -18,17 +20,49 @@ const [bagType,setBagType]=useState('')
 const [bagName,setBagName]=useState('')
 const [fromDate,setFromDate]=useState('')
 const [toDate,setToDate]=useState('')
+const [period,setPeriod]=useState('month')
+const [userFactory,setUserFactory] =
+useState('')
 
-useEffect(()=>{loadEntries()},[])
+useEffect(()=>{
 
-async function loadEntries(){
+  const factory =
+  localStorage.getItem(
+  'userFactory'
+  ) || ''
+  
+  setUserFactory(factory)
+  
+  loadEntries(factory)
+  
+  },[])
+
+  async function loadEntries(
+    factoryFilter=''
+    ){
  const {data,error}=await supabase
  .from('production_entries')
  .select('*')
  .order('production_date',{ascending:false})
 
  if(error){console.log(error);return}
- setEntries(data||[])
+ const filteredData =
+
+factoryFilter
+
+? (data || []).filter(
+row =>
+row.factory ===
+factoryFilter
+)
+
+: (
+data || []
+)
+
+setEntries(
+filteredData
+)
 }
 
 function tons(type:string,qty:number){
@@ -44,18 +78,74 @@ function tons(type:string,qty:number){
 const values=(key:string)=>[...new Set(entries.map(e=>e[key]).filter(Boolean))]
 
 const filtered=useMemo(()=>entries.filter(e=>{
- if(search && !JSON.stringify(e).toLowerCase().includes(search.toLowerCase())) return false
- if(factory && e.factory!==factory) return false
- if(machine && e.machine!==machine) return false
- if(labour && !(e.labour_name||'').toLowerCase().includes(labour.toLowerCase())) return false
- if(shift && e.shift!==shift) return false
- if(mesh && e.mesh!==mesh) return false
- if(bagType && e.bag_type!==bagType) return false
- if(bagName && e.bag_name!==bagName) return false
- if(fromDate && e.production_date<fromDate) return false
- if(toDate && e.production_date>toDate) return false
- return true
-}),[entries,search,factory,machine,labour,shift,mesh,bagType,bagName,fromDate,toDate])
+
+    const entryDate =
+    new Date(e.production_date)
+   
+    const now =
+    new Date()
+   
+    if(period==='month'){
+   
+     if(
+      entryDate.getMonth()!==now.getMonth() ||
+      entryDate.getFullYear()!==now.getFullYear()
+     ){
+      return false
+     }
+   
+    }
+   
+    if(period==='lastMonth'){
+   
+     const lastMonth =
+     new Date()
+   
+     lastMonth.setMonth(
+      now.getMonth()-1
+     )
+   
+     if(
+      entryDate.getMonth()!==lastMonth.getMonth() ||
+      entryDate.getFullYear()!==lastMonth.getFullYear()
+     ){
+      return false
+     }
+   
+    }
+   
+    if(search && !JSON.stringify(e).toLowerCase().includes(search.toLowerCase())) return false
+    if(factory && e.factory!==factory) return false
+    if(machine && e.machine!==machine) return false
+    if(labour && !(e.labour_name||'').toLowerCase().includes(labour.toLowerCase())) return false
+    if(shift && e.shift!==shift) return false
+    if(mesh && e.mesh!==mesh) return false
+    if(bagType && e.bag_type!==bagType) return false
+    if(bagName && e.bag_name!==bagName) return false
+   
+    if(period==='custom'){
+   
+     if(fromDate && e.production_date<fromDate) return false
+     if(toDate && e.production_date>toDate) return false
+   
+    }
+   
+    return true
+   
+   }),[
+    entries,
+    search,
+    factory,
+    machine,
+    labour,
+    shift,
+    mesh,
+    bagType,
+    bagName,
+    fromDate,
+    toDate,
+    period
+   ])
 
 const totalQty=filtered.reduce((a,b)=>a+Number(b.quantity||0),0)
 const totalAmount=filtered.reduce((a,b)=>a+Number(b.amount||0),0)
@@ -171,18 +261,96 @@ function exportExcel(
     }
 
 return <div className='p-4 md:p-6 space-y-6'>
+<RoleGuard
+allowedRoles={[
+'Admin',
+'production'
+]}
+>
 <div className='flex flex-col md:flex-row justify-between gap-4'>
 <div><p className='text-slate-500'>Production Management</p><h1 className='text-4xl font-bold'>Reports</h1></div>
-<div className='flex gap-3'>
-<button onClick={()=>setMode('detailed')} className={`px-5 py-3 rounded-xl transition ${mode==='detailed'?'bg-slate-900 text-white':'bg-white border'}`}>Detailed</button>
-<button onClick={()=>setMode('summary')} className={`px-5 py-3 rounded-xl transition ${mode==='summary'?'bg-slate-900 text-white':'bg-white border'}`}>Summary</button>
+<div className='space-y-3'>
+
+  <div className='flex gap-3'>
+
+    <button
+      onClick={()=>setMode('detailed')}
+      className={`px-5 py-3 rounded-xl transition ${
+        mode==='detailed'
+        ?'bg-slate-900 text-white'
+        :'bg-white border'
+      }`}
+    >
+      Detailed
+    </button>
+
+    <button
+      onClick={()=>setMode('summary')}
+      className={`px-5 py-3 rounded-xl transition ${
+        mode==='summary'
+        ?'bg-slate-900 text-white'
+        :'bg-white border'
+      }`}
+    >
+      Summary
+    </button>
+
+  </div>
+
+  <div className='flex gap-3'>
+
+    <button
+      onClick={()=>setPeriod('month')}
+      className={`px-5 py-3 rounded-xl transition ${
+        period==='month'
+        ?'bg-blue-600 text-white'
+        :'bg-white border'
+      }`}
+    >
+      This Month
+    </button>
+
+    <button
+      onClick={()=>setPeriod('lastMonth')}
+      className={`px-5 py-3 rounded-xl transition ${
+        period==='lastMonth'
+        ?'bg-blue-600 text-white'
+        :'bg-white border'
+      }`}
+    >
+      Last Month
+    </button>
+
+    <button
+      onClick={()=>setPeriod('custom')}
+      className={`px-5 py-3 rounded-xl transition ${
+        period==='custom'
+        ?'bg-blue-600 text-white'
+        :'bg-white border'
+      }`}
+    >
+      Custom Range
+    </button>
+
+  </div>
+
 </div></div>
 
 <div className='bg-white rounded-3xl p-4 md:p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3'>
 <input placeholder='Search' value={search} onChange={e=>setSearch(e.target.value)} className='border rounded-xl p-3'/>
 <input list='labours' placeholder='Labour' value={labour} onChange={e=>setLabour(e.target.value)} className='border rounded-xl p-3'/>
 <datalist id='labours'>{values('labour_name').map((v:any)=><option key={v} value={v}/> )}</datalist>
-<select value={factory} onChange={e=>setFactory(e.target.value)} className='border rounded-xl p-3'><option value=''>All Factories</option>{values('factory').map((v:any)=><option key={v}>{v}</option>)}</select>
+<select
+value={
+userFactory ||
+factory
+}
+onChange={e=>setFactory(e.target.value)}
+disabled={
+userFactory !== ''
+}
+className='border rounded-xl p-3 disabled:bg-slate-100'
+><option value=''>All Factories</option>{values('factory').map((v:any)=><option key={v}>{v}</option>)}</select>
 <select value={machine} onChange={e=>setMachine(e.target.value)} className='border rounded-xl p-3'><option value=''>All Machines</option>{values('machine').map((v:any)=><option key={v}>{v}</option>)}</select>
 <select value={shift} onChange={e=>setShift(e.target.value)} className='border rounded-xl p-3'><option value=''>All Shifts</option><option>Day</option><option>Night</option></select>
 <select value={mesh} onChange={e=>setMesh(e.target.value)} className='border rounded-xl p-3'><option value=''>All Mesh</option>{values('mesh').map((v:any)=><option key={v}>{v}</option>)}</select>
@@ -199,12 +367,20 @@ return <div className='p-4 md:p-6 space-y-6'>
 </div>
 
 <div className='flex flex-col md:flex-row justify-between gap-3'>
-{mode==='summary' && <select value={summaryBy} onChange={e=>setSummaryBy(e.target.value)} className='border rounded-xl p-3'><option value='bag_name'>Bag Name</option><option value='bag_type'>Bag Type</option><option value='bag_type_name'>Bag+Name</option><option value='bag_mesh'>Bag+Mesh</option><option value='labour'>Labour</option><option value='machine'>Machine</option><option value='factory'>Factory</option><option value='shift'>Shift</option><option value='mesh'>Mesh</option></select>}
+{mode==='summary' && <select value={summaryBy} onChange={e=>setSummaryBy(e.target.value)} className='border rounded-xl p-3'><option value='bag_name'>Bag Name</option><option value='bag_type'>Bag Type</option><option value='bag_type_name'>Bag+Name</option><option value='bag_mesh'>Bag+Mesh</option><option value='labour'>Labour</option><option value='machine'>Machine</option>{!userFactory && (
+
+<option value='factory'>
+Factory
+</option>
+
+)}<option value='shift'>Shift</option><option value='mesh'>Mesh</option></select>}
 <button onClick={()=>exportExcel(mode==='detailed'?filtered:summary,mode)} className='bg-slate-900 text-white px-5 py-3 rounded-xl'>Export Excel</button>
 </div>
 
 {mode==='summary' && <div className='bg-white rounded-3xl p-4 md:p-6 overflow-x-auto'><table className='min-w-[900px] w-full text-sm'><thead className='bg-slate-100'><tr className='text-left'><th className='p-4'>Category</th><th className='p-4'>Bags</th><th className='p-4'>Goods(T)</th><th className='p-4'>Amount</th></tr></thead><tbody>{summary.map((r:any)=><tr key={r.name} className='border-b'><td className='p-4'>{r.name}</td><td className='p-4'>{r.qty}</td><td className='p-4'>{r.tons.toFixed(2)}</td><td className='p-4'>₹{r.amount}</td></tr>)}</tbody></table></div>}
 
 {mode==='detailed' && <div className='bg-white rounded-3xl overflow-x-auto'><table className='min-w-[1200px] w-full text-sm'><thead className='bg-slate-100'><tr className='text-left'><th className='p-4'>Date</th><th className='p-4'>Factory</th><th className='p-4'>Machine</th><th className='p-4'>Labour</th><th className='p-4'>Shift</th><th className='p-4'>Mesh</th><th className='p-4'>Bag</th><th className='p-4'>Qty</th><th className='p-4'>Goods(T)</th><th className='p-4'>Rate</th><th className='p-4'>Amount</th></tr></thead><tbody>{filtered.map(e=><tr key={e.id} className='border-b'><td className='p-4'>{e.production_date}</td><td className='p-4'>{e.factory}</td><td className='p-4'>{e.machine}</td><td className='p-4'>{e.labour_name}</td><td className='p-4'>{e.shift}</td><td className='p-4'>{e.mesh}</td><td className='p-4'>{e.bag_name}</td><td className='p-4'>{e.quantity}</td><td className='p-4'>{tons(e.bag_type,Number(e.quantity)).toFixed(2)}</td><td className='p-4'>₹{e.rate}</td><td className='p-4'>₹{e.amount}</td></tr>)}</tbody></table></div>}
+</RoleGuard>
 </div>
+
 }

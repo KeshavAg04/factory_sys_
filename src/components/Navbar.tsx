@@ -26,6 +26,13 @@ export default function Navbar() {
           </Link>
 
           <Link
+            href="/dispatch"
+            className="hover:text-gray-300"
+          >
+            Dispatch Entry
+          </Link>
+
+          <Link
             href="/recent-entries"
             className="hover:text-gray-300"
           >

@@ -8,6 +8,9 @@ import {
 
 import { supabase } from '@/lib/supabase'
 
+import RoleGuard
+from '@/components/RoleGuard'
+
 export default function ProductionEntryPage() {
 
   const [date, setDate] =
@@ -63,6 +66,9 @@ export default function ProductionEntryPage() {
 
   const [labours, setLabours] =
     useState<string[]>([])
+  
+    const [userFactory,setUserFactory] =
+    useState('')
 
   const formRef = useRef<HTMLFormElement>(null)
 
@@ -101,6 +107,17 @@ export default function ProductionEntryPage() {
 
       setAmount(0)
     }
+
+    const factory =
+localStorage.getItem(
+'userFactory'
+) || ''
+
+setUserFactory(factory)
+
+if(factory){
+setFactory(factory)
+}
 
   }, [
     quantity,
@@ -346,8 +363,15 @@ export default function ProductionEntryPage() {
   }
 
   return (
+    <RoleGuard
+      allowedRoles={[
+        'Admin',
+        'production'
+      ]}
+      >
 
-    <div className="min-h-screen flex justify-center px-4 py-8">
+      
+      <div className="min-h-screen flex justify-center px-4 py-8">
 
       <div className="w-full max-w-4xl">
 
@@ -369,7 +393,7 @@ export default function ProductionEntryPage() {
             ref={formRef}
             onSubmit={saveEntry}
             className="grid grid-cols-1 md:grid-cols-2 gap-5"
-          >
+            >
 
             <input
               type="date"
@@ -380,17 +404,30 @@ export default function ProductionEntryPage() {
                 )
               }
               className="h-14 rounded-2xl border border-slate-200 px-4 outline-none focus:ring-2 focus:ring-slate-400"
-            />
+              />
 
-            <select
-              value={factory}
-              onChange={(e) =>
-                setFactory(
-                  e.target.value
-                )
-              }
-              className="h-14 rounded-2xl border border-slate-200 px-4 outline-none focus:ring-2 focus:ring-slate-400"
-            >
+<select
+value={factory}
+onChange={(e)=>
+setFactory(
+e.target.value
+)
+}
+disabled={
+userFactory !== ''
+}
+className="
+h-14
+rounded-2xl
+border
+border-slate-200
+px-4
+outline-none
+focus:ring-2
+focus:ring-slate-400
+disabled:bg-slate-100
+"
+>
 
               <option value="">
                 Select Factory
@@ -398,20 +435,20 @@ export default function ProductionEntryPage() {
 
               {factories.map(
                 (item) => (
-
+                  
                   <option
-                    key={item.id}
-                    value={
-                      item.factory_name
-                    }
+                  key={item.id}
+                  value={
+                    item.factory_name
+                  }
                   >
                     {
                       item.factory_name
                     }
                   </option>
 
-                )
-              )}
+)
+)}
 
             </select>
 
@@ -433,23 +470,23 @@ export default function ProductionEntryPage() {
     .filter(
       (item) =>
         !factory ||
-        item.factory ===
-          factory
+      item.factory ===
+      factory
     )
     .map((item) => (
-
+      
       <option
-        key={item.id}
-        value={
-          item.machine_name
-        }
+      key={item.id}
+      value={
+        item.machine_name
+      }
       >
         {
           item.machine_name
         }
       </option>
 
-    ))}
+))}
 
 </select>
 
@@ -463,18 +500,18 @@ export default function ProductionEntryPage() {
               }
               placeholder="Labour Name"
               className="h-14 rounded-2xl border border-slate-200 px-4 outline-none focus:ring-2 focus:ring-slate-400"
-            />
+              />
 
             <datalist id="labours">
 
               {labours.map(
                 (item) => (
-
+                  
                   <option
-                    key={item}
-                    value={item}
+                  key={item}
+                  value={item}
                   />
-
+                  
                 )
               )}
 
@@ -488,7 +525,7 @@ export default function ProductionEntryPage() {
                 )
               }
               className="h-14 rounded-2xl border border-slate-200 px-4 outline-none focus:ring-2 focus:ring-slate-400"
-            >
+              >
 
               <option>
                 Day
@@ -516,16 +553,16 @@ export default function ProductionEntryPage() {
 
               {meshes.map(
                 (item) => (
-
+                  
                   <option
-                    key={item}
-                    value={item}
+                  key={item}
+                  value={item}
                   >
                     {item}
                   </option>
 
-                )
-              )}
+)
+)}
 
             </select>
 
@@ -537,7 +574,7 @@ export default function ProductionEntryPage() {
                 )
               }
               className="h-14 rounded-2xl border border-slate-200 px-4 outline-none focus:ring-2 focus:ring-slate-400"
-            >
+              >
 
               <option value="">
                 Select Bag Type
@@ -545,15 +582,15 @@ export default function ProductionEntryPage() {
 
               {bagTypes.map(
                 (item) => (
-
+                  
                   <option
-                    key={item}
-                    value={item}
+                  key={item}
+                  value={item}
                   >
                     {item}
                   </option>
 
-                )
+)
               )}
 
             </select>
@@ -566,7 +603,7 @@ export default function ProductionEntryPage() {
                 )
               }
               className="h-14 rounded-2xl border border-slate-200 px-4 outline-none focus:ring-2 focus:ring-slate-400"
-            >
+              >
 
               <option value="">
                 Select Bag Name
@@ -576,16 +613,16 @@ export default function ProductionEntryPage() {
                 (item) => (
 
                   <option
-                    key={item.id}
-                    value={
-                      item.bag_name
-                    }
+                  key={item.id}
+                  value={
+                    item.bag_name
+                  }
                   >
                     {item.bag_name}
                   </option>
 
-                )
-              )}
+)
+)}
 
             </select>
 
@@ -599,7 +636,7 @@ export default function ProductionEntryPage() {
               }
               placeholder="Quantity"
               className="h-14 rounded-2xl border border-slate-200 px-4 outline-none focus:ring-2 focus:ring-slate-400"
-            />
+              />
 
               <input
                 type="number"
@@ -607,7 +644,7 @@ export default function ProductionEntryPage() {
                 readOnly
                 placeholder="Rate"
                 className="h-14 rounded-2xl bg-slate-100 border border-slate-200 px-4 outline-none"
-              />
+                />
 
             <input
               type="number"
@@ -615,14 +652,14 @@ export default function ProductionEntryPage() {
               readOnly
               placeholder="Amount"
               className="h-14 rounded-2xl bg-slate-100 border border-slate-200 px-4 outline-none"
-            />
+              />
 
             <div className="md:col-span-2 flex justify-center pt-2">
 
               <button
                 type="submit"
                 className="h-14 px-10 rounded-2xl bg-slate-900 text-white font-semibold hover:bg-slate-800 transition"
-              >
+                >
                 Save Entry
               </button>
 
@@ -635,5 +672,6 @@ export default function ProductionEntryPage() {
       </div>
 
     </div>
+  </RoleGuard>
   )
 }

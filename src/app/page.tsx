@@ -1,36 +1,166 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import {
+  useEffect,
+  useMemo,
+  useState
+} from 'react'
+
+import { useRouter }
+from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 
 export default function DashboardPage() {
+
+  const router =
+  useRouter()
 
   const [entries, setEntries] = useState<any[]>([])
   const [filter, setFilter] = useState('month')
 
   const [fromDate, setFromDate] = useState('')
   const [toDate, setToDate] = useState('')
+  const [dispatchEntries,setDispatchEntries] =
+useState<any[]>([])
+
+const [openingStock,setOpeningStock] =
+useState<any[]>([])
+
+const [inwardEntries,setInwardEntries] =
+useState<any[]>([])
+const [userFactory,setUserFactory] =
+useState('')
+  
 
   useEffect(() => {
-    loadData()
+
+    checkAuth()
+  
   }, [])
+  
+  async function checkAuth(){
+  
+    const {
+      data: { user }
+    } =
+    await supabase.auth.getUser()
+  
+    if(!user){
+  
+      router.push(
+        '/login'
+      )
+  
+      return
+  
+    }
+  
+    const factory =
+localStorage.getItem(
+'userFactory'
+) || ''
 
-  async function loadData() {
+setUserFactory(factory)
 
-    const { data, error } = await supabase
+loadData(factory)
+  
+  }
+
+  async function loadData(
+factoryFilter = ''
+) {
+
+    const [
+      productionRes,
+      dispatchRes,
+      openingRes,
+      inwardRes
+      ] = await Promise.all([
+      
+      supabase
       .from('production_entries')
       .select('*')
-      .order('production_date', {
-        ascending: true
-      })
+      .order('production_date',{
+      ascending:true
+      }),
+      
+      supabase
+      .from('dispatch_entries')
+      .select('*'),
+      
+      supabase
+      .from('opening_quantity')
+      .select('*'),
+      
+      supabase
+      .from('empty_bag_inward')
+      .select('*')
+      
+      ])
 
-    if (error) {
-      console.log(error)
-      return
-    }
+      const productionData =
 
-    setEntries(data || [])
-  }
+factoryFilter
+
+? (productionRes.data || [])
+.filter(
+row =>
+row.factory ===
+factoryFilter
+)
+
+: (
+productionRes.data || []
+)
+
+setEntries(
+productionData
+)
+
+        
+        
+const dispatchData =
+
+factoryFilter
+
+? (dispatchRes.data || [])
+.filter(
+row =>
+row.factory ===
+factoryFilter
+)
+
+: (
+dispatchRes.data || []
+)
+
+setDispatchEntries(
+dispatchData
+)
+        
+        setOpeningStock(
+        openingRes.data || []
+        )
+        
+        const inwardData =
+
+factoryFilter
+
+? (inwardRes.data || [])
+.filter(
+row =>
+row.factory ===
+factoryFilter
+)
+
+: (
+inwardRes.data || []
+)
+
+setInwardEntries(
+inwardData
+)
+      }
 
   function calculateTons(
     bagType: string,
@@ -61,30 +191,63 @@ export default function DashboardPage() {
   const filteredEntries = useMemo(() => {
 
     let filtered = [...entries]
-
-    if (
-      filter === 'custom'
-    ) {
-
-      if (fromDate) {
-        filtered = filtered.filter(
-          item =>
-            item.production_date >=
-            fromDate
-        )
-      }
-
-      if (toDate) {
-        filtered = filtered.filter(
-          item =>
-            item.production_date <=
-            toDate
-        )
-      }
+  
+    if (filter === 'month') {
+  
+      const now = new Date()
+  
+      const currentMonth =
+        now.getMonth()
+  
+      const currentYear =
+        now.getFullYear()
+  
+      filtered = filtered.filter(
+        item => {
+  
+          const date =
+            new Date(
+              item.production_date
+            )
+  
+          return (
+            date.getMonth() === currentMonth &&
+            date.getFullYear() === currentYear
+          )
+  
+        }
+      )
+  
     }
-
+  
+    if (filter === 'custom') {
+  
+      if (fromDate) {
+  
+        filtered =
+          filtered.filter(
+            item =>
+              item.production_date >=
+              fromDate
+          )
+  
+      }
+  
+      if (toDate) {
+  
+        filtered =
+          filtered.filter(
+            item =>
+              item.production_date <=
+              toDate
+          )
+  
+      }
+  
+    }
+  
     return filtered
-
+  
   }, [
     entries,
     filter,
@@ -141,13 +304,138 @@ export default function DashboardPage() {
   const totalEntries =
     filteredEntries.length
 
+    const totalDispatchQty =
+
+dispatchEntries.reduce(
+(sum,row)=>
+sum +
+Number(
+row.quantity || 0
+),
+0
+)
+
+
+
+    const currentEmptyStock =
+
+openingStock.reduce(
+(sum,row)=>
+sum +
+Number(
+row.opening_quantity || 0
+),
+0
+)
+
++
+
+inwardEntries.reduce(
+(sum,row)=>
+sum +
+Number(
+row.quantity || 0
+),
+0
+)
+
+-
+
+entries.reduce(
+(sum,row)=>
+sum +
+Number(
+row.quantity || 0
+),
+0
+)
+
+const currentFinishedStock =
+
+entries.reduce(
+(sum,row)=>
+sum +
+Number(
+row.quantity || 0
+),
+0
+)
+
+-
+
+dispatchEntries.reduce(
+(sum,row)=>
+sum +
+Number(
+row.quantity || 0
+),
+0
+)
+
+const lowStockItems =
+
+openingStock.filter(
+stock=>{
+
+const opening =
+Number(
+stock.opening_quantity || 0
+)
+
+const inward =
+inwardEntries
+.filter(
+i=>
+i.bag_name ===
+stock.bag_name
+)
+.reduce(
+(sum,row)=>
+sum +
+Number(
+row.quantity || 0
+),
+0
+)
+
+const produced =
+entries
+.filter(
+i=>
+i.bag_name ===
+stock.bag_name
+)
+.reduce(
+(sum,row)=>
+sum +
+Number(
+row.quantity || 0
+),
+0
+)
+
+const balance =
+
+opening +
+inward -
+produced
+
+return (
+balance <
+Number(
+stock.minimum_stock || 0
+)
+)
+
+}).length
+
   // MONTHLY CHART
   // NOT DAILY
 
   const monthlyTrend =
     Object.values(
 
-      filteredEntries.reduce(
+      entries.reduce(
         (acc: any, item) => {
 
           const date =
@@ -183,6 +471,62 @@ export default function DashboardPage() {
       )
 
     )
+
+    const monthlyDispatchTrend =
+Object.values(
+
+dispatchEntries.reduce(
+(acc:any,item)=>{
+
+const date =
+new Date(
+item.dispatch_date
+)
+
+const monthKey =
+`${date.getFullYear()}-${String(
+date.getMonth()+1
+).padStart(2,'0')}`
+
+if(!acc[monthKey]){
+
+acc[monthKey]={
+month:monthKey,
+qty:0
+}
+
+}
+
+acc[monthKey].qty +=
+Number(
+item.quantity || 0
+)
+
+return acc
+
+},
+{}
+)
+
+)
+
+const maxProductionValue =
+Math.max(
+...monthlyTrend.map(
+(item:any)=>
+item.tons
+),
+1
+)
+
+const maxDispatchValue =
+Math.max(
+...monthlyDispatchTrend.map(
+(item:any)=>
+item.qty
+),
+1
+)
 
   const bagWise =
     Object.values(
@@ -391,7 +735,7 @@ export default function DashboardPage() {
 
       {/* KPI CARDS */}
 
-      <div className='grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4'>
+      <div className='grid grid-cols-2 md:grid-cols-3 gap-4'>
 
         <Card
           title='Goods Produced'
@@ -404,24 +748,20 @@ export default function DashboardPage() {
         />
 
         <Card
-          title='Total Amount'
-          value={`₹${totalAmount}`}
+          title='Empty Stock'
+          value={currentEmptyStock}
         />
 
         <Card
-          title='Active Machines'
-          value={activeMachines}
+          title='Finished Stock'
+          value={currentFinishedStock}
         />
 
-        <Card
-          title='Active Labour'
-          value={activeLabour}
+        <Card 
+          title='Dispatch Qty' 
+          value={totalDispatchQty}
         />
 
-        <Card
-          title='Entries'
-          value={totalEntries}
-        />
 
       </div>
 
@@ -433,33 +773,39 @@ export default function DashboardPage() {
           Monthly Production Trend
         </h2>
 
-        <div className='flex items-end gap-4 h-[300px] overflow-x-auto'>
+        <div className='flex items-end gap-4 h-[320px] pt-12 overflow-x-auto'>
 
           {
             monthlyTrend.map(
               (item: any) => (
 
                 <div
-                  key={item.month}
-                  className='flex flex-col items-center min-w-[80px]'
-                >
+  key={item.month}
+  className='flex flex-col items-center min-w-[80px]'
+>
 
-                  <div
-                    className='w-full rounded-t-xl bg-blue-300 hover:bg-blue-400 transition'
-                    style={{
-                      height:
-                        `${Math.max(
-                          item.tons / 2,
-                          30
-                        )}px`
-                    }}
-                  />
+<div
+className='text-xs font-semibold text-slate-700 mb-2 h-5'
+>
+{item.tons.toFixed(1)}
+</div>
 
-                  <p className='text-sm mt-3 text-slate-600'>
-                    {item.month}
-                  </p>
+  <div
+    className='w-full rounded-t-xl bg-blue-300 hover:bg-blue-400 transition'
+    style={{
+      height:
+`${Math.max(
+(item.tons / maxProductionValue) * 250,
+30
+)}px`
+    }}
+  />
 
-                </div>
+  <p className='text-sm mt-3 text-slate-600'>
+    {item.month}
+  </p>
+
+</div>
 
               )
             )
@@ -468,6 +814,55 @@ export default function DashboardPage() {
         </div>
 
       </div>
+
+
+      <div className='bg-white rounded-3xl border p-6 shadow-sm'>
+
+  <h2 className='text-2xl font-semibold mb-8'>
+    Monthly Dispatch Trend
+  </h2>
+
+  <div className='flex items-end gap-4 h-[320px] overflow-x-auto'>
+
+    {
+      monthlyDispatchTrend.map(
+        (item:any)=>(
+          
+          <div
+  key={item.month}
+  className='flex flex-col items-center min-w-[80px]'
+>
+
+  <p className='text-xs font-semibold text-slate-700 mb-2'>
+    {item.qty}
+  </p>
+
+  <div
+    className='w-full rounded-t-xl bg-green-300 hover:bg-green-400 transition'
+    style={{
+      height:
+`${Math.max(
+(item.qty / maxDispatchValue) * 250,
+30
+)}px`
+    }}
+  />
+
+  <p className='text-sm mt-3 text-slate-600'>
+    {item.month}
+  </p>
+
+</div>
+
+        )
+      )
+    }
+
+  </div>
+
+</div>
+
+
 
       {/* TABLES */}
 

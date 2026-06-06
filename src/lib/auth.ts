@@ -1,5 +1,5 @@
 export const usernameToEmail = (
     username: string
   ) => {
-    return `${username}@internal.app`
+    return `${username}@kmfactory.com`
   }

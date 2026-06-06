@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import toast from 'react-hot-toast'
+import RoleGuard
+from '@/components/RoleGuard'
 
 export default function RecentEntriesPage() {
 
@@ -34,6 +36,10 @@ export default function RecentEntriesPage() {
 
   const [search, setSearch] =
     useState('')
+  
+    const [userFactory,setUserFactory] =
+    useState('')
+
 
   // EDIT
 
@@ -43,11 +49,22 @@ export default function RecentEntriesPage() {
   const [editData, setEditData] =
     useState<any>({})
 
-  useEffect(() => {
-    fetchEntries()
-  }, [])
+    useEffect(() => {
 
-  const fetchEntries = async () => {
+      const factory =
+        localStorage.getItem(
+          'userFactory'
+        ) || ''
+    
+      setUserFactory(factory)
+    
+      fetchEntries(factory)
+    
+    }, [])
+
+    const fetchEntries = async (
+      factoryFilter = ''
+      ) => {
 
     setLoading(true)
 
@@ -59,9 +76,25 @@ export default function RecentEntriesPage() {
           ascending: false,
         })
 
-    if (!error) {
-      setEntries(data || [])
-    }
+        if (!error) {
+
+          const filteredData =
+        
+            factoryFilter
+        
+              ? (data || []).filter(
+                  row =>
+                  row.factory ===
+                  factoryFilter
+                )
+        
+              : (data || [])
+        
+          setEntries(
+            filteredData
+          )
+        
+        }
 
     setLoading(false)
   }
@@ -92,61 +125,63 @@ export default function RecentEntriesPage() {
   // FILTERED ENTRIES
 
   const filteredEntries =
-    useMemo(() => {
+  useMemo(() => {
 
-      return entries.filter((entry) => {
+    return entries.filter((entry) => {
 
-        const matchesFactory =
-          !factoryFilter ||
-          entry.factory === factoryFilter
+      const matchesFactory =
+        !factoryFilter ||
+        entry.factory === factoryFilter
 
-        const matchesMachine =
-          !machineFilter ||
-          entry.machine === machineFilter
+      const matchesMachine =
+        !machineFilter ||
+        entry.machine === machineFilter
 
-        const matchesLabour =
-          !labourFilter ||
-          entry.labour_name === labourFilter
+      const matchesLabour =
+        !labourFilter ||
+        entry.labour_name === labourFilter
 
-        const matchesShift =
-          !shiftFilter ||
-          entry.shift === shiftFilter
+      const matchesShift =
+        !shiftFilter ||
+        entry.shift === shiftFilter
 
-        const matchesDate =
-          !dateFilter ||
-          entry.production_date === dateFilter
+      const matchesDate =
+        !dateFilter ||
+        entry.production_date === dateFilter
 
-        const matchesSearch =
-          !search ||
+      const matchesSearch =
+        !search ||
 
-          entry.bag_name
-            ?.toLowerCase()
-            .includes(search.toLowerCase()) ||
+        entry.bag_name
+          ?.toLowerCase()
+          .includes(search.toLowerCase()) ||
 
-          entry.labour_name
-            ?.toLowerCase()
-            .includes(search.toLowerCase())
+        entry.labour_name
+          ?.toLowerCase()
+          .includes(search.toLowerCase())
 
-        return (
-          matchesFactory &&
-          matchesMachine &&
-          matchesLabour &&
-          matchesShift &&
-          matchesDate &&
-          matchesSearch
-        )
-      })
+          return (
 
-    }, [
-      entries,
-      factoryFilter,
-      machineFilter,
-      labourFilter,
-      shiftFilter,
-      dateFilter,
-      search,
-    ])
+            matchesFactory &&
+            matchesMachine &&
+            matchesLabour &&
+            matchesShift &&
+            matchesDate &&
+            matchesSearch
+          
+          )
 
+    })
+
+  }, [
+    entries,
+    factoryFilter,
+    machineFilter,
+    labourFilter,
+    shiftFilter,
+    dateFilter,
+    search
+  ])
   // DELETE
 
   const deleteEntry = async (
@@ -227,6 +262,14 @@ export default function RecentEntriesPage() {
 
   return (
 
+    <RoleGuard
+allowedRoles={[
+'Admin',
+'production'
+]}
+>
+
+
     <main className="min-h-screen bg-slate-100 p-4 md:p-6">
 
       <div className="max-w-7xl mx-auto">
@@ -246,35 +289,40 @@ export default function RecentEntriesPage() {
         </div>
 
         {/* FILTERS */}
-
         <div className="bg-white rounded-3xl shadow-sm border border-slate-200 p-4 mb-6">
 
           <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
 
-            <select
-              value={factoryFilter}
-              onChange={(e) =>
-                setFactoryFilter(
-                  e.target.value
-                )
-              }
+          <select
+  value={
+    userFactory ||
+    factoryFilter
+  }
+  onChange={(e) =>
+    setFactoryFilter(
+      e.target.value
+    )
+  }
+  disabled={
+    userFactory !== ''
+  }
               className="border border-slate-200 p-3 rounded-2xl"
-            >
+              >
 
               <option value="">
                 All Factories
               </option>
 
               {factories.map((factory) => (
-
+                
                 <option
-                  key={factory}
-                  value={factory}
+                key={factory}
+                value={factory}
                 >
                   {factory}
                 </option>
 
-              ))}
+))}
 
             </select>
 
@@ -286,7 +334,7 @@ export default function RecentEntriesPage() {
                 )
               }
               className="border border-slate-200 p-3 rounded-2xl"
-            >
+              >
 
               <option value="">
                 All Machines
@@ -295,13 +343,13 @@ export default function RecentEntriesPage() {
               {machines.map((machine) => (
 
                 <option
-                  key={machine}
-                  value={machine}
+                key={machine}
+                value={machine}
                 >
                   {machine}
                 </option>
 
-              ))}
+))}
 
             </select>
 
@@ -313,22 +361,22 @@ export default function RecentEntriesPage() {
                 )
               }
               className="border border-slate-200 p-3 rounded-2xl"
-            >
+              >
 
               <option value="">
                 All Labours
               </option>
 
               {labours.map((labour) => (
-
+                
                 <option
-                  key={labour}
-                  value={labour}
+                key={labour}
+                value={labour}
                 >
                   {labour}
                 </option>
 
-              ))}
+))}
 
             </select>
 
@@ -340,7 +388,7 @@ export default function RecentEntriesPage() {
                 )
               }
               className="border border-slate-200 p-3 rounded-2xl"
-            >
+              >
 
               <option value="">
                 All Shifts
@@ -365,7 +413,7 @@ export default function RecentEntriesPage() {
                 )
               }
               className="border border-slate-200 p-3 rounded-2xl"
-            />
+              />
 
             <input
               type="text"
@@ -377,7 +425,7 @@ export default function RecentEntriesPage() {
                 )
               }
               className="border border-slate-200 p-3 rounded-2xl"
-            />
+              />
 
           </div>
 
@@ -442,10 +490,10 @@ export default function RecentEntriesPage() {
               {filteredEntries
                 .slice(0, visibleCount)
                 .map((entry) => (
-
+                  
                 <tr
-                  key={entry.id}
-                  className="border-b border-slate-100"
+                key={entry.id}
+                className="border-b border-slate-100"
                 >
 
                   <td className="p-4">
@@ -491,7 +539,7 @@ export default function RecentEntriesPage() {
                         startEdit(entry)
                       }
                       className="bg-slate-800 text-white px-3 py-2 rounded-xl"
-                    >
+                      >
                       Edit
                     </button>
 
@@ -500,7 +548,7 @@ export default function RecentEntriesPage() {
                         deleteEntry(entry.id)
                       }
                       className="bg-red-400 text-white px-3 py-2 rounded-xl"
-                    >
+                      >
                       Delete
                     </button>
 
@@ -508,7 +556,7 @@ export default function RecentEntriesPage() {
 
                 </tr>
 
-              ))}
+))}
 
             </tbody>
 
@@ -522,26 +570,26 @@ export default function RecentEntriesPage() {
 
           {visibleCount <
             filteredEntries.length && (
-
-            <button
+              
+              <button
               onClick={() =>
                 setVisibleCount(
                   visibleCount + 25
                 )
               }
               className="bg-white border border-slate-200 px-5 py-3 rounded-2xl shadow-sm"
-            >
+              >
               Load More
             </button>
 
-          )}
+)}
 
         </div>
 
         {/* EDIT MODAL */}
 
         {editingId && (
-
+          
           <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
 
             <div className="bg-white rounded-3xl p-6 w-full max-w-2xl">
@@ -553,30 +601,30 @@ export default function RecentEntriesPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
                 {Object.keys(editData).map((key) => {
-
+                  
                   if (
                     key === 'id' ||
                     key === 'created_at'
                   ) return null
-
+                  
                   return (
-
+                    
                     <input
-                      key={key}
-                      value={
-                        editData[key] ?? ''
-                      }
-                      onChange={(e) =>
-                        setEditData({
-                          ...editData,
-                          [key]:
-                            e.target.value,
-                        })
-                      }
-                      placeholder={key}
-                      className="border border-slate-200 p-3 rounded-2xl"
+                    key={key}
+                    value={
+                      editData[key] ?? ''
+                    }
+                    onChange={(e) =>
+                      setEditData({
+                        ...editData,
+                        [key]:
+                        e.target.value,
+                      })
+                    }
+                    placeholder={key}
+                    className="border border-slate-200 p-3 rounded-2xl"
                     />
-
+                    
                   )
                 })}
 
@@ -587,7 +635,7 @@ export default function RecentEntriesPage() {
                 <button
                   onClick={saveEdit}
                   className="bg-slate-800 text-white px-5 py-3 rounded-2xl"
-                >
+                  >
                   Save
                 </button>
 
@@ -596,7 +644,7 @@ export default function RecentEntriesPage() {
                     setEditingId(null)
                   }
                   className="bg-slate-200 px-5 py-3 rounded-2xl"
-                >
+                  >
                   Cancel
                 </button>
 
@@ -606,10 +654,11 @@ export default function RecentEntriesPage() {
 
           </div>
 
-        )}
+)}
 
       </div>
 
     </main>
+</RoleGuard>
   )
 }
