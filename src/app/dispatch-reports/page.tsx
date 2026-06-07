@@ -755,7 +755,7 @@ Custom Range
     </p>
     
     <h1 className='text-3xl font-bold'>
-    {totalQty}
+    {totalQty.toFixed(2)}
     </h1>
     
     </div>
@@ -948,7 +948,7 @@ Vasuli
     </td>
     
     <td className='p-4'>
-{r.qty}
+{Number(r.qty).toFixed(2)}
 </td>
 
 <td className='p-4'>
@@ -1008,9 +1008,9 @@ Dispatch Bags
 <th className='p-4'>Vehicle</th>
 
 <th className='p-4'>LR No</th>
+<th className='p-4'>Freight Type</th>
 <th className='p-4'>LR Freight</th>
 
-<th className='p-4'>Freight Type</th>
 <th className='p-4'>Freight PMT</th>
 <th className='p-4'>Total Freight</th>
 
@@ -1063,7 +1063,7 @@ key={e.id || index}
 </td>
 
 <td className='p-4 font-semibold'>
-{e.quantity}
+{Number(e.quantity || 0).toFixed(2)}
 </td>
 
 <td className='p-4 font-semibold'>
@@ -1083,14 +1083,15 @@ key={e.id || index}
 </td>
 
 <td className='p-4'>
+{e.freight_type}
+</td>
+
+<td className='p-4'>
 ₹{Number(
 e.lr_freight || 0
 ).toLocaleString()}
 </td>
 
-<td className='p-4'>
-{e.freight_type}
-</td>
 
 <td className='p-4'>
 ₹{Number(

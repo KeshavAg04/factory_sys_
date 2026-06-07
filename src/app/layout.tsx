@@ -423,6 +423,12 @@ Inventory Closing
 
       <Link
         href="/"
+        onClick={() => {
+          setMobileMenuOpen(false)
+          setProductionOpen(false)
+          setInventoryOpen(false)
+          setDispatchOpen(false)
+        }}
         className="block px-4 py-3 border-b"
       >
         Dashboard
@@ -492,7 +498,11 @@ Inventory Closing
 
 <Link
   href="/monthly-labour-report"
-  className={navClass('/monthly-labour-report')}
+  onClick={() => {
+    setMobileMenuOpen(false)
+    setProductionOpen(false)
+  }}
+  className="block px-8 py-3 border-b"
 >
   Labour Report
 </Link>
@@ -555,11 +565,11 @@ Inventory Closing
 
           <Link
 href="/inventory-closing"
-className={navClass('/inventory-closing')}
 onClick={()=>{
 setMobileMenuOpen(false)
 setInventoryOpen(false)
 }}
+className="block px-8 py-3 border-b"
 >
 Inventory Closing
 </Link>
@@ -652,7 +662,7 @@ Inventory Closing
 
 {/* PAGE CONTENT */}
 
-<main className="flex-1 pt-56 md:pt-0">
+<main className="flex-1">
 
             {children}
 

@@ -561,7 +561,7 @@ Vasuli
                       </td>
 
                       <td className="p-4">
-                        {entry.quantity}
+                        {Number(entry.quantity || 0).toFixed(2)}
                       </td>
 
                       <td className="p-4 font-semibold">
@@ -581,7 +581,7 @@ Vasuli
 </td>
 
 <td className="p-4">
-₹{entry.lr_freight}
+₹{Number(entry.lr_freight || 0).toFixed(2)}
 </td>
 
 <td className="p-4">
@@ -589,15 +589,15 @@ Vasuli
 </td>
 
 <td className="p-4">
-₹{entry.freight_pmt}
+₹{Number(entry.freight_pmt || 0).toFixed(2)}
 </td>
 
 <td className="p-4 font-semibold">
-₹{entry.total_freight}
+₹{Number(entry.total_freight || 0).toFixed(2)}
 </td>
 
 <td className="p-4">
-₹{entry.loading_amount}
+₹{Number(entry.loading_amount || 0).toFixed(2)}
 </td>
 
 <td className="p-4">
@@ -609,7 +609,7 @@ entry.loading_pending
 </td>
 
 <td className="p-4 font-semibold text-green-700">
-₹{entry.vasuli}
+₹{Number(entry.vasuli || 0).toFixed(2)}
 </td>
 
                       <td className="p-4">

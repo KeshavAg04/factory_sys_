@@ -754,12 +754,12 @@ item.qty
 
         <Card
           title='Finished Stock'
-          value={currentFinishedStock}
+          value={Number(currentFinishedStock).toFixed(2)}
         />
 
         <Card 
           title='Dispatch Qty' 
-          value={totalDispatchQty}
+          value={Number(totalDispatchQty).toFixed(2)}
         />
 
 
@@ -834,7 +834,7 @@ className='text-xs font-semibold text-slate-700 mb-2 h-5'
 >
 
   <p className='text-xs font-semibold text-slate-700 mb-2'>
-    {item.qty}
+    {Number(item.qty).toFixed(2)}
   </p>
 
   <div

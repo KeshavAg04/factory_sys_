@@ -564,7 +564,7 @@ disabled:cursor-not-allowed
         </p>
         
         <h1 className="text-3xl font-bold">
-        {totalFinishedStock.toLocaleString()}
+        {Number(totalFinishedStock).toFixed(2)}
         </h1>
         
         </div>
@@ -604,7 +604,7 @@ row.quantity || 0
 ),
 0
 )
-.toLocaleString()
+.toFixed(2)
 }
 </h1>
 
@@ -645,7 +645,7 @@ row.quantity || 0
 ),
 0
 )
-.toLocaleString()
+.toFixed(2)
 }
 </h1>
 
