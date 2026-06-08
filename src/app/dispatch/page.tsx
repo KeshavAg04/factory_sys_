@@ -471,18 +471,31 @@ setFactory(factory)
 
     const qty=
       Number(quantity)
-
-    if(
-      qty>
-      availableStock
-    ){
-
-      alert(
-        `Insufficient Stock\n\nAvailable: ${availableStock}\nRequested: ${qty}`
-      )
-
-      return
-    }
+      if(
+        Number(dispatchBags) >
+        availableStock
+        ){
+        
+        const proceed =
+        window.confirm(
+        `Warning
+        
+        Available Finished Bags: ${availableStock}
+        
+        Requested Dispatch Bags: ${dispatchBags}
+        
+        ERP stock may be negative because of pre-ERP inventory.
+        
+        Continue?`
+        )
+        
+        if(!proceed){
+        
+        return
+        
+        }
+        
+        }
     const payload = {
 
       dispatch_date:date,
