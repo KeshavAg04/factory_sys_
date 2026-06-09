@@ -260,47 +260,6 @@ async function handleLogout(){
 
     )}
 
-    <div className="relative group py-3">
-
-      <button className="text-sm font-semibold text-slate-600 hover:text-slate-900">
-
-        Inventory ▾
-
-      </button>
-
-      <div className="absolute top-8 left-0 mt-0 hidden group-hover:flex flex-col bg-white shadow-xl rounded-xl min-w-[220px] border border-slate-200 overflow-hidden z-50">
-
-        <Link
-          href="/empty-bag-inward"
-          className="px-4 py-3 hover:bg-slate-100"
-        >
-          Empty Bag Inward
-        </Link>
-
-        <Link
-          href="/factory-transfer"
-          className="px-4 py-3 hover:bg-slate-100"
-        >
-          Factory Transfer
-        </Link>
-
-        <Link
-          href="/inventory"
-          className="px-4 py-3 hover:bg-slate-100"
-        >
-          Inventory Dashboard
-        </Link>
-
-        <Link
-href="/inventory-closing"
-className="px-4 py-3 hover:bg-slate-100"
->
-Inventory Closing
-</Link>
-
-      </div>
-
-    </div>
 
     {(role === 'Admin' ||
       role === 'accounts') && (
@@ -335,6 +294,27 @@ Inventory Closing
           >
             Dispatch Reports
           </Link>
+
+          <Link
+  href="/credit-debit"
+  className="px-4 py-3 hover:bg-slate-100"
+>
+  Credit / Debit Entry
+</Link>
+
+<Link
+  href="/credit-debit-reports"
+  className="px-4 py-3 hover:bg-slate-100"
+>
+  Credit / Debit Reports
+</Link>
+
+<Link
+  href="/recent-credit-debit"
+  className="px-4 py-3 hover:bg-slate-100"
+>
+  Recent Credit / Debit
+</Link>
 
         </div>
 
@@ -515,68 +495,6 @@ Inventory Closing
 
       )}
 
-      <button
-        onClick={()=>{
-          setInventoryOpen(
-            !inventoryOpen
-          )
-          setProductionOpen(false)
-
-  setDispatchOpen(false)
-        }}
-        className="w-full text-left px-4 py-3 border-b font-medium"
-      >
-        Inventory ▼
-      </button>
-
-      {inventoryOpen && (
-
-        <div className="bg-slate-50">
-
-          <Link
-            href="/empty-bag-inward"
-            onClick={()=>{
-              setMobileMenuOpen(false)
-            }}
-            className="block px-8 py-3 border-b"
-          >
-            Empty Bag Inward
-          </Link>
-
-          <Link
-            href="/factory-transfer"
-            onClick={()=>{
-              setMobileMenuOpen(false)
-            }}
-            className="block px-8 py-3 border-b"
-          >
-            Factory Transfer
-          </Link>
-
-          <Link
-            href="/inventory"
-            onClick={()=>{
-              setMobileMenuOpen(false)
-            }}
-            className="block px-8 py-3 border-b"
-          >
-            Inventory Dashboard
-          </Link>
-
-          <Link
-href="/inventory-closing"
-onClick={()=>{
-setMobileMenuOpen(false)
-setInventoryOpen(false)
-}}
-className="block px-8 py-3 border-b"
->
-Inventory Closing
-</Link>
-
-        </div>
-
-      )}
 
       {(role === 'Admin' ||
         role === 'accounts') && (
@@ -629,6 +547,36 @@ Inventory Closing
               >
                 Dispatch Reports
               </Link>
+
+              <Link
+  href="/credit-debit"
+  onClick={()=>{
+    setMobileMenuOpen(false)
+  }}
+  className="block px-8 py-3 border-b"
+>
+  Credit / Debit Entry
+</Link>
+
+<Link
+  href="/credit-debit-reports"
+  onClick={()=>{
+    setMobileMenuOpen(false)
+  }}
+  className="block px-8 py-3 border-b"
+>
+  Credit / Debit Reports
+</Link>
+
+<Link
+  href="/recent-credit-debit"
+  onClick={()=>{
+    setMobileMenuOpen(false)
+  }}
+  className="block px-8 py-3 border-b"
+>
+  Recent Credit / Debit
+</Link>
 
             </div>
 

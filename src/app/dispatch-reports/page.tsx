@@ -56,6 +56,12 @@ useState('')
 const [period,setPeriod]=
 useState('month')
 
+const [loadingStatus,setLoadingStatus] =
+useState('')
+
+const [adjustments,setAdjustments] =
+useState<any[]>([])
+
 useEffect(()=>{
 
 loadEntries()
@@ -64,32 +70,46 @@ loadEntries()
 
 async function loadEntries(){
 
-const {data,error}=
-await supabase
-.from(
-'dispatch_entries'
-)
-.select('*')
-.order(
-'dispatch_date',
-{
-ascending:false
-}
-)
-
-if(error){
-
-console.log(error)
-
-return
-
-}
-
-setEntries(
-data||[]
-)
-
-}
+    const [
+    dispatchRes,
+    adjustmentRes
+    ] = await Promise.all([
+    
+    supabase
+    .from('dispatch_entries')
+    .select('*')
+    .order(
+    'dispatch_date',
+    {
+    ascending:false
+    }
+    ),
+    
+    supabase
+    .from('sales_adjustments')
+    .select('*')
+    
+    ])
+    
+    if(dispatchRes.error){
+    
+    console.log(
+    dispatchRes.error
+    )
+    
+    return
+    
+    }
+    
+    setEntries(
+    dispatchRes.data || []
+    )
+    
+    setAdjustments(
+    adjustmentRes.data || []
+    )
+    
+    }
 
 const values=
 (key:string)=>
@@ -111,6 +131,7 @@ useMemo(
 new Date(
 e.dispatch_date
 )
+
 
 const now =
 new Date()
@@ -190,6 +211,18 @@ e.vehicle_no!==vehicle
 )
 return false
 
+if(
+    loadingStatus === 'pending' &&
+    !e.loading_pending
+    )
+    return false
+    
+    if(
+    loadingStatus === 'cleared' &&
+    e.loading_pending
+    )
+    return false
+
 if(period==='custom'){
 
     if(
@@ -210,19 +243,44 @@ return true
 
 }),
 [
-entries,
-search,
-customer,
-factory,
-bagType,
-bagName,
-mesh,
-vehicle,
-fromDate,
-toDate,
-period
-]
+    entries,
+    search,
+    customer,
+    factory,
+    bagType,
+    bagName,
+    mesh,
+    loadingStatus,
+    fromDate,
+    toDate,
+    period
+    ]
 )
+
+const filteredAdjustments =
+adjustments.filter(a=>{
+
+if(
+customer &&
+a.customer_name !== customer
+)
+return false
+
+if(
+fromDate &&
+a.adjustment_date < fromDate
+)
+return false
+
+if(
+toDate &&
+a.adjustment_date > toDate
+)
+return false
+
+return true
+
+})
 
 const totalQty=
 filtered.reduce(
@@ -254,15 +312,20 @@ e.total_freight || 0
 0
 )
 
-const totalLrFreight =
+const totalLoadingAmount =
 filtered.reduce(
 (sum,e)=>
 sum +
 Number(
-e.lr_freight || 0
+e.loading_amount || 0
 ),
 0
 )
+
+const totalLoadingPending =
+filtered.filter(
+e => e.loading_pending
+).length
 
 const totalVasuli =
 filtered.reduce(
@@ -285,6 +348,44 @@ e.dispatch_bags || 0
 
 0
 )
+
+const totalCreditNotes =
+filteredAdjustments
+.filter(
+a =>
+a.adjustment_type ===
+'Credit Note'
+)
+.reduce(
+(sum,a)=>
+sum +
+Number(
+a.amount || 0
+),
+0
+)
+
+const totalDebitNotes =
+filteredAdjustments
+.filter(
+a =>
+a.adjustment_type ===
+'Debit Note'
+)
+.reduce(
+(sum,a)=>
+sum +
+Number(
+a.amount || 0
+),
+0
+)
+
+const netAdjustment =
+totalDebitNotes -
+totalCreditNotes
+
+
 
 const summary=
 Object.values(
@@ -547,7 +648,7 @@ Custom Range
     
     </div>
     
-    <div className='bg-white rounded-3xl p-4 md:p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3'>
+    <div className='bg-white rounded-3xl p-4 md:p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3'>
     
     <input
     placeholder='Search'
@@ -694,33 +795,30 @@ Custom Range
     )}
     
     </select>
-    
+
     <select
-    value={vehicle}
-    onChange={e=>
-    setVehicle(
-    e.target.value
-    )
-    }
-    className='border rounded-xl p-3'
-    >
-    <option value=''>
-    All Vehicles
-    </option>
+value={loadingStatus}
+onChange={e=>
+setLoadingStatus(
+e.target.value
+)
+}
+className='border rounded-xl p-3'
+>
+
+<option value=''>
+All Loading Status
+</option>
+
+<option value='pending'>
+Pending
+</option>
+
+<option value='cleared'>
+Cleared
+</option>
+</select>
     
-    {values(
-    'vehicle_no'
-    ).map(
-    (v:any)=>(
-    <option
-    key={v}
-    >
-    {v}
-    </option>
-    )
-    )}
-    
-    </select>
     
     <input
     type='date'
@@ -732,6 +830,7 @@ Custom Range
     }
     className='border rounded-xl p-3'
     />
+
     
     <input
     type='date'
@@ -746,7 +845,7 @@ Custom Range
     
     </div>
     
-    <div className='grid grid-cols-1 md:grid-cols-7 gap-4'>
+    <div className='grid grid-cols-1 md:grid-cols-11 gap-4'>
     
     <div className='bg-white p-6 rounded-3xl'>
     
@@ -799,14 +898,27 @@ Total Freight
 <div className='bg-white p-6 rounded-3xl'>
 
 <p>
-LR Freight
+Loading Amount
 </p>
 
 <h1 className='text-3xl font-bold'>
-₹{totalLrFreight.toLocaleString()}
+₹{totalLoadingAmount.toLocaleString()}
 </h1>
 
 </div>
+
+<div className='bg-white p-6 rounded-3xl'>
+
+<p>
+Loading Pending
+</p>
+
+<h1 className='text-3xl font-bold'>
+{totalLoadingPending}
+</h1>
+
+</div>
+
 
 <div className='bg-white p-6 rounded-3xl'>
 
@@ -828,6 +940,42 @@ Dispatch Bags
 
 <h1 className='text-3xl font-bold'>
 {totalDispatchBags.toLocaleString()}
+</h1>
+
+</div>
+
+<div className='bg-white p-6 rounded-3xl'>
+
+<p>
+Credit Notes
+</p>
+
+<h1 className='text-3xl font-bold text-red-600'>
+₹{totalCreditNotes.toLocaleString()}
+</h1>
+
+</div>
+
+<div className='bg-white p-6 rounded-3xl'>
+
+<p>
+Debit Notes
+</p>
+
+<h1 className='text-3xl font-bold text-green-600'>
+₹{totalDebitNotes.toLocaleString()}
+</h1>
+
+</div>
+
+<div className='bg-white p-6 rounded-3xl'>
+
+<p>
+Net Adjustment
+</p>
+
+<h1 className='text-3xl font-bold'>
+₹{netAdjustment.toLocaleString()}
 </h1>
 
 </div>

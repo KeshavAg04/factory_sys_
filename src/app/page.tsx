@@ -23,11 +23,6 @@ export default function DashboardPage() {
   const [dispatchEntries,setDispatchEntries] =
 useState<any[]>([])
 
-const [openingStock,setOpeningStock] =
-useState<any[]>([])
-
-const [inwardEntries,setInwardEntries] =
-useState<any[]>([])
 const [userFactory,setUserFactory] =
 useState('')
   
@@ -66,6 +61,34 @@ loadData(factory)
   
   }
 
+  function calculateTons(
+    bagType: string,
+    quantity: number
+  ) {
+  
+    const type =
+      bagType?.toLowerCase() || ''
+  
+    if (type.includes('1400'))
+      return quantity * 1.4
+  
+    if (type.includes('1350'))
+      return quantity * 1.35
+  
+    if (type.includes('1250'))
+      return quantity * 1.25
+  
+    if (
+      type.includes('50kg') ||
+      type.includes('50 kg')
+    )
+      return quantity * 0.05
+  
+    return 0
+  
+  }
+
+
   async function loadData(
 factoryFilter = ''
 ) {
@@ -73,8 +96,6 @@ factoryFilter = ''
     const [
       productionRes,
       dispatchRes,
-      openingRes,
-      inwardRes
       ] = await Promise.all([
       
       supabase
@@ -87,14 +108,6 @@ factoryFilter = ''
       supabase
       .from('dispatch_entries')
       .select('*'),
-      
-      supabase
-      .from('opening_quantity')
-      .select('*'),
-      
-      supabase
-      .from('empty_bag_inward')
-      .select('*')
       
       ])
 
@@ -136,57 +149,7 @@ dispatchRes.data || []
 
 setDispatchEntries(
 dispatchData
-)
-        
-        setOpeningStock(
-        openingRes.data || []
-        )
-        
-        const inwardData =
-
-factoryFilter
-
-? (inwardRes.data || [])
-.filter(
-row =>
-row.factory ===
-factoryFilter
-)
-
-: (
-inwardRes.data || []
-)
-
-setInwardEntries(
-inwardData
-)
-      }
-
-  function calculateTons(
-    bagType: string,
-    quantity: number
-  ) {
-
-    const type =
-      bagType?.toLowerCase() || ''
-
-    if (type.includes('1400'))
-      return quantity * 1.4
-
-    if (type.includes('1350'))
-      return quantity * 1.35
-
-    if (type.includes('1250'))
-      return quantity * 1.25
-
-    if (
-      type.includes('50kg') ||
-      type.includes('50 kg')
-    )
-      return quantity * 0.05
-
-    return 0
-  }
+)}
 
   const filteredEntries = useMemo(() => {
 
@@ -255,6 +218,63 @@ inwardData
     toDate
   ])
 
+
+  const filteredDispatchEntries = useMemo(() => {
+
+    let filtered = [...dispatchEntries]
+  
+    if (filter === 'month') {
+  
+      const now = new Date()
+  
+      filtered = filtered.filter(item => {
+  
+        const date = new Date(
+          item.dispatch_date
+        )
+  
+        return (
+          date.getMonth() === now.getMonth() &&
+          date.getFullYear() === now.getFullYear()
+        )
+  
+      })
+  
+    }
+  
+    if (filter === 'custom') {
+  
+      if (fromDate) {
+  
+        filtered = filtered.filter(
+          item =>
+            item.dispatch_date >= fromDate
+        )
+  
+      }
+  
+      if (toDate) {
+  
+        filtered = filtered.filter(
+          item =>
+            item.dispatch_date <= toDate
+        )
+  
+      }
+  
+    }
+  
+    return filtered
+  
+  }, [
+    dispatchEntries,
+    filter,
+    fromDate,
+    toDate
+  ])
+
+
+
   const totalTons =
     filteredEntries.reduce(
       (sum, item) =>
@@ -282,14 +302,6 @@ inwardData
       0
     )
 
-  const activeMachines =
-    [
-      ...new Set(
-        filteredEntries.map(
-          item => item.machine
-        )
-      )
-    ].length
 
   const activeLabour =
     [
@@ -306,7 +318,7 @@ inwardData
 
     const totalDispatchQty =
 
-dispatchEntries.reduce(
+filteredDispatchEntries.reduce(
 (sum,row)=>
 sum +
 Number(
@@ -315,119 +327,6 @@ row.quantity || 0
 0
 )
 
-
-
-    const currentEmptyStock =
-
-openingStock.reduce(
-(sum,row)=>
-sum +
-Number(
-row.opening_quantity || 0
-),
-0
-)
-
-+
-
-inwardEntries.reduce(
-(sum,row)=>
-sum +
-Number(
-row.quantity || 0
-),
-0
-)
-
--
-
-entries.reduce(
-(sum,row)=>
-sum +
-Number(
-row.quantity || 0
-),
-0
-)
-
-const currentFinishedStock =
-
-entries.reduce(
-(sum,row)=>
-sum +
-Number(
-row.quantity || 0
-),
-0
-)
-
--
-
-dispatchEntries.reduce(
-(sum,row)=>
-sum +
-Number(
-row.quantity || 0
-),
-0
-)
-
-const lowStockItems =
-
-openingStock.filter(
-stock=>{
-
-const opening =
-Number(
-stock.opening_quantity || 0
-)
-
-const inward =
-inwardEntries
-.filter(
-i=>
-i.bag_name ===
-stock.bag_name
-)
-.reduce(
-(sum,row)=>
-sum +
-Number(
-row.quantity || 0
-),
-0
-)
-
-const produced =
-entries
-.filter(
-i=>
-i.bag_name ===
-stock.bag_name
-)
-.reduce(
-(sum,row)=>
-sum +
-Number(
-row.quantity || 0
-),
-0
-)
-
-const balance =
-
-opening +
-inward -
-produced
-
-return (
-balance <
-Number(
-stock.minimum_stock || 0
-)
-)
-
-}).length
 
   // MONTHLY CHART
   // NOT DAILY
@@ -567,6 +466,8 @@ item.qty
       )
 
     )
+
+    
 
   const machineWise =
     Object.values(
@@ -747,15 +648,6 @@ item.qty
           value={totalBags}
         />
 
-        <Card
-          title='Empty Stock'
-          value={currentEmptyStock}
-        />
-
-        <Card
-          title='Finished Stock'
-          value={Number(currentFinishedStock).toFixed(2)}
-        />
 
         <Card 
           title='Dispatch Qty' 

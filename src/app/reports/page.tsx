@@ -150,6 +150,7 @@ const filtered=useMemo(()=>entries.filter(e=>{
 const totalQty=filtered.reduce((a,b)=>a+Number(b.quantity||0),0)
 const totalAmount=filtered.reduce((a,b)=>a+Number(b.amount||0),0)
 const totalTons=filtered.reduce((a,b)=>a+tons(b.bag_type,Number(b.quantity||0)),0)
+const totalEntries = filtered.length
 
 const summary=Object.values(filtered.reduce((acc:any,e)=>{
  let key=''
@@ -360,10 +361,17 @@ className='border rounded-xl p-3 disabled:bg-slate-100'
 <input type='date' value={toDate} onChange={e=>setToDate(e.target.value)} className='border rounded-xl p-3'/>
 </div>
 
-<div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
+<div className='grid grid-cols-1 md:grid-cols-4 gap-4'>
 <div className='bg-white p-6 rounded-3xl'><p>Total Bags</p><h1 className='text-3xl font-bold'>{totalQty}</h1></div>
 <div className='bg-white p-6 rounded-3xl'><p>Goods Produced</p><h1 className='text-3xl font-bold'>{totalTons.toFixed(2)} T</h1></div>
 <div className='bg-white p-6 rounded-3xl'><p>Total Amount</p><h1 className='text-3xl font-bold'>₹{totalAmount}</h1></div>
+<div className='bg-white p-6 rounded-3xl'>
+  <p>Production Entries</p>
+
+  <h1 className='text-3xl font-bold'>
+    {totalEntries}
+  </h1>
+</div>
 </div>
 
 <div className='flex flex-col md:flex-row justify-between gap-3'>
