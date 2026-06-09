@@ -38,6 +38,12 @@ export default function DispatchPage() {
     const [dispatchBags,setDispatchBags] =
     useState('')
 
+    const [salesRate,setSalesRate] =
+useState('')
+
+const [salesAmount,setSalesAmount] =
+useState(0)
+
   const [vehicleNo,setVehicleNo]=
     useState('')
 
@@ -225,6 +231,25 @@ setFactory(factory)
       dispatchBags,
       loadingRate
       ])
+
+      useEffect(()=>{
+
+        const amount =
+        
+        Number(quantity || 0)
+        
+        *
+        
+        Number(salesRate || 0)
+        
+        setSalesAmount(
+        amount
+        )
+        
+        },[
+        quantity,
+        salesRate
+        ])
 
   async function fetchMasters(){
 
@@ -518,6 +543,16 @@ setFactory(factory)
       
       quantity:qty,
 
+      sales_rate:
+Number(
+salesRate || 0
+),
+
+sales_amount:
+Number(
+salesAmount || 0
+),
+
 dispatch_bags:
 Number(dispatchBags),
       
@@ -619,6 +654,9 @@ loadingRate || 90
       setMesh('')
   
       setQuantity('')
+
+      setSalesRate('')
+setSalesAmount(0)
 
       setDispatchBags('')
 
@@ -860,6 +898,41 @@ userFactory !== ''
                 placeholder="Dispatch Quantity"
                 className="h-14 rounded-2xl border border-slate-200 px-4 outline-none focus:ring-2 focus:ring-slate-400"
               />
+
+<input
+type="number"
+value={salesRate}
+onChange={(e)=>
+setSalesRate(
+e.target.value
+)
+}
+placeholder="Sales Rate PMT"
+className="
+h-14
+rounded-2xl
+border
+border-slate-200
+px-4
+outline-none
+focus:ring-2
+focus:ring-slate-400
+"
+/>
+
+<input
+value={salesAmount}
+readOnly
+placeholder="Sales Amount"
+className="
+h-14
+rounded-2xl
+bg-slate-100
+border
+border-slate-200
+px-4
+"
+/>
 
 <input
 type="number"

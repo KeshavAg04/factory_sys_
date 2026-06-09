@@ -385,6 +385,23 @@ const netAdjustment =
 totalDebitNotes -
 totalCreditNotes
 
+const totalSales =
+filtered.reduce(
+(sum,e)=>
+sum +
+Number(
+e.sales_amount || 0
+),
+0
+)
+
+const netSales =
+totalSales
+-
+totalCreditNotes
++
+totalDebitNotes
+
 
 
 const summary=
@@ -845,82 +862,106 @@ Cleared
     
     </div>
     
-    <div className='grid grid-cols-1 md:grid-cols-11 gap-4'>
-    
-    <div className='bg-white p-6 rounded-3xl'>
+    <h2 className='text-xl font-bold text-slate-800 mb-2'>
+Dispatch Overview
+</h2>
+
+<div className='grid grid-cols-1 md:grid-cols-4 gap-4'>
+
+<div className='bg-white p-6 rounded-3xl shadow-sm border min-h-[140px] flex flex-col justify-center'>
     
     <p>
     Total Dispatch Qty
     </p>
     
-    <h1 className='text-3xl font-bold'>
+    <h1 className='text-4xl font-bold mt-2'>
     {totalQty.toFixed(2)}
     </h1>
     
     </div>
     
-    <div className='bg-white p-6 rounded-3xl'>
+    <div className='bg-white p-6 rounded-3xl shadow-sm border min-h-[140px] flex flex-col justify-center'>
     
     <p>
     Dispatch Entries
     </p>
     
-    <h1 className='text-3xl font-bold'>
+    <h1 className='text-4xl font-bold mt-2'>
     {totalEntries}
     </h1>
     
     </div>
     
-    <div className='bg-white p-6 rounded-3xl'>
+    <div className='bg-white p-6 rounded-3xl shadow-sm border min-h-[140px] flex flex-col justify-center'>
     
     <p>
     Customers Served
     </p>
     
-    <h1 className='text-3xl font-bold'>
+    <h1 className='text-4xl font-bold mt-2'>
     {totalCustomers}
     </h1>
     
     </div>
 
-    <div className='bg-white p-6 rounded-3xl'>
+    <div className='bg-white p-6 rounded-3xl shadow-sm border min-h-[140px] flex flex-col justify-center'>
+
+<p>
+Dispatch Bags
+</p>
+
+<h1 className='text-4xl font-bold mt-2'>
+{totalDispatchBags.toLocaleString()}
+</h1>
+
+</div>
+
+</div>
+
+<h2 className='text-lg font-bold mt-8'>
+Freight & Loading
+</h2>
+
+<div className='grid grid-cols-1 md:grid-cols-4 gap-4'>
+
+<div className='bg-white p-6 rounded-3xl shadow-sm border min-h-[140px] flex flex-col justify-center'>
 
 <p>
 Total Freight
 </p>
 
-<h1 className='text-3xl font-bold'>
+<h1 className='text-4xl font-bold mt-2'>
 ₹{totalFreight.toLocaleString()}
 </h1>
 
 </div>
 
-<div className='bg-white p-6 rounded-3xl'>
+<div className='bg-white p-6 rounded-3xl shadow-sm border min-h-[140px] flex flex-col justify-center'>
 
 <p>
 Loading Amount
 </p>
 
-<h1 className='text-3xl font-bold'>
+<h1 className='text-4xl font-bold mt-2'>
 ₹{totalLoadingAmount.toLocaleString()}
 </h1>
 
 </div>
 
-<div className='bg-white p-6 rounded-3xl'>
+<div className='bg-white p-6 rounded-3xl shadow-sm border min-h-[140px] flex flex-col justify-center'>
 
 <p>
 Loading Pending
 </p>
 
-<h1 className='text-3xl font-bold'>
+<h1 className='text-4xl font-bold mt-2'>
 {totalLoadingPending}
 </h1>
 
 </div>
 
 
-<div className='bg-white p-6 rounded-3xl'>
+<div className='bg-white p-6 rounded-3xl shadow-sm border min-h-[140px] flex flex-col justify-center'>
 
 <p>
 Total Vasuli
@@ -932,19 +973,28 @@ Total Vasuli
 
 </div>
 
-<div className='bg-white p-6 rounded-3xl'>
+</div>
+
+
+<h2 className='text-lg font-bold mt-8'>
+Sales Summary
+</h2>
+
+<div className='grid grid-cols-1 md:grid-cols-5 gap-4'>
+
+<div className='bg-white p-6 rounded-3xl shadow-sm border min-h-[140px] flex flex-col justify-center'>
 
 <p>
-Dispatch Bags
+Gross Sales
 </p>
 
-<h1 className='text-3xl font-bold'>
-{totalDispatchBags.toLocaleString()}
+<h1 className='text-3xl font-bold text-blue-600'>
+₹{totalSales.toLocaleString()}
 </h1>
 
 </div>
 
-<div className='bg-white p-6 rounded-3xl'>
+<div className='bg-white p-6 rounded-3xl shadow-sm border min-h-[140px] flex flex-col justify-center'>
 
 <p>
 Credit Notes
@@ -956,7 +1006,7 @@ Credit Notes
 
 </div>
 
-<div className='bg-white p-6 rounded-3xl'>
+<div className='bg-white p-6 rounded-3xl shadow-sm border min-h-[140px] flex flex-col justify-center'>
 
 <p>
 Debit Notes
@@ -968,20 +1018,35 @@ Debit Notes
 
 </div>
 
-<div className='bg-white p-6 rounded-3xl'>
+<div className='bg-white p-6 rounded-3xl shadow-sm border min-h-[140px] flex flex-col justify-center'>
 
 <p>
 Net Adjustment
 </p>
 
-<h1 className='text-3xl font-bold'>
+<h1 className='text-4xl font-bold mt-2'>
 ₹{netAdjustment.toLocaleString()}
 </h1>
 
 </div>
-    
-    </div>
-    
+
+<div className='bg-white p-6 rounded-3xl shadow-sm border min-h-[140px] flex flex-col justify-center'>
+
+<p>
+Net Sales
+</p>
+
+<h1 className='text-3xl font-bold text-purple-700'>
+₹{netSales.toLocaleString()}
+</h1>
+
+</div>
+
+</div>
+
+
+
+
     <div className='flex flex-col md:flex-row justify-between gap-3'>
     
     {mode==='summary' &&
@@ -1149,6 +1214,14 @@ r.vasuli || 0
 <th className='p-4'>Qty (Tons)</th>
 
 <th className='p-4'>
+Sales Rate
+</th>
+
+<th className='p-4'>
+Sales Amount
+</th>
+
+<th className='p-4'>
 Dispatch Bags
 </th>
 
@@ -1212,6 +1285,18 @@ key={e.id || index}
 
 <td className='p-4 font-semibold'>
 {Number(e.quantity || 0).toFixed(2)}
+</td>
+
+<td className='p-4'>
+₹{Number(
+e.sales_rate || 0
+).toLocaleString()}
+</td>
+
+<td className='p-4 font-semibold text-blue-700'>
+₹{Number(
+e.sales_amount || 0
+).toLocaleString()}
 </td>
 
 <td className='p-4 font-semibold'>

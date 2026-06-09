@@ -240,6 +240,38 @@ export default function RecentDispatchPage() {
 
   }
 
+  useEffect(()=>{
+
+    if(!editingId)
+    return
+    
+    const qty =
+    Number(
+    editData.quantity || 0
+    )
+    
+    const rate =
+    Number(
+    editData.sales_rate || 0
+    )
+    
+    setEditData(
+    (prev:any)=>({
+    
+    ...prev,
+    
+    sales_amount:
+    qty * rate
+    
+    })
+    )
+    
+    },[
+    editingId,
+    editData.quantity,
+    editData.sales_rate
+    ])
+
   async function saveEdit(){
 
     const {
@@ -463,6 +495,14 @@ Invoice No
                 </th>
 
                 <th className="p-4 text-left">
+Sales Rate
+</th>
+
+<th className="p-4 text-left">
+Sales Amount
+</th>
+
+                <th className="p-4 text-left">
   Dispatch Bags
 </th>
 
@@ -563,6 +603,18 @@ Vasuli
                       <td className="p-4">
                         {Number(entry.quantity || 0).toFixed(2)}
                       </td>
+
+                      <td className="p-4">
+₹{Number(
+entry.sales_rate || 0
+).toLocaleString()}
+</td>
+
+<td className="p-4 font-semibold text-blue-700">
+₹{Number(
+entry.sales_amount || 0
+).toLocaleString()}
+</td>
 
                       <td className="p-4 font-semibold">
   {entry.dispatch_bags}
@@ -696,7 +748,8 @@ entry.loading_pending
                     key==='id' ||
                     key==='created_at' ||
                     key==='vasuli' ||
-                    key==='total_freight'
+                    key==='total_freight' ||
+                    key==='sales_amount'
                   ) return null
 
                   return (
