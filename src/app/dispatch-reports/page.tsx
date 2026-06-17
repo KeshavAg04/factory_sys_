@@ -260,23 +260,67 @@ return true
 const filteredAdjustments =
 adjustments.filter(a=>{
 
+const adjustmentDate =
+new Date(
+a.adjustment_date
+)
+
+const now =
+new Date()
+
+if(period === 'month'){
+
+if(
+adjustmentDate.getMonth() !== now.getMonth() ||
+adjustmentDate.getFullYear() !== now.getFullYear()
+){
+return false
+}
+
+}
+
+if(period === 'lastMonth'){
+
+const lastMonth =
+new Date()
+
+lastMonth.setMonth(
+now.getMonth() - 1
+)
+
+if(
+adjustmentDate.getMonth() !== lastMonth.getMonth() ||
+adjustmentDate.getFullYear() !== lastMonth.getFullYear()
+){
+return false
+}
+
+}
+
 if(
 customer &&
 a.customer_name !== customer
-)
+){
 return false
+}
+
+if(period === 'custom'){
 
 if(
 fromDate &&
 a.adjustment_date < fromDate
-)
+){
 return false
+}
 
 if(
 toDate &&
 a.adjustment_date > toDate
-)
+){
 return false
+}
+
+}
 
 return true
 
