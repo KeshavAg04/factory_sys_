@@ -651,7 +651,7 @@ item.qty
 
         <Card 
           title='Dispatch Qty' 
-          value={Number(totalDispatchQty).toFixed(2)}
+          value={`${Number(totalDispatchQty).toFixed(2)} T`}
         />
 
 
