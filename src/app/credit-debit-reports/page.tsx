@@ -35,6 +35,9 @@ useState('')
 const [toDate,setToDate] =
 useState('')
 
+const [period,setPeriod] =
+useState('month')
+
 useEffect(()=>{
 
 loadEntries()
@@ -87,6 +90,43 @@ const filtered =
 useMemo(
 ()=>entries.filter(e=>{
 
+const entryDate =
+new Date(
+e.adjustment_date
+)
+
+const now =
+new Date()
+
+if(period==='month'){
+
+ if(
+ entryDate.getMonth()!==now.getMonth() ||
+ entryDate.getFullYear()!==now.getFullYear()
+ ){
+  return false
+ }
+
+}
+
+if(period==='lastMonth'){
+
+ const lastMonth =
+ new Date()
+
+ lastMonth.setMonth(
+ now.getMonth()-1
+ )
+
+ if(
+ entryDate.getMonth()!==lastMonth.getMonth() ||
+ entryDate.getFullYear()!==lastMonth.getFullYear()
+ ){
+  return false
+ }
+
+}
+
 if(
 search &&
 !JSON.stringify(e)
@@ -109,6 +149,8 @@ e.adjustment_type !== type
 )
 return false
 
+if(period==='custom'){
+
 if(
 fromDate &&
 e.adjustment_date < fromDate
@@ -121,6 +163,8 @@ e.adjustment_date > toDate
 )
 return false
 
+}
+
 return true
 
 }),
@@ -130,7 +174,8 @@ search,
 customer,
 type,
 fromDate,
-toDate
+toDate,
+period
 ]
 )
 
@@ -247,6 +292,8 @@ function exportExcel(
     
     <div className='p-4 md:p-6 space-y-6'>
     
+    <div className='flex flex-col md:flex-row justify-between items-start gap-4'>
+    
     <div>
     
     <p className='text-slate-500'>
@@ -256,6 +303,51 @@ function exportExcel(
     <h1 className='text-4xl font-bold'>
     Credit / Debit Reports
     </h1>
+    
+    </div>
+
+    <div className='flex gap-3'>
+
+    <button
+    onClick={()=>
+    setPeriod('month')
+    }
+    className={`px-5 py-3 rounded-xl transition ${
+    period==='month'
+    ?'bg-blue-600 text-white'
+    :'bg-white border'
+    }`}
+    >
+    This Month
+    </button>
+
+    <button
+    onClick={()=>
+    setPeriod('lastMonth')
+    }
+    className={`px-5 py-3 rounded-xl transition ${
+    period==='lastMonth'
+    ?'bg-blue-600 text-white'
+    :'bg-white border'
+    }`}
+    >
+    Last Month
+    </button>
+
+    <button
+    onClick={()=>
+    setPeriod('custom')
+    }
+    className={`px-5 py-3 rounded-xl transition ${
+    period==='custom'
+    ?'bg-blue-600 text-white'
+    :'bg-white border'
+    }`}
+    >
+    Custom Range
+    </button>
+
+    </div>
     
     </div>
     

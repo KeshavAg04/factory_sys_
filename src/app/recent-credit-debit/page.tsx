@@ -450,7 +450,7 @@ async function deleteEntry(
         </p>
         
         <h1 className='text-3xl font-bold text-red-600'>
-        ₹{totalCreditNotes.toLocaleString()}
+        ₹{totalCreditNotes.toLocaleString('en-IN')}
         </h1>
         
         </div>
@@ -462,7 +462,7 @@ async function deleteEntry(
         </p>
         
         <h1 className='text-3xl font-bold text-green-600'>
-        ₹{totalDebitNotes.toLocaleString()}
+        ₹{totalDebitNotes.toLocaleString('en-IN')}
         </h1>
         
         </div>
@@ -474,7 +474,7 @@ async function deleteEntry(
         </p>
         
         <h1 className='text-3xl font-bold'>
-        ₹{netAdjustment.toLocaleString()}
+        ₹{netAdjustment.toLocaleString('en-IN')}
         </h1>
         
         </div>
@@ -518,7 +518,7 @@ async function deleteEntry(
         <td className='p-4'>{entry.customer_name}</td>
         <td className='p-4'>{entry.invoice_number}</td>
         <td className='p-4'>{entry.adjustment_type}</td>
-        <td className='p-4'>₹{Number(entry.amount || 0).toLocaleString()}</td>
+        <td className='p-4'>₹{Number(entry.amount || 0).toLocaleString('en-IN')}</td>
         <td className='p-4'>{entry.reason}</td>
         <td className='p-4'>{entry.remarks}</td>
         

@@ -1027,7 +1027,7 @@ Dispatch Bags
 </p>
 
 <h1 className='text-4xl font-bold mt-2'>
-{totalDispatchBags.toLocaleString()}
+{totalDispatchBags.toLocaleString('en-IN')}
 </h1>
 
 </div>
@@ -1047,7 +1047,7 @@ Total Freight
 </p>
 
 <h1 className='text-4xl font-bold mt-2'>
-₹{totalFreight.toLocaleString()}
+₹{totalFreight.toLocaleString('en-IN')}
 </h1>
 
 </div>
@@ -1059,7 +1059,7 @@ Loading Amount
 </p>
 
 <h1 className='text-4xl font-bold mt-2'>
-₹{totalLoadingAmount.toLocaleString()}
+₹{totalLoadingAmount.toLocaleString('en-IN')}
 </h1>
 
 </div>
@@ -1084,7 +1084,7 @@ Total Vasuli
 </p>
 
 <h1 className='text-3xl font-bold text-green-700'>
-₹{totalVasuli.toLocaleString()}
+₹{totalVasuli.toLocaleString('en-IN')}
 </h1>
 
 </div>
@@ -1105,7 +1105,7 @@ Gross Sales
 </p>
 
 <h1 className='text-3xl font-bold text-blue-600'>
-₹{totalSales.toLocaleString()}
+₹{totalSales.toLocaleString('en-IN')}
 </h1>
 
 </div>
@@ -1117,7 +1117,7 @@ Credit Notes
 </p>
 
 <h1 className='text-3xl font-bold text-red-600'>
-₹{totalCreditNotes.toLocaleString()}
+₹{totalCreditNotes.toLocaleString('en-IN')}
 </h1>
 
 </div>
@@ -1129,7 +1129,7 @@ Debit Notes
 </p>
 
 <h1 className='text-3xl font-bold text-green-600'>
-₹{totalDebitNotes.toLocaleString()}
+₹{totalDebitNotes.toLocaleString('en-IN')}
 </h1>
 
 </div>
@@ -1141,7 +1141,7 @@ Net Adjustment
 </p>
 
 <h1 className='text-4xl font-bold mt-2'>
-₹{netAdjustment.toLocaleString()}
+₹{netAdjustment.toLocaleString('en-IN')}
 </h1>
 
 </div>
@@ -1153,7 +1153,7 @@ Net Sales
 </p>
 
 <h1 className='text-3xl font-bold text-purple-700'>
-₹{netSales.toLocaleString()}
+₹{netSales.toLocaleString('en-IN')}
 </h1>
 
 </div>
@@ -1287,13 +1287,13 @@ Vasuli
 <td className='p-4'>
 ₹{Number(
 r.freight || 0
-).toLocaleString()}
+).toLocaleString('en-IN')}
 </td>
 
 <td className='p-4 text-green-700 font-semibold'>
 ₹{Number(
 r.vasuli || 0
-).toLocaleString()}
+).toLocaleString('en-IN')}
 </td>
     
     </tr>
@@ -1406,13 +1406,13 @@ key={e.id || index}
 <td className='p-4'>
 ₹{Number(
 e.sales_rate || 0
-).toLocaleString()}
+).toLocaleString('en-IN')}
 </td>
 
 <td className='p-4 font-semibold text-blue-700'>
 ₹{Number(
 e.sales_amount || 0
-).toLocaleString()}
+).toLocaleString('en-IN')}
 </td>
 
 <td className='p-4 font-semibold'>
@@ -1438,26 +1438,26 @@ e.sales_amount || 0
 <td className='p-4'>
 ₹{Number(
 e.lr_freight || 0
-).toLocaleString()}
+).toLocaleString('en-IN')}
 </td>
 
 
 <td className='p-4'>
 ₹{Number(
 e.freight_pmt || 0
-).toLocaleString()}
+).toLocaleString('en-IN')}
 </td>
 
 <td className='p-4 font-semibold'>
 ₹{Number(
 e.total_freight || 0
-).toLocaleString()}
+).toLocaleString('en-IN')}
 </td>
 
 <td className='p-4'>
 ₹{Number(
 e.loading_amount || 0
-).toLocaleString()}
+).toLocaleString('en-IN')}
 </td>
 
 <td className='p-4'>
@@ -1471,7 +1471,7 @@ e.loading_pending
 <td className='p-4 text-green-700 font-semibold'>
 ₹{Number(
 e.vasuli || 0
-).toLocaleString()}
+).toLocaleString('en-IN')}
 </td>
 
 <td className='p-4'>
