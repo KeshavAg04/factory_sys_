@@ -56,21 +56,9 @@ loadFactories()
 
 useEffect(()=>{
 
-if(
-factory ||
-userFactory
-){
-
-loadEntries()
-
-}
-
-},[
-factory,
-month,
-year,
-userFactory
-])
+    loadEntries()
+    
+    },[])
 
 async function loadUserFactory(){
 
@@ -110,67 +98,82 @@ data || []
 
 async function loadEntries(){
 
-const selectedFactory =
+    const {data,error} =
+    await supabase
+    .from('production_entries')
+    .select('*')
+    .order(
+    'production_date',
+    {
+    ascending:false
+    }
+    )
+    
+    if(error){
+    
+    console.log(error)
+    
+    return
+    
+    }
+    
+    setEntries(
+    data || []
+    )
+    
+    }
 
-userFactory ||
-factory
+
+    const filtered =
+useMemo(()=>entries.filter(e=>{
+
+const entryDate =
+new Date(
+e.production_date
+)
+
+const selectedDate =
+new Date(
+Number(year),
+Number(month)-1,
+1
+)
 
 if(
-!selectedFactory
+entryDate.getMonth() !== selectedDate.getMonth() ||
+entryDate.getFullYear() !== selectedDate.getFullYear()
 ){
-
-return
-
+return false
 }
 
-const startDate =
+const selectedFactory =
+userFactory || factory
 
-`${year}-${month}-01`
-
-const endDate =
-
-`${year}-${month}-31`
-
-const {data,error} =
-await supabase
-.from(
-'production_entries'
-)
-.select('*')
-.eq(
-'factory',
-selectedFactory
-)
-.gte(
-'production_date',
-startDate
-)
-.lte(
-'production_date',
-endDate
-)
-
-if(error){
-
-console.log(error)
-
-return
-
+if(
+selectedFactory &&
+e.factory !== selectedFactory
+){
+return false
 }
 
-setEntries(
-data || []
-)
+return true
 
-}
+}),[
+entries,
+factory,
+userFactory,
+month,
+year
+])
+
 
 const reportData =
 useMemo(()=>{
 
 const grouped:any = {}
 
-entries.forEach(
-(entry:any)=>{
+filtered.forEach(
+    (entry:any)=>{
 
 const key =
 
@@ -248,18 +251,15 @@ a.amount
 )
 
 },[
-entries
+filtered
 ])
 const totalAmount =
-
-reportData.reduce(
-(sum:any,row:any)=>
-
+filtered.reduce(
+(sum,e)=>
 sum +
 Number(
-row.amount || 0
+e.amount || 0
 ),
-
 0
 )
 
@@ -297,15 +297,12 @@ reportData
 ])
 
 const totalQuantity =
-
-reportData.reduce(
-(sum:any,row:any)=>
-
+filtered.reduce(
+(sum,e)=>
 sum +
 Number(
-row.quantity || 0
+e.quantity || 0
 ),
-
 0
 )
 

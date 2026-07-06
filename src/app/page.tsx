@@ -286,35 +286,6 @@ dispatchData
       0
     )
 
-  const totalBags =
-    filteredEntries.reduce(
-      (sum, item) =>
-        sum +
-        Number(item.quantity || 0),
-      0
-    )
-
-  const totalAmount =
-    filteredEntries.reduce(
-      (sum, item) =>
-        sum +
-        Number(item.amount || 0),
-      0
-    )
-
-
-  const activeLabour =
-    [
-      ...new Set(
-        filteredEntries.map(
-          item =>
-            item.labour_name
-        )
-      )
-    ].length
-
-  const totalEntries =
-    filteredEntries.length
 
     const totalDispatchQty =
 
@@ -636,22 +607,17 @@ item.qty
 
       {/* KPI CARDS */}
 
-      <div className='grid grid-cols-2 md:grid-cols-3 gap-4'>
+      <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
 
         <Card
           title='Goods Produced'
-          value={`${totalTons.toFixed(2)} T`}
-        />
-
-        <Card
-          title='Total Bags'
-          value={totalBags}
+          value={`${totalTons.toFixed(2)} Ton`}
         />
 
 
         <Card 
-          title='Dispatch Qty' 
-          value={`${Number(totalDispatchQty).toFixed(2)} T`}
+          title='Goods Dispatched' 
+          value={`${Number(totalDispatchQty).toFixed(2)} Ton`}
         />
 
 

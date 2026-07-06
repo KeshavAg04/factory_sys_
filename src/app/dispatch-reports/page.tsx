@@ -44,6 +44,12 @@ useState('')
 const [mesh,setMesh]=
 useState('')
 
+const [transporter,setTransporter] =
+useState('')
+
+const [freightType,setFreightType] =
+useState('')
+
 const [vehicle,setVehicle]=
 useState('')
 
@@ -206,6 +212,18 @@ e.mesh!==mesh
 return false
 
 if(
+    transporter &&
+    e.transporter_name !== transporter
+    )
+    return false
+
+    if(
+        freightType &&
+        e.freight_type !== freightType
+        )
+        return false
+
+if(
 vehicle &&
 e.vehicle_no!==vehicle
 )
@@ -250,6 +268,8 @@ return true
     bagType,
     bagName,
     mesh,
+    transporter,
+    freightType,
     loadingStatus,
     fromDate,
     toDate,
@@ -856,6 +876,58 @@ Custom Range
     )}
     
     </select>
+
+    <select
+value={transporter}
+onChange={e=>
+setTransporter(
+e.target.value
+)
+}
+className='border rounded-xl p-3'
+>
+
+<option value=''>
+All Transporters
+</option>
+
+{values(
+'transporter_name'
+).map(
+(v:any)=>(
+<option
+key={v}
+>
+{v}
+</option>
+)
+)}
+
+</select>
+
+<select
+value={freightType}
+onChange={e=>
+setFreightType(
+e.target.value
+)
+}
+className='border rounded-xl p-3'
+>
+
+<option value=''>
+All Freight Types
+</option>
+
+<option value='Advance'>
+Advance
+</option>
+
+<option value='To be Paid'>
+To be Paid
+</option>
+
+</select>
 
     <select
 value={loadingStatus}
