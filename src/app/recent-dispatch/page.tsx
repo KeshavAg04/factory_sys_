@@ -42,20 +42,32 @@ export default function RecentDispatchPage() {
   const [editData,setEditData] =
     useState<any>({})
 
+  const [userFactory,setUserFactory] =
+    useState('')
+
   useEffect(()=>{
 
-    loadMasters()
+    const factory =
+      localStorage.getItem(
+        'userFactory'
+      ) || ''
 
-    fetchEntries()
+    setUserFactory(factory)
+
+    loadMasters(factory)
+
+    fetchEntries(factory)
 
   },[])
 
-  async function fetchEntries(){
+  async function fetchEntries(
+    factoryFilter = userFactory
+  ){
 
     setLoading(true)
 
-    const {data,error} =
-      await supabase
+    let query =
+      supabase
       .from('dispatch_entries')
       .select('*')
       .order(
@@ -64,6 +76,19 @@ export default function RecentDispatchPage() {
           ascending:false
         }
       )
+
+    if(factoryFilter){
+
+      query =
+        query.eq(
+          'factory',
+          factoryFilter
+        )
+
+    }
+
+    const {data,error} =
+      await query
 
     if(!error){
 
@@ -75,7 +100,9 @@ export default function RecentDispatchPage() {
 
   }
 
-  async function loadMasters(){
+  async function loadMasters(
+    factoryFilter = userFactory
+  ){
 
     const [
       customerRes,
@@ -118,7 +145,15 @@ export default function RecentDispatchPage() {
           .map((x:any) => [x.customer_name, x])
       ).values()
     ])
-    setFactories(factoryRes.data||[])
+    setFactories(
+      factoryFilter
+      ? (factoryRes.data || [])
+        .filter(
+          (item:any)=>
+            item.factory_name === factoryFilter
+        )
+      : factoryRes.data||[]
+    )
     setBagTypes(bagTypeRes.data||[])
     setBagNames(bagNameRes.data||[])
     setMeshes(meshRes.data||[])
@@ -242,8 +277,8 @@ export default function RecentDispatchPage() {
 
     }
 
-    const {error} =
-      await supabase
+    let query =
+      supabase
       .from(
         'dispatch_entries'
       )
@@ -252,6 +287,19 @@ export default function RecentDispatchPage() {
         'id',
         id
       )
+
+    if(userFactory){
+
+      query =
+        query.eq(
+          'factory',
+          userFactory
+        )
+
+    }
+
+    const {error} =
+      await query
 
     if(error){
 
@@ -274,6 +322,19 @@ export default function RecentDispatchPage() {
   function startEdit(
     entry:any
   ){
+
+    if(
+      userFactory &&
+      entry.factory !== userFactory
+    ){
+
+      toast.error(
+        'You can only edit dispatches for your assigned factory.'
+      )
+
+      return
+
+    }
 
     setEditingId(
       entry.id
@@ -328,14 +389,27 @@ export default function RecentDispatchPage() {
 
   async function saveEdit(){
 
+    if(
+      userFactory &&
+      editData.factory !== userFactory
+    ){
+
+      toast.error(
+        'You can only save dispatches for your assigned factory.'
+      )
+
+      return
+
+    }
+
     const {
       id,
       created_at,
       ...updateData
     } = editData
   
-    const {error} =
-      await supabase
+    let query =
+      supabase
       .from(
         'dispatch_entries'
       )
@@ -356,6 +430,19 @@ export default function RecentDispatchPage() {
         'id',
         editingId
       )
+
+    if(userFactory){
+
+      query =
+        query.eq(
+          'factory',
+          userFactory
+        )
+
+    }
+
+    const {error} =
+      await query
   
     if(error){
   
@@ -398,6 +485,7 @@ allowedRoles={[
 'Admin',
 'accounts'
 ]}
+allowDadiFactory
 >
 
     <main className="min-h-screen bg-slate-100 p-4 md:p-6">
@@ -869,6 +957,7 @@ setEditData({
 factory:e.target.value
 })
 }
+disabled={userFactory !== ''}
 className="border rounded-xl p-3 w-full"
 >
 

@@ -68,19 +68,39 @@ useState('')
 const [adjustments,setAdjustments] =
 useState<any[]>([])
 
+const [userFactory,setUserFactory] =
+useState('')
+
 useEffect(()=>{
 
-loadEntries()
+const factory =
+localStorage.getItem(
+'userFactory'
+) || ''
+
+setUserFactory(
+factory
+)
+
+if(factory){
+
+setFactory(
+factory
+)
+
+}
+
+loadEntries(
+factory
+)
 
 },[])
 
-async function loadEntries(){
+async function loadEntries(
+factoryFilter = ''
+){
 
-    const [
-    dispatchRes,
-    adjustmentRes
-    ] = await Promise.all([
-    
+    let dispatchQuery =
     supabase
     .from('dispatch_entries')
     .select('*')
@@ -89,7 +109,24 @@ async function loadEntries(){
     {
     ascending:false
     }
-    ),
+    )
+
+    if(factoryFilter){
+
+    dispatchQuery =
+    dispatchQuery.eq(
+    'factory',
+    factoryFilter
+    )
+
+    }
+
+    const [
+    dispatchRes,
+    adjustmentRes
+    ] = await Promise.all([
+    
+    dispatchQuery,
     
     supabase
     .from('sales_adjustments')
@@ -111,8 +148,26 @@ async function loadEntries(){
     dispatchRes.data || []
     )
     
+    const dispatchInvoices =
+    new Set(
+    (dispatchRes.data || [])
+    .map(
+    (entry:any)=>
+    entry.invoice_number
+    )
+    .filter(Boolean)
+    )
+    
     setAdjustments(
-    adjustmentRes.data || []
+    factoryFilter
+    ? (adjustmentRes.data || [])
+    .filter(
+    (adjustment:any)=>
+    dispatchInvoices.has(
+    adjustment.invoice_number
+    )
+    )
+    : adjustmentRes.data || []
     )
     
     }
@@ -632,6 +687,7 @@ allowedRoles={[
 'Admin',
 'accounts'
 ]}
+allowDadiFactory
 >
 
     <div className='p-4 md:p-6 space-y-6'>
@@ -776,10 +832,11 @@ Custom Range
     e.target.value
     )
     }
+    disabled={userFactory !== ''}
     className='border rounded-xl p-3'
     >
     <option value=''>
-    All Factories
+    {userFactory || 'All Factories'}
     </option>
     
     {values(

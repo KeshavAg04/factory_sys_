@@ -44,15 +44,69 @@ useState<string | null>(null)
 const [editData,setEditData] =
 useState<any>({})
 
+const [userFactory,setUserFactory] =
+useState('')
+
+const [invoiceNumbers,setInvoiceNumbers] =
+useState<string[]>([])
+
 useEffect(()=>{
 
-fetchEntries()
+const factory =
+localStorage.getItem(
+'userFactory'
+) || ''
+
+setUserFactory(
+factory
+)
+
+fetchEntries(
+factory
+)
 
 },[])
 
-async function fetchEntries(){
+async function fetchEntries(
+factoryFilter = userFactory
+){
 
 setLoading(true)
+
+let allowedInvoices:string[] = []
+
+if(factoryFilter){
+
+const {data:dispatchData} =
+await supabase
+.from(
+'dispatch_entries'
+)
+.select(
+'invoice_number'
+)
+.eq(
+'factory',
+factoryFilter
+)
+
+allowedInvoices =
+[
+...new Set(
+(dispatchData || [])
+.map(
+(entry:any)=>
+entry.invoice_number
+)
+.filter(Boolean)
+)
+] as string[]
+
+setInvoiceNumbers(
+allowedInvoices
+)
+
+}
 
 const {data,error} =
 await supabase
@@ -70,7 +124,15 @@ ascending:false
 if(!error){
 
 setEntries(
-data || []
+factoryFilter
+? (data || [])
+.filter(
+(entry:any)=>
+allowedInvoices.includes(
+entry.invoice_number
+)
+)
+: data || []
 )
 
 }
@@ -180,6 +242,27 @@ search
 async function deleteEntry(
     id:string
     ){
+
+    const entry =
+    entries.find(
+    item =>
+    item.id === id
+    )
+
+    if(
+    userFactory &&
+    !invoiceNumbers.includes(
+    entry?.invoice_number
+    )
+    ){
+
+    toast.error(
+    'You can only delete Dadi credit/debit entries.'
+    )
+
+    return
+
+    }
     
     const typed =
     prompt(
@@ -230,6 +313,21 @@ async function deleteEntry(
     function startEdit(
     entry:any
     ){
+
+    if(
+    userFactory &&
+    !invoiceNumbers.includes(
+    entry.invoice_number
+    )
+    ){
+
+    toast.error(
+    'You can only edit Dadi credit/debit entries.'
+    )
+
+    return
+
+    }
     
     setEditingId(
     entry.id
@@ -242,6 +340,21 @@ async function deleteEntry(
     }
     
     async function saveEdit(){
+
+    if(
+    userFactory &&
+    !invoiceNumbers.includes(
+    editData.invoice_number
+    )
+    ){
+
+    toast.error(
+    'Select a Dadi dispatch invoice before saving.'
+    )
+
+    return
+
+    }
     
     const {
     id,
@@ -337,6 +450,7 @@ async function deleteEntry(
         'Admin',
         'accounts'
         ]}
+        allowDadiFactory
         >
         
         <div className='p-4 md:p-6 space-y-6'>
@@ -633,6 +747,7 @@ Invoice Number
 </p>
 
 <input
+list="recent-credit-debit-invoices"
 value={editData.invoice_number || ''}
 onChange={e=>
 setEditData({
@@ -643,6 +758,17 @@ e.target.value
 }
 className='border rounded-xl p-3 w-full'
 />
+
+<datalist id="recent-credit-debit-invoices">
+{invoiceNumbers.map(
+invoice=>(
+<option
+key={invoice}
+value={invoice}
+/>
+)
+)}
+</datalist>
 
 </div>
 

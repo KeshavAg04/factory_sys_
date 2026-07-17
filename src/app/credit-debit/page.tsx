@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 
 import { supabase } from '@/lib/supabase'
+import RoleGuard from '@/components/RoleGuard'
 
 export default function CreditDebitPage(){
 
@@ -33,9 +34,26 @@ useState('')
 const [customers,setCustomers] =
 useState<string[]>([])
 
+const [invoiceNumbers,setInvoiceNumbers] =
+useState<string[]>([])
+
+const [userFactory,setUserFactory] =
+useState('')
+
 useEffect(()=>{
 
-loadCustomers()
+const factory =
+localStorage.getItem(
+'userFactory'
+) || ''
+
+setUserFactory(
+factory
+)
+
+loadCustomers(
+factory
+)
 
 loadNextNumber(
 'Credit Note'
@@ -43,12 +61,27 @@ loadNextNumber(
 
 },[])
 
-async function loadCustomers(){
+async function loadCustomers(
+factoryFilter = userFactory
+){
+
+let query =
+supabase
+.from('dispatch_entries')
+.select('customer_name,invoice_number')
+
+if(factoryFilter){
+
+query =
+query.eq(
+'factory',
+factoryFilter
+)
+
+}
 
 const {data} =
-await supabase
-.from('dispatch_entries')
-.select('customer_name')
+await query
 
 const uniqueCustomers =
 
@@ -68,6 +101,19 @@ row.customer_name
 
 setCustomers(
 uniqueCustomers as string[]
+)
+
+setInvoiceNumbers(
+[
+...new Set(
+(data || [])
+.map(
+row =>
+row.invoice_number
+)
+.filter(Boolean)
+)
+] as string[]
 )
 
 }
@@ -130,6 +176,21 @@ setNoteNumber(
 
 async function saveEntry(){
 
+if(
+userFactory &&
+!invoiceNumbers.includes(
+invoiceNumber
+)
+){
+
+alert(
+'Select a Dadi dispatch invoice before saving.'
+)
+
+return
+
+}
+
 const {error} =
 await supabase
 .from(
@@ -191,6 +252,14 @@ adjustmentType
 }
 
 return (
+
+<RoleGuard
+allowedRoles={[
+'Admin',
+'accounts'
+]}
+allowDadiFactory
+>
 
     <div className='p-4 md:p-6 space-y-6'>
     
@@ -285,6 +354,7 @@ return (
     </p>
     
     <input
+    list="credit-debit-invoices"
     value={invoiceNumber}
     onChange={e=>
     setInvoiceNumber(
@@ -293,6 +363,17 @@ return (
     }
     className='border rounded-xl p-3 w-full'
     />
+
+    <datalist id="credit-debit-invoices">
+    {invoiceNumbers.map(
+    invoice=>(
+    <option
+    key={invoice}
+    value={invoice}
+    />
+    )
+    )}
+    </datalist>
     
     </div>
     
@@ -407,6 +488,8 @@ return (
     </div>
     
     </div>
+
+    </RoleGuard>
     
     )
     

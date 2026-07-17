@@ -38,13 +38,60 @@ useState('')
 const [period,setPeriod] =
 useState('month')
 
+const [userFactory,setUserFactory] =
+useState('')
+
 useEffect(()=>{
 
-loadEntries()
+const factory =
+localStorage.getItem(
+'userFactory'
+) || ''
+
+setUserFactory(
+factory
+)
+
+loadEntries(
+factory
+)
 
 },[])
 
-async function loadEntries(){
+async function loadEntries(
+factoryFilter = userFactory
+){
+
+let allowedInvoices:string[] = []
+
+if(factoryFilter){
+
+const {data:dispatchData} =
+await supabase
+.from(
+'dispatch_entries'
+)
+.select(
+'invoice_number'
+)
+.eq(
+'factory',
+factoryFilter
+)
+
+allowedInvoices =
+[
+...new Set(
+(dispatchData || [])
+.map(
+(entry:any)=>
+entry.invoice_number
+)
+.filter(Boolean)
+)
+] as string[]
+
+}
 
 const {data,error} =
 await supabase
@@ -68,7 +115,15 @@ return
 }
 
 setEntries(
-data || []
+factoryFilter
+? (data || [])
+.filter(
+(entry:any)=>
+allowedInvoices.includes(
+entry.invoice_number
+)
+)
+: data || []
 )
 
 }
@@ -288,6 +343,7 @@ function exportExcel(
     'Admin',
     'accounts'
     ]}
+    allowDadiFactory
     >
     
     <div className='p-4 md:p-6 space-y-6'>

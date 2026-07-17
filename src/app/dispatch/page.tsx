@@ -496,6 +496,20 @@ setFactory(factory)
 
     const qty=
       Number(quantity)
+
+      if(
+        userFactory &&
+        factory !== userFactory
+      ){
+
+        alert(
+          'You can only create dispatches for your assigned factory.'
+        )
+
+        return
+
+      }
+
       if(
         Number(dispatchBags) >
         availableStock
@@ -678,6 +692,7 @@ allowedRoles={[
 'Admin',
 'accounts'
 ]}
+allowDadiFactory
 >
   
       <div className="min-h-screen flex justify-center px-4 py-8">

@@ -16,6 +16,7 @@ import {
 import { useEffect, useState } from 'react'
 
 import { supabase } from '@/lib/supabase'
+import { isDadiFactory } from '@/lib/permissions'
 
 
 
@@ -26,6 +27,9 @@ export default function RootLayout({
 }) {
 
   const [role,setRole] =
+useState('')
+
+const [userFactory,setUserFactory] =
 useState('')
 
 const [mobileMenuOpen,setMobileMenuOpen] =
@@ -78,6 +82,7 @@ async function loadRole(){
   if(!user){
 
     setRole('')
+    setUserFactory('')
     setLoadingRole(false)
   
     return
@@ -93,6 +98,10 @@ await supabase
 
   setRole(
     data?.role || ''
+  )
+
+  setUserFactory(
+    data?.factory || ''
   )
 
   localStorage.setItem(
@@ -125,6 +134,14 @@ async function handleLogout(){
 
   const isLoginPage =
   pathname === '/login'
+
+  const canAccessDispatch =
+  role === 'Admin' ||
+  role === 'accounts' ||
+  (
+    role === 'production' &&
+    isDadiFactory(userFactory)
+  )
 
   const navClass = (
     path: string
@@ -261,8 +278,7 @@ async function handleLogout(){
     )}
 
 
-    {(role === 'Admin' ||
-      role === 'accounts') && (
+    {canAccessDispatch && (
 
       <div className="relative group py-3">
 
@@ -496,8 +512,7 @@ async function handleLogout(){
       )}
 
 
-      {(role === 'Admin' ||
-        role === 'accounts') && (
+      {canAccessDispatch && (
 
         <>
           <button

@@ -8,14 +8,17 @@ import { getUserRole } from '@/lib/getUserRole'
 
 import { supabase }
 from '@/lib/supabase'
+import { isDadiFactory } from '@/lib/permissions'
 
 type Props = {
   allowedRoles: string[]
+  allowDadiFactory?: boolean
   children: React.ReactNode
 }
 
 export default function RoleGuard({
   allowedRoles,
+  allowDadiFactory = false,
   children,
 }: Props) {
 
@@ -75,9 +78,54 @@ if(
   
   }
 
+let factory =
+localStorage.getItem(
+'userFactory'
+) || ''
+
+if(
+allowDadiFactory &&
+role === 'production' &&
+!factory
+){
+
+const {
+data:{user}
+} =
+await supabase.auth.getUser()
+
+if(user){
+
+const {data} =
+await supabase
+.from('profiles')
+.select('factory')
+.eq('id',user.id)
+.single()
+
+factory =
+data?.factory || ''
+
+localStorage.setItem(
+'userFactory',
+factory
+)
+
+}
+
+}
+
+const canUseDadiFactoryAccess =
+allowDadiFactory &&
+role === 'production' &&
+isDadiFactory(factory)
+
 if (
 role &&
-allowedRoles.includes(role)
+(
+allowedRoles.includes(role) ||
+canUseDadiFactoryAccess
+)
 ) {
 
 setAllowed(true)
