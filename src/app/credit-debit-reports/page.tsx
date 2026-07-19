@@ -1,6 +1,7 @@
 'use client'
 
 import {
+Fragment,
 useEffect,
 useMemo,
 useState
@@ -11,6 +12,9 @@ import * as XLSX from 'xlsx'
 import {
 supabase
 } from '@/lib/supabase'
+import {
+groupByFinancialYearAndMonth
+} from '@/lib/financialYear'
 
 import RoleGuard
 from '@/components/RoleGuard'
@@ -40,6 +44,9 @@ useState('month')
 
 const [userFactory,setUserFactory] =
 useState('')
+
+const [expandedFinancialYears,setExpandedFinancialYears] =
+useState<Record<string,boolean>>({})
 
 useEffect(()=>{
 
@@ -272,6 +279,23 @@ totalCreditNotes
 
 const totalEntries =
 filtered.length
+
+const financialYearGroups =
+useMemo(
+()=>groupByFinancialYearAndMonth(
+filtered,
+(entry:any)=>entry.adjustment_date
+),
+[
+filtered
+]
+)
+
+function isFinancialYearExpanded(
+key:string
+){
+return expandedFinancialYears[key] ?? true
+}
 
 function exportExcel(
     data:any[],
@@ -610,7 +634,47 @@ Remarks
 
 <tbody>
 
-{filtered.map(
+{financialYearGroups.map(
+(fy:any)=>{
+const expanded =
+isFinancialYearExpanded(
+fy.key
+)
+
+return (
+<Fragment key={fy.key}>
+
+<tr className='bg-slate-200'>
+<td colSpan={8} className='p-4'>
+<button
+onClick={()=>
+setExpandedFinancialYears(
+prev=>({
+...prev,
+[fy.key]:
+!expanded
+})
+)
+}
+className='font-bold text-slate-900'
+>
+{expanded ? 'v' : '>'} {fy.label}
+</button>
+</td>
+</tr>
+
+{expanded &&
+fy.months.map(
+(month:any)=>(
+<Fragment key={month.key}>
+
+<tr className='bg-slate-50'>
+<td colSpan={8} className='p-4 font-semibold text-slate-700'>
+{month.label}
+</td>
+</tr>
+
+{month.items.map(
 (e:any)=>(
 
 <tr
@@ -655,6 +719,16 @@ e.amount || 0
 </tr>
 
 ))
+}
+
+</Fragment>
+)
+)}
+
+</Fragment>
+)
+}
+)
 }
 
 </tbody>

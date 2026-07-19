@@ -7,6 +7,10 @@ import {
 } from 'react'
 
 import { supabase } from '@/lib/supabase'
+import {
+  findProductionRate,
+  getProductionRate,
+} from '@/lib/productionRate'
 
 import RoleGuard
 from '@/components/RoleGuard'
@@ -83,22 +87,21 @@ export default function ProductionEntryPage() {
   useEffect(() => {
 
     const foundRate =
-      rates.find(
-        (item) =>
-          item.bag_type ===
-            bagType &&
-          item.mesh === mesh
+      findProductionRate(
+        rates,
+        mesh,
+        bagType
       )
 
-    if (foundRate) {
+    if (foundRate !== null) {
 
       setRate(
-        Number(foundRate.rate)
+        foundRate
       )
 
       setAmount(
         Number(quantity || 0) *
-          Number(foundRate.rate)
+          foundRate
       )
 
     } else {
@@ -291,6 +294,22 @@ setFactory(factory)
       return
     }
 
+    const currentRate =
+      await getProductionRate(
+        supabase,
+        mesh,
+        bagType
+      )
+
+    if (currentRate === null) {
+
+      alert(
+        'Rate not found for selected Mesh & Bag Type'
+      )
+
+      return
+    }
+
     const payload = {
 
       production_date: date,
@@ -312,10 +331,11 @@ setFactory(factory)
         Number(quantity),
     
       rate:
-        Number(rate),
+        currentRate,
     
       amount:
-        Number(amount),
+        Number(quantity) *
+        currentRate,
     
     }
 

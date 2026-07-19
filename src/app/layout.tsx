@@ -143,22 +143,51 @@ async function handleLogout(){
     isDadiFactory(userFactory)
   )
 
-  const navClass = (
+  const productionRoutes = [
+    '/production-entry',
+    '/recent-entries',
+    '/reports',
+    '/opening-stock',
+    '/bag-name-master',
+    '/monthly-labour-report',
+  ]
+
+  const dispatchRoutes = [
+    '/dispatch',
+    '/recent-dispatch',
+    '/dispatch-reports',
+    '/credit-debit',
+    '/credit-debit-reports',
+    '/recent-credit-debit',
+  ]
+
+  const navLinkClass = (
     path: string
-  ) => `
+  ) =>
+    pathname === path
+      ? 'erp-nav-link erp-nav-link-active'
+      : 'erp-nav-link'
 
-    px-5 py-3 rounded-2xl shadow-sm
-    font-medium transition whitespace-nowrap
+  const navButtonClass = (
+    paths: string[]
+  ) =>
+    paths.includes(pathname)
+      ? 'erp-nav-button erp-nav-button-active'
+      : 'erp-nav-button'
 
-    ${
-      pathname === path
+  const dropdownLinkClass = (
+    path: string
+  ) =>
+    pathname === path
+      ? 'erp-dropdown-link erp-dropdown-link-active'
+      : 'erp-dropdown-link'
 
-        ? 'bg-slate-800 text-white'
-
-        : 'bg-white hover:bg-slate-200 text-slate-800'
-    }
-
-  `
+  const mobileLinkClass = (
+    path: string
+  ) =>
+    pathname === path
+      ? 'erp-mobile-link erp-mobile-link-active'
+      : 'erp-mobile-link'
 
   return (
 
@@ -187,31 +216,41 @@ async function handleLogout(){
 
       </head>
 
-      <body className="bg-slate-100">
+      <body>
 
         <Toaster position="top-right" />
 
-        <div className="min-h-screen flex flex-col">
+        <div className="erp-shell flex flex-col">
 
           {/* DESKTOP NAVBAR */}
 
-          <div className="hidden md:block">
+          <div className="hidden md:block sticky top-0 z-[200] bg-white/95 border-b border-slate-200 shadow-sm">
 
-          <nav className="flex items-center justify-between w-full px-8 py-3">
+          <nav className="erp-topbar relative z-[210] flex items-center justify-between gap-6 px-8 py-3">
 
-  <div className="flex items-center gap-8">
+  <div className="flex items-center gap-3">
+
+    <div className="flex items-center gap-3 pr-3">
+
+      <div className="erp-brand-mark">
+        KM
+      </div>
+
+      <div>
+        <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-400">
+          Manufacturing ERP
+        </p>
+
+        <p className="text-sm font-bold text-slate-900">
+          KM Factory
+        </p>
+      </div>
+
+    </div>
 
     <Link
       href="/"
-      className={`
-        text-sm font-semibold
-        pb-1 border-b-2 transition
-        ${
-          pathname === '/'
-            ? 'border-slate-900 text-slate-900'
-            : 'border-transparent text-slate-600 hover:text-slate-900'
-        }
-      `}
+      className={navLinkClass('/')}
     >
       Dashboard
     </Link>
@@ -219,54 +258,54 @@ async function handleLogout(){
     {(role === 'Admin' ||
       role === 'production') && (
 
-      <div className="relative group py-3">
+      <div className="relative group py-3 z-[220]">
 
-        <button className="text-sm font-semibold text-slate-600 hover:text-slate-900">
+        <button className={navButtonClass(productionRoutes)}>
 
           Production ▾
 
         </button>
 
-        <div className="absolute top-8 left-0 mt-0 hidden group-hover:flex flex-col bg-white shadow-xl rounded-xl min-w-[220px] border border-slate-200 overflow-hidden z-50">
+        <div className="erp-dropdown absolute top-full left-0 -mt-1 hidden group-hover:flex flex-col z-[230]">
 
           <Link
             href="/production-entry"
-            className="px-4 py-3 hover:bg-slate-100"
+            className={dropdownLinkClass('/production-entry')}
           >
             Production Entry
           </Link>
 
           <Link
             href="/recent-entries"
-            className="px-4 py-3 hover:bg-slate-100"
+            className={dropdownLinkClass('/recent-entries')}
           >
             Recent Production
           </Link>
 
           <Link
             href="/reports"
-            className="px-4 py-3 hover:bg-slate-100"
+            className={dropdownLinkClass('/reports')}
           >
             Production Reports
           </Link>
 
           <Link
   href="/opening-stock"
-  className="px-4 py-3 hover:bg-slate-100"
+  className={dropdownLinkClass('/opening-stock')}
 >
   Opening Stock Master
 </Link>
 
 <Link
   href="/bag-name-master"
-  className="px-4 py-3 hover:bg-slate-100"
+  className={dropdownLinkClass('/bag-name-master')}
 >
   Bag Name Master
 </Link>
 
 <Link
   href="/monthly-labour-report"
-  className="px-4 py-3 hover:bg-slate-100"
+  className={dropdownLinkClass('/monthly-labour-report')}
 >
   Monthly Labour Report
 </Link>
@@ -280,54 +319,54 @@ async function handleLogout(){
 
     {canAccessDispatch && (
 
-      <div className="relative group py-3">
+      <div className="relative group py-3 z-[220]">
 
-        <button className="text-sm font-semibold text-slate-600 hover:text-slate-900">
+        <button className={navButtonClass(dispatchRoutes)}>
 
           Dispatch ▾
 
         </button>
 
-        <div className="absolute top-8 left-0 mt-0 hidden group-hover:flex flex-col bg-white shadow-xl rounded-xl min-w-[220px] border border-slate-200 overflow-hidden z-50">
+        <div className="erp-dropdown absolute top-full left-0 -mt-1 hidden group-hover:flex flex-col z-[230]">
 
           <Link
             href="/dispatch"
-            className="px-4 py-3 hover:bg-slate-100"
+            className={dropdownLinkClass('/dispatch')}
           >
             Dispatch Entry
           </Link>
 
           <Link
             href="/recent-dispatch"
-            className="px-4 py-3 hover:bg-slate-100"
+            className={dropdownLinkClass('/recent-dispatch')}
           >
             Recent Dispatch
           </Link>
 
           <Link
             href="/dispatch-reports"
-            className="px-4 py-3 hover:bg-slate-100"
+            className={dropdownLinkClass('/dispatch-reports')}
           >
             Dispatch Reports
           </Link>
 
           <Link
   href="/credit-debit"
-  className="px-4 py-3 hover:bg-slate-100"
+  className={dropdownLinkClass('/credit-debit')}
 >
   Credit / Debit Entry
 </Link>
 
 <Link
   href="/credit-debit-reports"
-  className="px-4 py-3 hover:bg-slate-100"
+  className={dropdownLinkClass('/credit-debit-reports')}
 >
   Credit / Debit Reports
 </Link>
 
 <Link
   href="/recent-credit-debit"
-  className="px-4 py-3 hover:bg-slate-100"
+  className={dropdownLinkClass('/recent-credit-debit')}
 >
   Recent Credit / Debit
 </Link>
@@ -343,14 +382,16 @@ async function handleLogout(){
   <button
     onClick={handleLogout}
     className="
+      min-h-10
       px-4 py-2
-      rounded-xl
-      bg-red-500
-      text-white
+      rounded-full
+      border
+      border-red-100
+      bg-red-50
+      text-red-700
       text-sm
-      font-medium
-      hover:bg-red-600
-      transition
+      font-bold
+      hover:bg-red-100
     "
   >
     Logout
@@ -363,14 +404,14 @@ async function handleLogout(){
 
           {!isLoginPage && (
 
-<header className="md:hidden bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm">
+<header className="erp-mobile-header md:hidden border-b border-slate-200 sticky top-0 z-50 shadow-sm">
 
   <div className="flex items-center justify-between px-4 py-4">
 
     <div>
 
       <p className="text-slate-500 text-xs">
-        Production Management
+        Manufacturing ERP
       </p>
 
       <h1 className="text-xl font-bold text-slate-900">
@@ -401,11 +442,14 @@ async function handleLogout(){
       
       }}
       className="
-        text-2xl
+        text-sm
+        font-bold
         px-3
-        py-1
-        rounded-lg
+        py-2
+        rounded-xl
         bg-slate-100
+        border
+        border-slate-200
       "
     >
       ☰
@@ -415,7 +459,7 @@ async function handleLogout(){
 
   {mobileMenuOpen && (
 
-    <div className="border-t border-slate-200 bg-white">
+    <div className="border-t border-slate-200 bg-white shadow-xl">
 
       <Link
         href="/"
@@ -425,7 +469,7 @@ async function handleLogout(){
           setInventoryOpen(false)
           setDispatchOpen(false)
         }}
-        className="block px-4 py-3 border-b"
+        className={mobileLinkClass('/')}
       >
         Dashboard
       </Link>
@@ -443,7 +487,7 @@ async function handleLogout(){
 
   setDispatchOpen(false)}
             }
-            className="w-full text-left px-4 py-3 border-b font-medium"
+            className="erp-mobile-link w-full text-left"
           >
             Production ▼
           </button>
@@ -457,7 +501,7 @@ async function handleLogout(){
                 onClick={()=>{
                   setMobileMenuOpen(false)
                 }}
-                className="block px-8 py-3 border-b"
+                className={mobileLinkClass('/production-entry')}
               >
                 Production Entry
               </Link>
@@ -467,7 +511,7 @@ async function handleLogout(){
                 onClick={()=>{
                   setMobileMenuOpen(false)
                 }}
-                className="block px-8 py-3 border-b"
+                className={mobileLinkClass('/recent-entries')}
               >
                 Recent Production
               </Link>
@@ -477,7 +521,7 @@ async function handleLogout(){
                 onClick={()=>{
                   setMobileMenuOpen(false)
                 }}
-                className="block px-8 py-3 border-b"
+                className={mobileLinkClass('/reports')}
               >
                 Production Reports
               </Link>
@@ -487,7 +531,7 @@ async function handleLogout(){
   onClick={()=>{
     setMobileMenuOpen(false)
   }}
-  className="block px-8 py-3 border-b"
+  className={mobileLinkClass('/opening-stock')}
 >
   Opening Stock Master
 </Link>
@@ -498,7 +542,7 @@ async function handleLogout(){
     setMobileMenuOpen(false)
     setProductionOpen(false)
   }}
-  className="block px-8 py-3 border-b"
+  className={mobileLinkClass('/monthly-labour-report')}
 >
   Labour Report
 </Link>
@@ -524,7 +568,7 @@ async function handleLogout(){
 
   setInventoryOpen(false)
             }}
-            className="w-full text-left px-4 py-3 border-b font-medium"
+            className="erp-mobile-link w-full text-left"
           >
             Dispatch ▼
           </button>
@@ -538,7 +582,7 @@ async function handleLogout(){
                 onClick={()=>{
                   setMobileMenuOpen(false)
                 }}
-                className="block px-8 py-3 border-b"
+                className={mobileLinkClass('/dispatch')}
               >
                 Dispatch Entry
               </Link>
@@ -548,7 +592,7 @@ async function handleLogout(){
                 onClick={()=>{
                   setMobileMenuOpen(false)
                 }}
-                className="block px-8 py-3 border-b"
+                className={mobileLinkClass('/recent-dispatch')}
               >
                 Recent Dispatch
               </Link>
@@ -558,7 +602,7 @@ async function handleLogout(){
                 onClick={()=>{
                   setMobileMenuOpen(false)
                 }}
-                className="block px-8 py-3 border-b"
+                className={mobileLinkClass('/dispatch-reports')}
               >
                 Dispatch Reports
               </Link>
@@ -568,7 +612,7 @@ async function handleLogout(){
   onClick={()=>{
     setMobileMenuOpen(false)
   }}
-  className="block px-8 py-3 border-b"
+  className={mobileLinkClass('/credit-debit')}
 >
   Credit / Debit Entry
 </Link>
@@ -578,7 +622,7 @@ async function handleLogout(){
   onClick={()=>{
     setMobileMenuOpen(false)
   }}
-  className="block px-8 py-3 border-b"
+  className={mobileLinkClass('/credit-debit-reports')}
 >
   Credit / Debit Reports
 </Link>
@@ -588,7 +632,7 @@ async function handleLogout(){
   onClick={()=>{
     setMobileMenuOpen(false)
   }}
-  className="block px-8 py-3 border-b"
+  className={mobileLinkClass('/recent-credit-debit')}
 >
   Recent Credit / Debit
 </Link>
@@ -608,8 +652,9 @@ async function handleLogout(){
           text-left
           px-4
           py-3
-          bg-red-500
-          text-white
+          bg-red-50
+          text-red-700
+          font-bold
         "
       >
         Logout

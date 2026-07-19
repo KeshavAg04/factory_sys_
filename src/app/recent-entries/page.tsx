@@ -2,6 +2,11 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '@/lib/supabase'
+import {
+  findProductionRate,
+  getProductionRate,
+  RateMasterRow,
+} from '@/lib/productionRate'
 import toast from 'react-hot-toast'
 import RoleGuard
 from '@/components/RoleGuard'
@@ -49,18 +54,64 @@ export default function RecentEntriesPage() {
   const [editData, setEditData] =
     useState<any>({})
 
-    useEffect(() => {
+  const [meshes, setMeshes] =
+    useState<string[]>([])
 
-      const factory =
-        localStorage.getItem(
-          'userFactory'
-        ) || ''
-    
-      setUserFactory(factory)
-    
-      fetchEntries(factory)
-    
-    }, [])
+  const [bagTypes, setBagTypes] =
+    useState<string[]>([])
+
+  const [bagNames, setBagNames] =
+    useState<
+      { id: string; bag_name: string }[]
+    >([])
+
+  const [rates, setRates] =
+    useState<RateMasterRow[]>([])
+
+    const fetchMasters = async () => {
+
+      const [meshRes, bagTypeRes, bagNameRes, rateRes] =
+        await Promise.all([
+          supabase
+            .from('rate_master')
+            .select('mesh'),
+          supabase
+            .from('rate_master')
+            .select('bag_type'),
+          supabase
+            .from('bag_name_master')
+            .select('*'),
+          supabase
+            .from('rate_master')
+            .select('*'),
+        ])
+
+      setMeshes([
+        ...new Set(
+          (meshRes.data || []).map(
+            (item: { mesh: string }) =>
+              item.mesh
+          )
+        ),
+      ])
+
+      setBagTypes([
+        ...new Set(
+          (bagTypeRes.data || []).map(
+            (item: { bag_type: string }) =>
+              item.bag_type
+          )
+        ),
+      ])
+
+      setBagNames(
+        bagNameRes.data || []
+      )
+
+      setRates(
+        rateRes.data || []
+      )
+    }
 
     const fetchEntries = async (
       factoryFilter = ''
@@ -98,6 +149,21 @@ export default function RecentEntriesPage() {
 
     setLoading(false)
   }
+
+    useEffect(() => {
+
+      const factory =
+        localStorage.getItem(
+          'userFactory'
+        ) || ''
+
+      setUserFactory(factory)
+
+      fetchEntries(factory)
+
+      fetchMasters()
+
+    }, [])
 
   // FILTER VALUES
 
@@ -224,17 +290,110 @@ export default function RecentEntriesPage() {
     })
   }
 
+  const updateEditData = (
+    updates: Record<
+      string,
+      string | number
+    >
+  ) => {
+
+    const nextData = {
+      ...editData,
+      ...updates,
+    }
+
+    const shouldRecalculate =
+      Object.prototype.hasOwnProperty.call(
+        updates,
+        'quantity'
+      ) ||
+      Object.prototype.hasOwnProperty.call(
+        updates,
+        'mesh'
+      ) ||
+      Object.prototype.hasOwnProperty.call(
+        updates,
+        'bag_type'
+      )
+
+    if (shouldRecalculate) {
+
+      const currentRate =
+        findProductionRate(
+          rates,
+          nextData.mesh,
+          nextData.bag_type
+        )
+
+      if (currentRate !== null) {
+
+        nextData.rate =
+          currentRate
+
+        nextData.amount =
+          Number(
+            nextData.quantity || 0
+          ) * currentRate
+
+      } else {
+
+        nextData.rate = 0
+
+        nextData.amount = 0
+      }
+    }
+
+    setEditData(nextData)
+  }
+
   const saveEdit = async () => {
+
+    const currentRate =
+      await getProductionRate(
+        supabase,
+        editData.mesh,
+        editData.bag_type
+      )
+
+    if (currentRate === null) {
+
+      toast.error(
+        'Rate not found for selected Mesh & Bag Type'
+      )
+
+      return
+    }
 
     const amount =
       Number(editData.quantity || 0) *
-      Number(editData.rate || 0)
+      currentRate
 
     const { error } =
       await supabase
         .from('production_entries')
         .update({
-          ...editData,
+          production_date:
+            editData.production_date,
+          factory:
+            editData.factory,
+          machine:
+            editData.machine,
+          labour_name:
+            editData.labour_name,
+          shift:
+            editData.shift,
+          mesh:
+            editData.mesh,
+          bag_type:
+            editData.bag_type,
+          bag_name:
+            editData.bag_name,
+          quantity:
+            Number(
+              editData.quantity || 0
+            ),
+          rate:
+            currentRate,
           amount,
         })
         .eq('id', editingId)
@@ -247,7 +406,7 @@ export default function RecentEntriesPage() {
 
       setEditingId(null)
 
-      fetchEntries()
+      fetchEntries(userFactory)
     }
   }
 
@@ -600,33 +759,169 @@ allowedRoles={[
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
-                {Object.keys(editData).map((key) => {
-                  
-                  if (
-                    key === 'id' ||
-                    key === 'created_at'
-                  ) return null
-                  
-                  return (
-                    
-                    <input
-                    key={key}
-                    value={
-                      editData[key] ?? ''
-                    }
-                    onChange={(e) =>
-                      setEditData({
-                        ...editData,
-                        [key]:
+                <input
+                  type="date"
+                  value={editData.production_date || ''}
+                  onChange={(e) =>
+                    updateEditData({
+                      production_date:
                         e.target.value,
-                      })
-                    }
-                    placeholder={key}
-                    className="border border-slate-200 p-3 rounded-2xl"
-                    />
-                    
-                  )
-                })}
+                    })
+                  }
+                  className="border border-slate-200 p-3 rounded-2xl"
+                />
+
+                <input
+                  value={editData.factory || ''}
+                  onChange={(e) =>
+                    updateEditData({
+                      factory:
+                        e.target.value,
+                    })
+                  }
+                  placeholder="Factory"
+                  className="border border-slate-200 p-3 rounded-2xl"
+                />
+
+                <input
+                  value={editData.machine || ''}
+                  onChange={(e) =>
+                    updateEditData({
+                      machine:
+                        e.target.value,
+                    })
+                  }
+                  placeholder="Machine"
+                  className="border border-slate-200 p-3 rounded-2xl"
+                />
+
+                <input
+                  value={editData.labour_name || ''}
+                  onChange={(e) =>
+                    updateEditData({
+                      labour_name:
+                        e.target.value,
+                    })
+                  }
+                  placeholder="Labour Name"
+                  className="border border-slate-200 p-3 rounded-2xl"
+                />
+
+                <select
+                  value={editData.shift || ''}
+                  onChange={(e) =>
+                    updateEditData({
+                      shift:
+                        e.target.value,
+                    })
+                  }
+                  className="border border-slate-200 p-3 rounded-2xl"
+                >
+                  <option value="Day">
+                    Day
+                  </option>
+                  <option value="Night">
+                    Night
+                  </option>
+                </select>
+
+                <select
+                  value={editData.mesh || ''}
+                  onChange={(e) =>
+                    updateEditData({
+                      mesh:
+                        e.target.value,
+                    })
+                  }
+                  className="border border-slate-200 p-3 rounded-2xl"
+                >
+                  <option value="">
+                    Select Mesh
+                  </option>
+                  {meshes.map((mesh) => (
+                    <option
+                      key={mesh}
+                      value={mesh}
+                    >
+                      {mesh}
+                    </option>
+                  ))}
+                </select>
+
+                <select
+                  value={editData.bag_type || ''}
+                  onChange={(e) =>
+                    updateEditData({
+                      bag_type:
+                        e.target.value,
+                    })
+                  }
+                  className="border border-slate-200 p-3 rounded-2xl"
+                >
+                  <option value="">
+                    Select Bag Type
+                  </option>
+                  {bagTypes.map((bagType) => (
+                    <option
+                      key={bagType}
+                      value={bagType}
+                    >
+                      {bagType}
+                    </option>
+                  ))}
+                </select>
+
+                <select
+                  value={editData.bag_name || ''}
+                  onChange={(e) =>
+                    updateEditData({
+                      bag_name:
+                        e.target.value,
+                    })
+                  }
+                  className="border border-slate-200 p-3 rounded-2xl"
+                >
+                  <option value="">
+                    Select Bag Name
+                  </option>
+                  {bagNames.map((bag) => (
+                    <option
+                      key={bag.id}
+                      value={bag.bag_name}
+                    >
+                      {bag.bag_name}
+                    </option>
+                  ))}
+                </select>
+
+                <input
+                  type="number"
+                  value={editData.quantity || ''}
+                  onChange={(e) =>
+                    updateEditData({
+                      quantity:
+                        e.target.value,
+                    })
+                  }
+                  placeholder="Quantity"
+                  className="border border-slate-200 p-3 rounded-2xl"
+                />
+
+                <input
+                  type="number"
+                  value={editData.rate || 0}
+                  readOnly
+                  placeholder="Rate"
+                  className="border border-slate-200 bg-slate-100 p-3 rounded-2xl"
+                />
+
+                <input
+                  type="number"
+                  value={editData.amount || 0}
+                  readOnly
+                  placeholder="Amount"
+                  className="border border-slate-200 bg-slate-100 p-3 rounded-2xl"
+                />
 
               </div>
 

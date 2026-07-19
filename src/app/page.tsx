@@ -9,6 +9,9 @@ import {
 import { useRouter }
 from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import {
+  groupByFinancialYearAndMonth,
+} from '@/lib/financialYear'
 
 export default function DashboardPage() {
 
@@ -25,6 +28,12 @@ useState<any[]>([])
 
 const [userFactory,setUserFactory] =
 useState('')
+
+const [expandedProductionFY,setExpandedProductionFY] =
+useState<Record<string,boolean>>({})
+
+const [expandedDispatchFY,setExpandedDispatchFY] =
+useState<Record<string,boolean>>({})
   
 
   useEffect(() => {
@@ -398,6 +407,44 @@ item.qty
 1
 )
 
+const productionFinancialYears =
+useMemo(
+()=>
+groupByFinancialYearAndMonth(
+monthlyTrend as any[],
+(item:any)=>
+`${item.month}-01`
+),
+[
+monthlyTrend
+]
+)
+
+const dispatchFinancialYears =
+useMemo(
+()=>
+groupByFinancialYearAndMonth(
+monthlyDispatchTrend as any[],
+(item:any)=>
+`${item.month}-01`
+),
+[
+monthlyDispatchTrend
+]
+)
+
+function isProductionFYExpanded(
+key:string
+){
+return expandedProductionFY[key] ?? true
+}
+
+function isDispatchFYExpanded(
+key:string
+){
+return expandedDispatchFY[key] ?? true
+}
+
   const bagWise =
     Object.values(
 
@@ -631,41 +678,110 @@ item.qty
           Monthly Production Trend
         </h2>
 
-        <div className='flex items-end gap-4 h-[320px] pt-12 overflow-x-auto'>
+        <div className='space-y-4'>
 
           {
-            monthlyTrend.map(
-              (item: any) => (
+            productionFinancialYears.map(
+              (fy:any) => {
 
-                <div
-  key={item.month}
-  className='flex flex-col items-center min-w-[80px]'
->
+                const fyTotal =
+                  fy.months.reduce(
+                    (sum:any,month:any)=>
+                    sum +
+                    month.items.reduce(
+                      (monthSum:any,item:any)=>
+                      monthSum +
+                      Number(item.tons || 0),
+                      0
+                    ),
+                    0
+                  )
 
-<div
-className='text-xs font-semibold text-slate-700 mb-2 h-5'
->
-{item.tons.toFixed(1)}
-</div>
+                const expanded =
+                  isProductionFYExpanded(
+                    fy.key
+                  )
 
-  <div
-    className='w-full rounded-t-xl bg-blue-300 hover:bg-blue-400 transition'
-    style={{
-      height:
-`${Math.max(
-(item.tons / maxProductionValue) * 250,
-30
-)}px`
-    }}
-  />
+                return (
 
-  <p className='text-sm mt-3 text-slate-600'>
-    {item.month}
-  </p>
+                  <div
+                    key={fy.key}
+                    className='border border-slate-200 rounded-2xl overflow-hidden bg-slate-50'
+                  >
 
-</div>
+                    <button
+                      onClick={()=>
+                        setExpandedProductionFY(
+                          prev=>({
+                            ...prev,
+                            [fy.key]:
+                            !expanded
+                          })
+                        )
+                      }
+                      className='w-full flex items-center justify-between gap-4 px-5 py-4 text-left bg-slate-100 hover:bg-slate-200'
+                    >
 
-              )
+                      <span className='text-lg font-bold text-slate-900'>
+                        {expanded ? 'v' : '>'} {fy.label}
+                      </span>
+
+                      <span className='text-sm font-semibold text-slate-600'>
+                        {fyTotal.toFixed(2)} Ton
+                      </span>
+
+                    </button>
+
+                    {expanded && (
+
+                      <div className='flex items-end gap-5 min-h-[340px] px-5 pb-6 pt-8 overflow-x-auto bg-white'>
+
+                        {
+                          fy.months.map(
+                            (month:any) => {
+
+                              const item =
+                                month.items[0]
+
+                              return (
+
+                                <div
+                                  key={month.key}
+                                  className='flex flex-col items-center justify-end min-w-[120px]'
+                                >
+
+                                  <div className='text-xs font-semibold text-slate-700 mb-2 h-6 leading-6'>
+                                    {item.tons.toFixed(1)}
+                                  </div>
+
+                                  <div
+                                    className='w-full rounded-t-xl bg-blue-300 hover:bg-blue-400 transition'
+                                    style={{
+                                      height:
+                                      `${Math.max(
+                                      (item.tons / maxProductionValue) * 210,
+                                      30
+                                      )}px`
+                                    }}
+                                  />
+
+                                  <p className='text-sm mt-3 text-slate-600 text-center leading-5 min-h-10'>
+                                    {month.label}
+                                  </p>
+
+                                </div>
+                              )
+                            }
+                          )
+                        }
+
+                      </div>
+
+                    )}
+
+                  </div>
+                )
+              }
             )
           }
 
@@ -680,39 +796,110 @@ className='text-xs font-semibold text-slate-700 mb-2 h-5'
     Monthly Dispatch Trend
   </h2>
 
-  <div className='flex items-end gap-4 h-[320px] overflow-x-auto'>
+  <div className='space-y-4'>
 
     {
-      monthlyDispatchTrend.map(
-        (item:any)=>(
-          
-          <div
-  key={item.month}
-  className='flex flex-col items-center min-w-[80px]'
->
+      dispatchFinancialYears.map(
+        (fy:any)=>{
 
-  <p className='text-xs font-semibold text-slate-700 mb-2'>
-    {Number(item.qty).toFixed(2)}
-  </p>
+          const fyTotal =
+            fy.months.reduce(
+              (sum:any,month:any)=>
+              sum +
+              month.items.reduce(
+                (monthSum:any,item:any)=>
+                monthSum +
+                Number(item.qty || 0),
+                0
+              ),
+              0
+            )
 
-  <div
-    className='w-full rounded-t-xl bg-green-300 hover:bg-green-400 transition'
-    style={{
-      height:
-`${Math.max(
-(item.qty / maxDispatchValue) * 250,
-30
-)}px`
-    }}
-  />
+          const expanded =
+            isDispatchFYExpanded(
+              fy.key
+            )
 
-  <p className='text-sm mt-3 text-slate-600'>
-    {item.month}
-  </p>
+          return (
 
-</div>
+            <div
+              key={fy.key}
+              className='border border-slate-200 rounded-2xl overflow-hidden bg-slate-50'
+            >
 
-        )
+              <button
+                onClick={()=>
+                  setExpandedDispatchFY(
+                    prev=>({
+                      ...prev,
+                      [fy.key]:
+                      !expanded
+                    })
+                  )
+                }
+                className='w-full flex items-center justify-between gap-4 px-5 py-4 text-left bg-slate-100 hover:bg-slate-200'
+              >
+
+                <span className='text-lg font-bold text-slate-900'>
+                  {expanded ? 'v' : '>'} {fy.label}
+                </span>
+
+                <span className='text-sm font-semibold text-slate-600'>
+                  {Number(fyTotal).toFixed(2)} Ton
+                </span>
+
+              </button>
+
+              {expanded && (
+
+                <div className='flex items-end gap-5 min-h-[340px] px-5 pb-6 pt-8 overflow-x-auto bg-white'>
+
+                  {
+                    fy.months.map(
+                      (month:any)=>{
+
+                        const item =
+                          month.items[0]
+
+                        return (
+
+                          <div
+                            key={month.key}
+                            className='flex flex-col items-center justify-end min-w-[120px]'
+                          >
+
+                            <p className='text-xs font-semibold text-slate-700 mb-2 h-6 leading-6'>
+                              {Number(item.qty).toFixed(2)}
+                            </p>
+
+                            <div
+                              className='w-full rounded-t-xl bg-green-300 hover:bg-green-400 transition'
+                              style={{
+                                height:
+                                `${Math.max(
+                                (item.qty / maxDispatchValue) * 210,
+                                30
+                                )}px`
+                              }}
+                            />
+
+                            <p className='text-sm mt-3 text-slate-600 text-center leading-5 min-h-10'>
+                              {month.label}
+                            </p>
+
+                          </div>
+                        )
+                      }
+                    )
+                  }
+
+                </div>
+
+              )}
+
+            </div>
+          )
+        }
       )
     }
 

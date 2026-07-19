@@ -1,8 +1,11 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { Fragment, useEffect, useMemo, useState } from 'react'
 import * as XLSX from 'xlsx'
 import { supabase } from '@/lib/supabase'
+import {
+groupByFinancialYearAndMonth
+} from '@/lib/financialYear'
 import RoleGuard
 from '@/components/RoleGuard'
 
@@ -23,6 +26,8 @@ const [toDate,setToDate]=useState('')
 const [period,setPeriod]=useState('month')
 const [userFactory,setUserFactory] =
 useState('')
+const [expandedFinancialYears,setExpandedFinancialYears] =
+useState<Record<string,boolean>>({})
 
 useEffect(()=>{
 
@@ -151,6 +156,23 @@ const totalQty=filtered.reduce((a,b)=>a+Number(b.quantity||0),0)
 const totalAmount=filtered.reduce((a,b)=>a+Number(b.amount||0),0)
 const totalTons=filtered.reduce((a,b)=>a+tons(b.bag_type,Number(b.quantity||0)),0)
 const totalEntries = filtered.length
+
+const financialYearGroups =
+useMemo(
+()=>groupByFinancialYearAndMonth(
+filtered,
+(entry:any)=>entry.production_date
+),
+[
+filtered
+]
+)
+
+function isFinancialYearExpanded(
+key:string
+){
+return expandedFinancialYears[key] ?? true
+}
 
 const summary=Object.values(filtered.reduce((acc:any,e)=>{
  let key=''
@@ -387,7 +409,7 @@ Factory
 
 {mode==='summary' && <div className='bg-white rounded-3xl p-4 md:p-6 overflow-x-auto'><table className='min-w-[900px] w-full text-sm'><thead className='bg-slate-100'><tr className='text-left'><th className='p-4'>Category</th><th className='p-4'>Bags</th><th className='p-4'>Goods(T)</th><th className='p-4'>Amount</th></tr></thead><tbody>{summary.map((r:any)=><tr key={r.name} className='border-b'><td className='p-4'>{r.name}</td><td className='p-4'>{r.qty}</td><td className='p-4'>{r.tons.toFixed(2)}</td><td className='p-4'>₹{r.amount}</td></tr>)}</tbody></table></div>}
 
-{mode==='detailed' && <div className='bg-white rounded-3xl overflow-x-auto'><table className='min-w-[1200px] w-full text-sm'><thead className='bg-slate-100'><tr className='text-left'><th className='p-4'>Date</th><th className='p-4'>Factory</th><th className='p-4'>Machine</th><th className='p-4'>Labour</th><th className='p-4'>Shift</th><th className='p-4'>Mesh</th><th className='p-4'>Bag</th><th className='p-4'>Qty</th><th className='p-4'>Goods(T)</th><th className='p-4'>Rate</th><th className='p-4'>Amount</th></tr></thead><tbody>{filtered.map(e=><tr key={e.id} className='border-b'><td className='p-4'>{e.production_date}</td><td className='p-4'>{e.factory}</td><td className='p-4'>{e.machine}</td><td className='p-4'>{e.labour_name}</td><td className='p-4'>{e.shift}</td><td className='p-4'>{e.mesh}</td><td className='p-4'>{e.bag_name}</td><td className='p-4'>{e.quantity}</td><td className='p-4'>{tons(e.bag_type,Number(e.quantity)).toFixed(2)}</td><td className='p-4'>₹{e.rate}</td><td className='p-4'>₹{Number(e.amount || 0).toFixed(2)}</td></tr>)}</tbody></table></div>}
+{mode==='detailed' && <div className='bg-white rounded-3xl overflow-x-auto'><table className='min-w-[1200px] w-full text-sm'><thead className='bg-slate-100'><tr className='text-left'><th className='p-4'>Date</th><th className='p-4'>Factory</th><th className='p-4'>Machine</th><th className='p-4'>Labour</th><th className='p-4'>Shift</th><th className='p-4'>Mesh</th><th className='p-4'>Bag</th><th className='p-4'>Qty</th><th className='p-4'>Goods(T)</th><th className='p-4'>Rate</th><th className='p-4'>Amount</th></tr></thead><tbody>{financialYearGroups.map((fy:any)=>{const expanded=isFinancialYearExpanded(fy.key);return <Fragment key={fy.key}><tr className='bg-slate-200'><td colSpan={11} className='p-4'><button onClick={()=>setExpandedFinancialYears(prev=>({...prev,[fy.key]:!expanded}))} className='font-bold text-slate-900'>{expanded?'v':'>'} {fy.label}</button></td></tr>{expanded && fy.months.map((month:any)=><Fragment key={month.key}><tr className='bg-slate-50'><td colSpan={11} className='p-4 font-semibold text-slate-700'>{month.label}</td></tr>{month.items.map((e:any)=><tr key={e.id} className='border-b'><td className='p-4'>{e.production_date}</td><td className='p-4'>{e.factory}</td><td className='p-4'>{e.machine}</td><td className='p-4'>{e.labour_name}</td><td className='p-4'>{e.shift}</td><td className='p-4'>{e.mesh}</td><td className='p-4'>{e.bag_name}</td><td className='p-4'>{e.quantity}</td><td className='p-4'>{tons(e.bag_type,Number(e.quantity)).toFixed(2)}</td><td className='p-4'>₹{e.rate}</td><td className='p-4'>₹{Number(e.amount || 0).toFixed(2)}</td></tr>)}</Fragment>)}</Fragment>})}</tbody></table></div>}
 </RoleGuard>
 </div>
 
