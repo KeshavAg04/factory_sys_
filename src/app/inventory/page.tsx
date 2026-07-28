@@ -552,7 +552,7 @@ disabled:cursor-not-allowed
         </p>
         
         <h1 className="text-3xl font-bold">
-        {totalEmptyStock.toLocaleString()}
+        {totalEmptyStock.toLocaleString('en-IN')}
         </h1>
         
         </div>
@@ -564,7 +564,10 @@ disabled:cursor-not-allowed
         </p>
         
         <h1 className="text-3xl font-bold">
-        {Number(totalFinishedStock).toFixed(2)}
+        {Number(totalFinishedStock).toLocaleString('en-IN', {
+        minimumFractionDigits:2,
+        maximumFractionDigits:2
+        })}
         </h1>
         
         </div>

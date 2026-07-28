@@ -507,29 +507,41 @@ async function deleteEntry(
         
         </select>
         
-        <select
-        value={typeFilter}
-        onChange={e=>
+        <div className='border rounded-xl p-1 grid grid-cols-3 gap-1'>
+        {[
+        {
+        label:'All',
+        value:''
+        },
+        {
+        label:'Credit',
+        value:'Credit Note'
+        },
+        {
+        label:'Debit',
+        value:'Debit Note'
+        }
+        ].map(
+        option=>(
+        <button
+        key={option.label}
+        type='button'
+        onClick={()=>
         setTypeFilter(
-        e.target.value
+        option.value
         )
         }
-        className='border rounded-xl p-3'
+        className={`rounded-lg px-2 py-2 text-sm font-semibold transition ${
+        typeFilter === option.value
+        ? 'bg-slate-900 text-white'
+        : 'text-slate-600 hover:bg-slate-100'
+        }`}
         >
-        
-        <option value=''>
-        All Types
-        </option>
-        
-        <option>
-        Credit Note
-        </option>
-        
-        <option>
-        Debit Note
-        </option>
-        
-        </select>
+        {option.label}
+        </button>
+        )
+        )}
+        </div>
         
         <input
         type='date'

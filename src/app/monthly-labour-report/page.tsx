@@ -562,20 +562,20 @@ border-slate-100
 </td>
 
 <td className="p-4 text-right">
-₹{row.rate}
+₹{Number(row.rate || 0).toLocaleString('en-IN')}
 </td>
 
 <td className="p-4 text-right">
 {
 row.quantity
-.toLocaleString()
+.toLocaleString('en-IN')
 }
 </td>
 
 <td className="p-4 text-right font-semibold">
 ₹{
 row.amount
-.toLocaleString()
+.toLocaleString('en-IN')
 }
 </td>
 
@@ -603,7 +603,7 @@ rows.reduce(
 a+b.quantity,
 
 0
-).toLocaleString()
+).toLocaleString('en-IN')
 }
 
 </td>
@@ -617,7 +617,7 @@ rows.reduce(
 a+b.amount,
 
 0
-).toLocaleString()
+).toLocaleString('en-IN')
 }
 
 </td>
@@ -725,7 +725,7 @@ Total Labour Amount
 
 <h1 className="text-3xl font-bold">
 ₹{
-totalAmount.toLocaleString()
+totalAmount.toLocaleString('en-IN')
 }
 </h1>
 
@@ -739,7 +739,7 @@ Total Bags
 
 <h1 className="text-3xl font-bold">
 {
-totalQuantity.toLocaleString()
+totalQuantity.toLocaleString('en-IN')
 }
 </h1>
 
@@ -771,3 +771,4 @@ totalLabours
 )
 
 }
+

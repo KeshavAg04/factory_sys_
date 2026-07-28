@@ -688,7 +688,7 @@ allowedRoles={[
                   </td>
 
                   <td className="p-4 font-semibold">
-                    ₹{entry.amount}
+                    ₹{Number(entry.amount || 0).toLocaleString('en-IN')}
                   </td>
 
                   <td className="p-4 flex gap-2">

@@ -611,7 +611,7 @@ row.empty_stock || 0
 
 0
 )
-.toLocaleString()
+.toLocaleString('en-IN')
 }
 
 </h1>
@@ -638,7 +638,7 @@ row.finished_stock || 0
 
 0
 )
-.toLocaleString()
+.toLocaleString('en-IN')
 }
 
 </h1>
@@ -700,7 +700,7 @@ row.finished_stock || 0
     {
     Number(
     row.empty_stock
-    ).toLocaleString()
+    ).toLocaleString('en-IN')
     }
     </td>
     
@@ -708,7 +708,7 @@ row.finished_stock || 0
     {
     Number(
     row.finished_stock
-    ).toLocaleString()
+    ).toLocaleString('en-IN')
     }
     </td>
     

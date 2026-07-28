@@ -472,29 +472,41 @@ function exportExcel(
     
     </select>
     
-    <select
-    value={type}
-    onChange={e=>
+    <div className='border rounded-xl p-1 grid grid-cols-3 gap-1'>
+    {[
+    {
+    label:'All',
+    value:''
+    },
+    {
+    label:'Credit',
+    value:'Credit Note'
+    },
+    {
+    label:'Debit',
+    value:'Debit Note'
+    }
+    ].map(
+    option=>(
+    <button
+    key={option.label}
+    type='button'
+    onClick={()=>
     setType(
-    e.target.value
+    option.value
     )
     }
-    className='border rounded-xl p-3'
+    className={`rounded-lg px-2 py-2 text-sm font-semibold transition ${
+    type === option.value
+    ? 'bg-slate-900 text-white'
+    : 'text-slate-600 hover:bg-slate-100'
+    }`}
     >
-    
-    <option value=''>
-    All Types
-    </option>
-    
-    <option>
-    Credit Note
-    </option>
-    
-    <option>
-    Debit Note
-    </option>
-    
-    </select>
+    {option.label}
+    </button>
+    )
+    )}
+    </div>
     
     <input
     type='date'
@@ -529,7 +541,7 @@ function exportExcel(
     </p>
     
     <h1 className='text-3xl font-bold text-red-600'>
-    ₹{totalCreditNotes.toLocaleString()}
+    ₹{totalCreditNotes.toLocaleString('en-IN')}
     </h1>
     
     </div>
@@ -541,7 +553,7 @@ function exportExcel(
     </p>
     
     <h1 className='text-3xl font-bold text-green-600'>
-    ₹{totalDebitNotes.toLocaleString()}
+    ₹{totalDebitNotes.toLocaleString('en-IN')}
     </h1>
     
     </div>
@@ -553,7 +565,7 @@ function exportExcel(
     </p>
     
     <h1 className='text-3xl font-bold'>
-    ₹{netAdjustment.toLocaleString()}
+    ₹{netAdjustment.toLocaleString('en-IN')}
     </h1>
     
     </div>
@@ -705,7 +717,7 @@ className='border-b'
 <td className='p-4 font-semibold'>
 ₹{Number(
 e.amount || 0
-).toLocaleString()}
+).toLocaleString('en-IN')}
 </td>
 
 <td className='p-4'>

@@ -733,13 +733,13 @@ Vasuli
                       <td className="p-4">
 ₹{Number(
 entry.sales_rate || 0
-).toLocaleString()}
+).toLocaleString('en-IN')}
 </td>
 
 <td className="p-4 font-semibold text-blue-700">
 ₹{Number(
 entry.sales_amount || 0
-).toLocaleString()}
+).toLocaleString('en-IN')}
 </td>
 
                       <td className="p-4 font-semibold">
@@ -759,7 +759,10 @@ entry.sales_amount || 0
 </td>
 
 <td className="p-4">
-₹{Number(entry.lr_freight || 0).toFixed(2)}
+₹{Number(entry.lr_freight || 0).toLocaleString('en-IN', {
+minimumFractionDigits:2,
+maximumFractionDigits:2
+})}
 </td>
 
 <td className="p-4">
@@ -767,15 +770,24 @@ entry.sales_amount || 0
 </td>
 
 <td className="p-4">
-₹{Number(entry.freight_pmt || 0).toFixed(2)}
+₹{Number(entry.freight_pmt || 0).toLocaleString('en-IN', {
+minimumFractionDigits:2,
+maximumFractionDigits:2
+})}
 </td>
 
 <td className="p-4 font-semibold">
-₹{Number(entry.total_freight || 0).toFixed(2)}
+₹{Number(entry.total_freight || 0).toLocaleString('en-IN', {
+minimumFractionDigits:2,
+maximumFractionDigits:2
+})}
 </td>
 
 <td className="p-4">
-₹{Number(entry.loading_amount || 0).toFixed(2)}
+₹{Number(entry.loading_amount || 0).toLocaleString('en-IN', {
+minimumFractionDigits:2,
+maximumFractionDigits:2
+})}
 </td>
 
 <td className="p-4">
@@ -787,7 +799,10 @@ entry.loading_pending
 </td>
 
 <td className="p-4 font-semibold text-green-700">
-₹{Number(entry.vasuli || 0).toFixed(2)}
+₹{Number(entry.vasuli || 0).toLocaleString('en-IN', {
+minimumFractionDigits:2,
+maximumFractionDigits:2
+})}
 </td>
 
                       <td className="p-4">
