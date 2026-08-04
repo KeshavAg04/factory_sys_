@@ -12,6 +12,14 @@ import { supabase } from '@/lib/supabase'
 import {
   groupByFinancialYearAndMonth,
 } from '@/lib/financialYear'
+import {
+  EmptyState,
+  FilterPanel,
+  PageHeader,
+  PageShell,
+  StatCard,
+  SurfaceCard,
+} from '@/components/erp-ui'
 
 export default function DashboardPage() {
 
@@ -572,32 +580,24 @@ return expandedDispatchFY[key] ?? true
 
   return (
 
-    <div className='p-4 md:p-6 space-y-6'>
+    <PageShell className='space-y-6'>
 
       {/* HEADER */}
 
-      <div className='flex flex-col lg:flex-row justify-between gap-4'>
-
-        <div>
-          <p className='text-slate-500'>
-            Production Management
-          </p>
-
-          <h1 className='text-4xl font-bold text-slate-900'>
-            KM Factory
-          </h1>
-        </div>
-
-        <div className='flex gap-3'>
+      <PageHeader
+        eyebrow='Production Management'
+        title='KM Factory'
+        actions={
+        <>
 
           <button
             onClick={() =>
               setFilter('month')
             }
-            className={`px-6 py-3 rounded-xl border font-medium transition ${filter === 'month'
-                ? 'bg-slate-900 text-white'
-                : 'bg-white'
-              }`}
+            className={filter === 'month'
+                ? 'erp-btn-primary'
+                : 'erp-btn-secondary'
+              }
           >
             This Month
           </button>
@@ -606,24 +606,24 @@ return expandedDispatchFY[key] ?? true
             onClick={() =>
               setFilter('custom')
             }
-            className={`px-6 py-3 rounded-xl border font-medium transition ${filter === 'custom'
-                ? 'bg-slate-900 text-white'
-                : 'bg-white'
-              }`}
+            className={filter === 'custom'
+                ? 'erp-btn-primary'
+                : 'erp-btn-secondary'
+              }
           >
             Custom
           </button>
 
-        </div>
-
-      </div>
+        </>
+        }
+      />
 
       {/* CUSTOM DATES */}
 
       {
         filter === 'custom' && (
 
-          <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+          <FilterPanel className='grid grid-cols-1 md:grid-cols-2 gap-4'>
 
             <input
               type='date'
@@ -647,7 +647,7 @@ return expandedDispatchFY[key] ?? true
               className='border rounded-xl p-4 bg-white'
             />
 
-          </div>
+          </FilterPanel>
 
         )
       }
@@ -656,15 +656,21 @@ return expandedDispatchFY[key] ?? true
 
       <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
 
-        <Card
-          title='Goods Produced'
-          value={`${totalTons.toFixed(2)} Ton`}
+        <StatCard
+          label='Goods Produced'
+          value={totalTons.toFixed(2)}
+          unit='Ton'
+          support='Filtered production quantity'
+          tone='blue'
         />
 
 
-        <Card 
-          title='Goods Dispatched' 
-          value={`${Number(totalDispatchQty).toFixed(2)} Ton`}
+        <StatCard 
+          label='Goods Dispatched' 
+          value={Number(totalDispatchQty).toFixed(2)}
+          unit='Ton'
+          support='Filtered dispatch quantity'
+          tone='emerald'
         />
 
 
@@ -672,9 +678,9 @@ return expandedDispatchFY[key] ?? true
 
       {/* MONTHLY TREND */}
 
-      <div className='bg-white rounded-3xl border p-6 shadow-sm'>
+      <SurfaceCard>
 
-        <h2 className='text-2xl font-semibold mb-8'>
+        <h2 className='erp-section-title'>
           Monthly Production Trend
         </h2>
 
@@ -787,12 +793,12 @@ return expandedDispatchFY[key] ?? true
 
         </div>
 
-      </div>
+      </SurfaceCard>
 
 
-      <div className='bg-white rounded-3xl border p-6 shadow-sm'>
+      <SurfaceCard>
 
-  <h2 className='text-2xl font-semibold mb-8'>
+  <h2 className='erp-section-title'>
     Monthly Dispatch Trend
   </h2>
 
@@ -905,7 +911,7 @@ return expandedDispatchFY[key] ?? true
 
   </div>
 
-</div>
+</SurfaceCard>
 
 
 
@@ -977,29 +983,7 @@ return expandedDispatchFY[key] ?? true
 
       </div>
 
-    </div>
-  )
-}
-
-function Card({
-  title,
-  value
-}: any) {
-
-  return (
-
-    <div className='bg-white border rounded-3xl p-5 shadow-sm'>
-
-      <p className='text-slate-500 text-sm'>
-        {title}
-      </p>
-
-      <h2 className='text-3xl font-bold mt-2 text-slate-900'>
-        {value}
-      </h2>
-
-    </div>
-
+    </PageShell>
   )
 }
 
@@ -1011,10 +995,10 @@ function TableCard({
 
   return (
 
-    <div className='bg-white rounded-3xl border shadow-sm overflow-hidden'>
+    <div className='erp-surface-card overflow-hidden p-0'>
 
       <div className='p-5 border-b'>
-        <h2 className='text-xl font-semibold'>
+        <h2 className='erp-section-title mb-0'>
           {title}
         </h2>
       </div>
@@ -1048,7 +1032,13 @@ function TableCard({
 
           <tbody>
 
-            {
+            {rows.length === 0 ? (
+              <tr>
+                <td colSpan={headers.length}>
+                  <EmptyState />
+                </td>
+              </tr>
+            ) : (
               rows.map(
                 (
                   row: any,
@@ -1082,7 +1072,7 @@ function TableCard({
 
                 )
               )
-            }
+            )}
 
           </tbody>
 

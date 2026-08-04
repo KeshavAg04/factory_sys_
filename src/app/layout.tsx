@@ -224,9 +224,9 @@ async function handleLogout(){
 
           {/* DESKTOP NAVBAR */}
 
-          <div className="hidden md:block sticky top-0 z-[200] bg-white/95 border-b border-slate-200 shadow-sm">
+          <div className="hidden md:block sticky top-0 z-[200] bg-white/90 border-b border-slate-200/80 shadow-sm backdrop-blur-xl">
 
-          <nav className="erp-topbar relative z-[210] flex items-center justify-between gap-6 px-8 py-3">
+          <nav className="erp-topbar relative z-[210] mx-auto flex max-w-[1600px] items-center justify-between gap-6 px-8 py-3">
 
   <div className="flex items-center gap-3">
 
@@ -386,12 +386,13 @@ async function handleLogout(){
       px-4 py-2
       rounded-full
       border
-      border-red-100
-      bg-red-50
-      text-red-700
+      border-slate-200
+      bg-white
+      text-slate-600
       text-sm
       font-bold
-      hover:bg-red-100
+      hover:bg-slate-100
+      hover:text-slate-900
     "
   >
     Logout
@@ -489,7 +490,7 @@ async function handleLogout(){
             }
             className="erp-mobile-link w-full text-left"
           >
-            Production ▼
+            Production ▾
           </button>
 
           {productionOpen && (
@@ -570,7 +571,7 @@ async function handleLogout(){
             }}
             className="erp-mobile-link w-full text-left"
           >
-            Dispatch ▼
+            Dispatch ▾
           </button>
 
           {dispatchOpen && (
@@ -652,9 +653,10 @@ async function handleLogout(){
           text-left
           px-4
           py-3
-          bg-red-50
-          text-red-700
+          bg-white
+          text-slate-700
           font-bold
+          hover:bg-slate-50
         "
       >
         Logout
