@@ -428,11 +428,10 @@ setFactory(factory)
 
 <select
 value={factory}
-onChange={(e)=>
-setFactory(
-e.target.value
-)
-}
+onChange={(e) => {
+  setFactory(e.target.value)
+  setMachine('')
+}}
 disabled={
 userFactory !== ''
 }
