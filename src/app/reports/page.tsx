@@ -379,8 +379,8 @@ className='border rounded-xl p-3 disabled:bg-slate-100'
 <select value={mesh} onChange={e=>setMesh(e.target.value)} className='border rounded-xl p-3'><option value=''>All Mesh</option>{values('mesh').map((v:any)=><option key={v}>{v}</option>)}</select>
 <select value={bagType} onChange={e=>setBagType(e.target.value)} className='border rounded-xl p-3'><option value=''>All Bag Types</option>{values('bag_type').map((v:any)=><option key={v}>{v}</option>)}</select>
 <select value={bagName} onChange={e=>setBagName(e.target.value)} className='border rounded-xl p-3'><option value=''>All Bag Names</option>{values('bag_name').map((v:any)=><option key={v}>{v}</option>)}</select>
-<input type='date' value={fromDate} onChange={e=>setFromDate(e.target.value)} className='border rounded-xl p-3'/>
-<input type='date' value={toDate} onChange={e=>setToDate(e.target.value)} className='border rounded-xl p-3'/>
+<input type='date' value={fromDate} onChange={e=>{setFromDate(e.target.value);setPeriod('custom')}} className='border rounded-xl p-3'/>
+<input type='date' value={toDate} onChange={e=>{setToDate(e.target.value);setPeriod('custom')}} className='border rounded-xl p-3'/>
 </div>
 
 <div className='grid grid-cols-1 md:grid-cols-4 gap-4'>

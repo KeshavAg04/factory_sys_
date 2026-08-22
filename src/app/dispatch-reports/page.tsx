@@ -1038,9 +1038,14 @@ Cleared
     type='date'
     value={fromDate}
     onChange={e=>
+    {
     setFromDate(
     e.target.value
     )
+    setPeriod(
+    'custom'
+    )
+    }
     }
     className='border rounded-xl p-3'
     />
@@ -1050,9 +1055,14 @@ Cleared
     type='date'
     value={toDate}
     onChange={e=>
+    {
     setToDate(
     e.target.value
     )
+    setPeriod(
+    'custom'
+    )
+    }
     }
     className='border rounded-xl p-3'
     />
