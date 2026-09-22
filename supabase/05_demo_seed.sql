@@ -55,10 +55,6 @@ values
 insert into public.production_entries
   (production_date, factory, machine, labour_name, shift, mesh, bag_type, bag_name, quantity, rate, amount)
 values
-  ('2025-04-12', 'Demo Factory', 'Demo Machine 1', 'Amit Demo', 'Day', '200#', '50kg', 'Demo Premium 50kg', 420, 18, 7560),
-  ('2025-07-18', 'Demo Factory', 'Demo Machine 2', 'Ravi Demo', 'Night', '200#', 'Jumbo Bag (1250kg)', 'Demo Jumbo 1250kg', 95, 420, 39900),
-  ('2025-11-22', 'Demo Factory', 'Demo Machine 3', 'Sohan Demo', 'Day', '300#', 'Jumbo Bag (1400kg)', 'Demo Jumbo 1400kg', 88, 455, 40040),
-  ('2026-04-09', 'Demo Factory', 'Demo Machine 1', 'Amit Demo', 'Day', '200#', '50kg', 'Demo Premium 50kg', 510, 18, 9180),
   ('2026-06-16', 'Demo Factory', 'Demo Machine 2', 'Ravi Demo', 'Night', '200#', 'Jumbo Bag (1250kg)', 'Demo Jumbo 1250kg', 115, 420, 48300),
   ('2026-08-21', 'Demo Factory', 'Demo Machine 3', 'Sohan Demo', 'Day', '300#', 'Jumbo Bag (1400kg)', 'Demo Jumbo 1400kg', 104, 455, 47320);
 
@@ -71,14 +67,11 @@ insert into public.dispatch_entries
     loading_pending, vasuli, remarks
   )
 values
-  ('2025-05-03', 'Demo Ceramics Pvt Ltd', 'Demo Factory', 'DEMO-INV-25001', 'Demo Logistics', '50kg', 'Demo Premium 50kg', '200#', 21.00, 2600, 54600, 420, 'RJ00DEMO1', 'DL-25001', 900, 'Advance', 780, 16380, 1890, 90, false, 2520, 'Fictional demo dispatch'),
-  ('2025-12-14', 'Sample Paints LLP', 'Demo Factory', 'DEMO-INV-25002', 'Sample Roadlines', 'Jumbo Bag (1250kg)', 'Demo Jumbo 1250kg', '200#', 118.75, 2850, 338437.50, 95, 'RJ00DEMO2', 'DL-25002', 1100, 'To be Paid', 950, 112812.50, 10687.50, 90, true, 17812.50, 'Fictional demo dispatch'),
   ('2026-05-19', 'Fictional Minerals Co', 'Demo Factory', 'DEMO-INV-26001', 'Demo Logistics', 'Jumbo Bag (1400kg)', 'Demo Jumbo 1400kg', '300#', 145.60, 2925, 425880, 104, 'RJ00DEMO3', 'DL-26001', 1200, 'Advance', 980, 142688, 13104, 90, false, 32032, 'Fictional demo dispatch');
 
 insert into public.sales_adjustments
   (adjustment_date, customer_name, invoice_number, adjustment_type, amount, reason, remarks, factory)
 values
-  ('2025-12-20', 'Sample Paints LLP', 'DEMO-INV-25002', 'Credit Note', 2500, 'Demo quality allowance', 'Fictional demo adjustment', 'Demo Factory'),
   ('2026-05-24', 'Fictional Minerals Co', 'DEMO-INV-26001', 'Debit Note', 1800, 'Demo freight difference', 'Fictional demo adjustment', 'Demo Factory');
 
 commit;
