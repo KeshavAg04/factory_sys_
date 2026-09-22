@@ -287,7 +287,8 @@ return <div className='p-4 md:p-6 space-y-6'>
 <RoleGuard
 allowedRoles={[
 'Admin',
-'production'
+'production',
+'demo'
 ]}
 >
 <div className='flex flex-col md:flex-row justify-between gap-4'>

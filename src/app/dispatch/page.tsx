@@ -623,7 +623,9 @@ loadingRate || 90
         .upsert(
         {
         transporter_name:
-        transporterName
+        transporterName,
+        factory:
+        userFactory || factory || null
         },
         {
         onConflict:
@@ -690,7 +692,8 @@ setSalesAmount(0)
       <RoleGuard
 allowedRoles={[
 'Admin',
-'accounts'
+'accounts',
+'demo'
 ]}
 allowDadiFactory
 >

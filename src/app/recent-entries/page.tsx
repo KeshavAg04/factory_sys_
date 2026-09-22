@@ -424,7 +424,8 @@ export default function RecentEntriesPage() {
     <RoleGuard
 allowedRoles={[
 'Admin',
-'production'
+'production',
+'demo'
 ]}
 >
 

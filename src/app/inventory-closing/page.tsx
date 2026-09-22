@@ -121,7 +121,7 @@ await supabase
 
 const transferRes =
 await supabase
-.from('factory_transfer')
+.from('factory_transfers')
 .select('*')
 
 const productionRes =

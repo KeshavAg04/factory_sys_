@@ -218,7 +218,10 @@ Number(amount),
 
 reason,
 
-remarks
+remarks,
+
+factory:
+userFactory || null
 
 })
 
@@ -256,7 +259,8 @@ return (
 <RoleGuard
 allowedRoles={[
 'Admin',
-'accounts'
+'accounts',
+'demo'
 ]}
 allowDadiFactory
 >

@@ -483,7 +483,8 @@ export default function RecentDispatchPage() {
     <RoleGuard
 allowedRoles={[
 'Admin',
-'accounts'
+'accounts',
+'demo'
 ]}
 allowDadiFactory
 >

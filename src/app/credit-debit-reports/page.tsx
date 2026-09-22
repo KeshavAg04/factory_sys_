@@ -365,7 +365,8 @@ function exportExcel(
     <RoleGuard
     allowedRoles={[
     'Admin',
-    'accounts'
+    'accounts',
+    'demo'
     ]}
     allowDadiFactory
     >

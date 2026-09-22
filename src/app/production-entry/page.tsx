@@ -386,7 +386,8 @@ setFactory(factory)
     <RoleGuard
       allowedRoles={[
         'Admin',
-        'production'
+        'production',
+        'demo'
       ]}
       >
 

@@ -1,0 +1,62 @@
+-- POST-DEPLOYMENT SECURITY TEST CHECKLIST
+-- These tests were successfully performed after RLS activation.
+-- Execute through authenticated Supabase clients for each role. Do not run as
+-- service_role for access-control validation.
+
+-- ADMIN
+-- 1. Full access to all real factories and Demo Factory where needed.
+-- 2. Full SELECT/INSERT/UPDATE/DELETE across ERP data.
+-- 3. Masters, reports, dispatch, production, credit/debit, inventory, and
+--    factory_transfers remain accessible.
+
+-- PRODUCTION MANAGER
+-- Profile: role='production', factory=NULL.
+-- 1. SELECT/INSERT/UPDATE/DELETE production-related real-factory rows succeeds
+--    for KM-New, KM-Old, Dadi, and future real factories.
+-- 2. SELECT real dispatch_entries succeeds for Dashboard dependencies.
+-- 3. Inventory/production supporting data for real factories remains available.
+-- 4. SELECT/INSERT/UPDATE/DELETE Demo Factory operational rows fails.
+-- 5. Demo Factory masters, rates, transporters, stock, adjustments, and
+--    factory_transfers are not accessible.
+
+-- ACCOUNTS
+-- Profile: role='accounts', factory=NULL.
+-- 1. SELECT real production_entries succeeds for Dashboard.
+-- 2. INSERT/UPDATE/DELETE production_entries fails.
+-- 3. SELECT/INSERT/UPDATE/DELETE real dispatch_entries succeeds.
+-- 4. SELECT/INSERT/UPDATE/DELETE real sales_adjustments succeeds, including
+--    reviewed legacy NULL-factory adjustments.
+-- 5. Demo Factory production, dispatch, sales_adjustments, rates, bag names,
+--    transporters, stock, and transfers are not accessible.
+
+-- DADI
+-- Profile: role='production', factory='Dadi'.
+-- 1. Dadi Production SELECT/INSERT/UPDATE/DELETE succeeds.
+-- 2. Dadi Dispatch SELECT/INSERT/UPDATE/DELETE succeeds.
+-- 3. KM-New, KM-Old, Demo Factory, and other factory operational rows return
+--    zero rows or fail writes.
+-- 4. factory_transfers SELECT/INSERT/UPDATE/DELETE fails.
+-- 5. Dadi cannot read Demo Factory rates, bag names, transporters, stock, or
+--    financial adjustments.
+
+-- DEMO
+-- Profile: role='demo', factory='Demo Factory'.
+-- 1. Demo Factory production_entries, dispatch_entries, sales_adjustments,
+--    opening_stock, rates, bag names, machines, and transporters are accessible
+--    according to the demo workflow.
+-- 2. KM-New, KM-Old, Dadi, and other real operational rows return zero rows or
+--    fail writes.
+-- 3. Real company customers, transporters, confidential rates, financial
+--    adjustments, production, dispatch, stock, and inventory data are not
+--    accessible.
+-- 4. factory_transfers SELECT/INSERT/UPDATE/DELETE fails.
+-- 5. UPDATE profiles SET role='Admin' WHERE id=auth.uid() fails.
+-- 6. UPDATE profiles SET factory='KM-New' WHERE id=auth.uid() fails.
+-- 7. SELECT other profiles returns zero.
+
+-- DIRECT API BYPASS
+-- 1. Set localStorage.userRole to a privileged value in DevTools.
+-- 2. Set localStorage.userFactory to another factory in DevTools.
+-- 3. Repeat direct Supabase SELECT/INSERT/UPDATE/DELETE attempts.
+-- 4. Confirm database authorization still follows public.profiles and access
+--    does not expand.

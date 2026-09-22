@@ -16,7 +16,10 @@ import {
 import { useEffect, useState } from 'react'
 
 import { supabase } from '@/lib/supabase'
-import { isDadiFactory } from '@/lib/permissions'
+import {
+  isDadiFactory,
+  isDemoRole,
+} from '@/lib/permissions'
 
 
 
@@ -138,10 +141,16 @@ async function handleLogout(){
   const canAccessDispatch =
   role === 'Admin' ||
   role === 'accounts' ||
+  isDemoRole(role) ||
   (
     role === 'production' &&
     isDadiFactory(userFactory)
   )
+
+  const canAccessProduction =
+  role === 'Admin' ||
+  role === 'production' ||
+  isDemoRole(role)
 
   const productionRoutes = [
     '/production-entry',
@@ -255,8 +264,7 @@ async function handleLogout(){
       Dashboard
     </Link>
 
-    {(role === 'Admin' ||
-      role === 'production') && (
+    {canAccessProduction && (
 
       <div className="relative group py-3 z-[220]">
 
@@ -289,19 +297,21 @@ async function handleLogout(){
             Production Reports
           </Link>
 
-          <Link
+<Link
   href="/opening-stock"
   className={dropdownLinkClass('/opening-stock')}
 >
   Opening Stock Master
 </Link>
 
+{!isDemoRole(role) && (
 <Link
   href="/bag-name-master"
   className={dropdownLinkClass('/bag-name-master')}
 >
   Bag Name Master
 </Link>
+)}
 
 <Link
   href="/monthly-labour-report"
@@ -379,6 +389,14 @@ async function handleLogout(){
 
   </div>
 
+  <div className="flex items-center gap-3">
+
+  {isDemoRole(role) && (
+    <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-bold uppercase tracking-wide text-amber-700">
+      Demo Mode
+    </span>
+  )}
+
   <button
     onClick={handleLogout}
     className="
@@ -398,6 +416,8 @@ async function handleLogout(){
     Logout
   </button>
 
+  </div>
+
 </nav>
 </div>
 
@@ -416,8 +436,14 @@ async function handleLogout(){
       </p>
 
       <h1 className="text-xl font-bold text-slate-900">
-        KM Factory
+        {isDemoRole(role) ? 'KM Factory Demo' : 'KM Factory'}
       </h1>
+
+      {isDemoRole(role) && (
+        <p className="mt-1 inline-flex rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-700">
+          Demo Mode
+        </p>
+      )}
 
     </div>
 
@@ -475,8 +501,7 @@ async function handleLogout(){
         Dashboard
       </Link>
 
-      {(role === 'Admin' ||
-        role === 'production') && (
+      {canAccessProduction && (
 
         <>
           <button

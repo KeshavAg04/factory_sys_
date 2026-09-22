@@ -361,6 +361,13 @@ async function deleteEntry(
     created_at,
     ...updateData
     } = editData
+
+    if(userFactory){
+
+    updateData.factory =
+    userFactory
+
+    }
     
     const {error} =
     await supabase
@@ -448,7 +455,8 @@ async function deleteEntry(
         <RoleGuard
         allowedRoles={[
         'Admin',
-        'accounts'
+        'accounts',
+        'demo'
         ]}
         allowDadiFactory
         >

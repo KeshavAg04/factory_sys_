@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 
 import { supabase } from '@/lib/supabase'
+import RoleGuard from '@/components/RoleGuard'
 
 export default function FactoryTransferPage() {
 
@@ -244,6 +245,13 @@ export default function FactoryTransferPage() {
 
   return (
 
+    <RoleGuard
+      allowedRoles={[
+        'Admin',
+        'production'
+      ]}
+    >
+
     <main className="min-h-screen bg-slate-100 p-4 md:p-6">
 
       <div className="max-w-7xl mx-auto">
@@ -470,6 +478,8 @@ export default function FactoryTransferPage() {
       </div>
 
     </main>
+
+    </RoleGuard>
 
   )
 

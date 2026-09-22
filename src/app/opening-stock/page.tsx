@@ -36,6 +36,9 @@ export default function OpeningStockPage(){
   const [editingId,setEditingId] =
     useState<number | null>(null)
 
+  const [userFactory,setUserFactory] =
+    useState('')
+
   useEffect(()=>{
 
     loadData()
@@ -45,6 +48,10 @@ export default function OpeningStockPage(){
 
     loadData()
     loadBagNames()
+
+    setUserFactory(
+      localStorage.getItem('userFactory') || ''
+    )
   
   },[])
 
@@ -124,7 +131,10 @@ export default function OpeningStockPage(){
             minimum_stock:
               Number(
                 minimumStock || 0
-              )
+              ),
+
+            factory:
+              userFactory || null
           }
         ])
 
@@ -233,7 +243,8 @@ export default function OpeningStockPage(){
     <RoleGuard
       allowedRoles={[
         'Admin',
-        'production'
+        'production',
+        'demo'
       ]}
     >
 

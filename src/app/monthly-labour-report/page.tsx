@@ -432,7 +432,8 @@ return (
 <RoleGuard
 allowedRoles={[
 'Admin',
-'production'
+'production',
+'demo'
 ]}
 >
 

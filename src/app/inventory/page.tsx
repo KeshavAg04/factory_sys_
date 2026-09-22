@@ -87,7 +87,7 @@ supabase
 .select('*'),
 
 supabase
-.from('factory_transfer')
+.from('factory_transfers')
 .select('*'),
 
 supabase

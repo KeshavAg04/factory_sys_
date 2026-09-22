@@ -8,7 +8,10 @@ import { getUserRole } from '@/lib/getUserRole'
 
 import { supabase }
 from '@/lib/supabase'
-import { isDadiFactory } from '@/lib/permissions'
+import {
+  isDadiFactory,
+  isDemoRole,
+} from '@/lib/permissions'
 
 type Props = {
   allowedRoles: string[]
@@ -85,7 +88,10 @@ localStorage.getItem(
 
 if(
 allowDadiFactory &&
-role === 'production' &&
+(
+role === 'production' ||
+isDemoRole(role)
+) &&
 !factory
 ){
 
@@ -120,11 +126,16 @@ allowDadiFactory &&
 role === 'production' &&
 isDadiFactory(factory)
 
+const canUseDemoAccess =
+isDemoRole(role) &&
+allowedRoles.includes('demo')
+
 if (
 role &&
 (
 allowedRoles.includes(role) ||
-canUseDadiFactoryAccess
+canUseDadiFactoryAccess ||
+canUseDemoAccess
 )
 ) {
 

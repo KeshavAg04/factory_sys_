@@ -709,7 +709,8 @@ return (
     <RoleGuard
 allowedRoles={[
 'Admin',
-'accounts'
+'accounts',
+'demo'
 ]}
 allowDadiFactory
 >
