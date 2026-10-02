@@ -135,21 +135,23 @@ function tons(type:string,qty:number){
 const values=(key:string)=>[...new Set(entries.map(e=>e[key]).filter(Boolean))]
 
 const filtered=useMemo(()=>{
- const presetBounds =
- period==='month'
+ const bounds =
+ period==='custom'
+ ? {
+  from:fromDate,
+  to:toDate
+ }
+ : period==='month'
  ? monthBounds(0)
- : period==='lastMonth'
- ? monthBounds(-1)
- : null
+ : monthBounds(-1)
 
  return entries.filter(e=>{
 
     const entryDate =
     dateValue(e.production_date)
 
-    if(presetBounds){
-     if(entryDate<presetBounds.from || entryDate>presetBounds.to) return false
-    }
+    if(bounds.from && entryDate<bounds.from) return false
+    if(bounds.to && entryDate>bounds.to) return false
    
     if(search && !JSON.stringify(e).toLowerCase().includes(search.toLowerCase())) return false
     if(factory && e.factory!==factory) return false
@@ -159,13 +161,6 @@ const filtered=useMemo(()=>{
     if(mesh && e.mesh!==mesh) return false
     if(bagType && e.bag_type!==bagType) return false
     if(bagName && e.bag_name!==bagName) return false
-   
-    if(period==='custom'){
-   
-     if(fromDate && entryDate<fromDate) return false
-     if(toDate && entryDate>toDate) return false
-   
-    }
    
     return true
    
@@ -357,7 +352,14 @@ allowedRoles={[
   <div className='flex gap-3'>
 
     <button
-      onClick={()=>setPeriod('month')}
+      onClick={()=>{
+        const bounds =
+        monthBounds(0)
+
+        setFromDate(bounds.from)
+        setToDate(bounds.to)
+        setPeriod('month')
+      }}
       className={`px-5 py-3 rounded-xl transition ${
         period==='month'
         ?'bg-blue-600 text-white'
@@ -368,7 +370,14 @@ allowedRoles={[
     </button>
 
     <button
-      onClick={()=>setPeriod('lastMonth')}
+      onClick={()=>{
+        const bounds =
+        monthBounds(-1)
+
+        setFromDate(bounds.from)
+        setToDate(bounds.to)
+        setPeriod('lastMonth')
+      }}
       className={`px-5 py-3 rounded-xl transition ${
         period==='lastMonth'
         ?'bg-blue-600 text-white'
