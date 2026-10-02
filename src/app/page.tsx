@@ -20,6 +20,9 @@ import {
   sumProductionTons,
 } from '@/lib/productionReporting'
 import {
+  formatMT,
+} from '@/lib/formatters'
+import {
   EmptyState,
   FilterPanel,
   PageHeader,
@@ -605,7 +608,7 @@ return expandedDispatchFY[key] ?? true
         <StatCard 
           label='Goods Dispatched' 
           value={Number(totalDispatchQty).toFixed(2)}
-          unit='Ton'
+          unit='MT'
           support='Filtered dispatch quantity'
           tone='emerald'
         />
@@ -670,7 +673,7 @@ return expandedDispatchFY[key] ?? true
                       </span>
 
                       <span className='text-sm font-semibold text-slate-600'>
-                        {fyTotal.toFixed(2)} Ton
+                        {formatMT(fyTotal)}
                       </span>
 
                     </button>
@@ -788,7 +791,7 @@ return expandedDispatchFY[key] ?? true
                 </span>
 
                 <span className='text-sm font-semibold text-slate-600'>
-                  {Number(fyTotal).toFixed(2)} Ton
+                  {formatMT(fyTotal)}
                 </span>
 
               </button>
@@ -863,7 +866,7 @@ return expandedDispatchFY[key] ?? true
           headers={[
             'Bag',
             'Bags',
-            'Goods(T)'
+            'Goods (MT)'
           ]}
           rows={
             bagWise.map(
@@ -884,7 +887,7 @@ return expandedDispatchFY[key] ?? true
             'Factory',
             'Machine',
             'Bags',
-            'Goods(T)'
+            'Goods (MT)'
           ]}
           rows={
             machineWise.map(
@@ -905,7 +908,7 @@ return expandedDispatchFY[key] ?? true
           headers={[
             'Labour',
             'Bags',
-            'Goods(T)'
+            'Goods (MT)'
           ]}
           rows={
             labourWise.map(

@@ -14,6 +14,12 @@ productionTons,
 sumProductionQuantity,
 sumProductionTons,
 } from '@/lib/productionReporting'
+import {
+formatBags,
+formatCurrency,
+formatDateDisplay,
+formatMT,
+} from '@/lib/formatters'
 import RoleGuard
 from '@/components/RoleGuard'
 
@@ -149,7 +155,8 @@ const financialYearGroups =
 useMemo(
 ()=>groupByFinancialYearAndMonth(
 filtered,
-(entry:any)=>entry.production_date
+(entry:any)=>entry.production_date,
+'newestFirst'
 ),
 [
 filtered
@@ -387,9 +394,9 @@ className='border rounded-xl p-3 disabled:bg-slate-100'
 </div>
 
 <div className='grid grid-cols-1 md:grid-cols-4 gap-4'>
-<div className='bg-white p-6 rounded-3xl'><p>Total Bags</p><h1 className='text-3xl font-bold'>{totalQty.toLocaleString('en-IN')}</h1></div>
-<div className='bg-white p-6 rounded-3xl'><p>Goods Produced</p><h1 className='text-3xl font-bold'>{totalMt.toFixed(2)} MT</h1></div>
-<div className='bg-white p-6 rounded-3xl'><p>Total Amount</p><h1 className='text-3xl font-bold'>₹{totalAmount.toLocaleString('en-IN')}</h1></div>
+<div className='bg-white p-6 rounded-3xl'><p>Total Bags</p><h1 className='text-3xl font-bold'>{formatBags(totalQty)}</h1></div>
+<div className='bg-white p-6 rounded-3xl'><p>Goods Produced</p><h1 className='text-3xl font-bold'>{formatMT(totalMt)}</h1></div>
+<div className='bg-white p-6 rounded-3xl'><p>Total Amount</p><h1 className='text-3xl font-bold'>{formatCurrency(totalAmount)}</h1></div>
 <div className='bg-white p-6 rounded-3xl'>
   <p>Production Entries</p>
 
@@ -410,9 +417,9 @@ Factory
 <button onClick={()=>exportExcel(mode==='detailed'?filtered:summary,mode)} className='bg-slate-900 text-white px-5 py-3 rounded-xl'>Export Excel</button>
 </div>
 
-{mode==='summary' && <div className='bg-white rounded-3xl p-4 md:p-6 overflow-x-auto'><table className='min-w-[900px] w-full text-sm'><thead className='bg-slate-100'><tr className='text-left'><th className='p-4'>Category</th><th className='p-4'>Bags</th><th className='p-4'>Goods(T)</th><th className='p-4'>Amount</th></tr></thead><tbody>{summary.map((r:any)=><tr key={r.name} className='border-b'><td className='p-4'>{r.name}</td><td className='p-4'>{r.qty.toLocaleString('en-IN')}</td><td className='p-4'>{r.tons.toFixed(2)}</td><td className='p-4'>₹{r.amount.toLocaleString('en-IN')}</td></tr>)}</tbody></table></div>}
+{mode==='summary' && <div className='bg-white rounded-3xl p-4 md:p-6 overflow-x-auto'><table className='min-w-[900px] w-full text-sm'><thead className='bg-slate-100'><tr className='text-left'><th className='p-4'>Category</th><th className='p-4 text-right'>Bags</th><th className='p-4 text-right'>Goods (MT)</th><th className='p-4 text-right'>Amount</th></tr></thead><tbody>{summary.map((r:any)=><tr key={r.name} className='border-b'><td className='p-4'>{r.name}</td><td className='p-4 text-right'>{formatBags(r.qty)}</td><td className='p-4 text-right'>{formatMT(r.tons)}</td><td className='p-4 text-right'>{formatCurrency(r.amount)}</td></tr>)}</tbody></table></div>}
 
-{mode==='detailed' && <div className='bg-white rounded-3xl overflow-x-auto'><table className='min-w-[1200px] w-full text-sm'><thead className='bg-slate-100'><tr className='text-left'><th className='p-4'>Date</th><th className='p-4'>Factory</th><th className='p-4'>Machine</th><th className='p-4'>Labour</th><th className='p-4'>Shift</th><th className='p-4'>Mesh</th><th className='p-4'>Bag</th><th className='p-4'>Qty</th><th className='p-4'>Goods(T)</th><th className='p-4'>Rate</th><th className='p-4'>Amount</th></tr></thead><tbody>{financialYearGroups.map((fy:any)=>{const expanded=isFinancialYearExpanded(fy.key);return <Fragment key={fy.key}><tr className='bg-slate-200'><td colSpan={11} className='p-4'><button onClick={()=>setExpandedFinancialYears(prev=>({...prev,[fy.key]:!expanded}))} className='font-bold text-slate-900'>{expanded?'v':'>'} {fy.label}</button></td></tr>{expanded && fy.months.map((month:any)=><Fragment key={month.key}><tr className='bg-slate-50'><td colSpan={11} className='p-4 font-semibold text-slate-700'>{month.label}</td></tr>{month.items.map((e:any)=><tr key={e.id} className='border-b'><td className='p-4'>{e.production_date}</td><td className='p-4'>{e.factory}</td><td className='p-4'>{e.machine}</td><td className='p-4'>{e.labour_name}</td><td className='p-4'>{e.shift}</td><td className='p-4'>{e.mesh}</td><td className='p-4'>{e.bag_name}</td><td className='p-4'>{Number(e.quantity || 0).toLocaleString('en-IN')}</td><td className='p-4'>{productionTons(e).toFixed(2)}</td><td className='p-4'>₹{Number(e.rate || 0).toLocaleString('en-IN')}</td><td className='p-4'>₹{Number(e.amount || 0).toLocaleString('en-IN', {minimumFractionDigits:2, maximumFractionDigits:2})}</td></tr>)}</Fragment>)}</Fragment>})}</tbody></table></div>}
+{mode==='detailed' && <div className='bg-white rounded-3xl overflow-x-auto'><table className='min-w-[1200px] w-full text-sm'><thead className='bg-slate-100'><tr className='text-left'><th className='p-4'>Date</th><th className='p-4'>Factory</th><th className='p-4'>Machine</th><th className='p-4'>Labour</th><th className='p-4'>Shift</th><th className='p-4'>Mesh</th><th className='p-4'>Bag Name</th><th className='p-4 text-right'>Bags</th><th className='p-4 text-right'>Goods (MT)</th><th className='p-4 text-right'>Rate</th><th className='p-4 text-right'>Amount</th></tr></thead><tbody>{financialYearGroups.map((fy:any)=>{const expanded=isFinancialYearExpanded(fy.key);return <Fragment key={fy.key}><tr className='bg-slate-200'><td colSpan={11} className='p-4'><button onClick={()=>setExpandedFinancialYears(prev=>({...prev,[fy.key]:!expanded}))} className='font-bold text-slate-900'>{expanded?'v':'>'} {fy.label}</button></td></tr>{expanded && fy.months.map((month:any)=><Fragment key={month.key}><tr className='bg-slate-50'><td colSpan={11} className='p-4 font-semibold text-slate-700'>{month.label}</td></tr>{month.items.map((e:any)=><tr key={e.id} className='border-b'><td className='p-4'>{formatDateDisplay(e.production_date)}</td><td className='p-4'>{e.factory}</td><td className='p-4'>{e.machine}</td><td className='p-4'>{e.labour_name}</td><td className='p-4'>{e.shift}</td><td className='p-4'>{e.mesh}</td><td className='p-4'>{e.bag_name}</td><td className='p-4 text-right'>{formatBags(e.quantity)}</td><td className='p-4 text-right'>{formatMT(productionTons(e))}</td><td className='p-4 text-right'>{formatCurrency(e.rate)}</td><td className='p-4 text-right'>{formatCurrency(e.amount)}</td></tr>)}</Fragment>)}</Fragment>})}</tbody></table></div>}
 </RoleGuard>
 </div>
 

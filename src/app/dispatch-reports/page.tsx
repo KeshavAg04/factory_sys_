@@ -15,6 +15,12 @@ supabase
 import {
 groupByFinancialYearAndMonth
 } from '@/lib/financialYear'
+import {
+formatBags,
+formatCurrency,
+formatDateDisplay,
+formatMT,
+} from '@/lib/formatters'
 import RoleGuard from '@/components/RoleGuard'
 
 export default function DispatchReportsPage(){
@@ -631,7 +637,8 @@ const financialYearGroups =
 useMemo(
 ()=>groupByFinancialYearAndMonth(
 filtered,
-(entry:any)=>entry.dispatch_date
+(entry:any)=>entry.dispatch_date,
+'newestFirst'
 ),
 [
 filtered
@@ -1083,7 +1090,7 @@ Dispatch Overview
     </p>
     
     <h1 className='text-4xl font-bold mt-2'>
-    {totalQty.toFixed(2)}
+    {formatMT(totalQty)}
     </h1>
     
     </div>
@@ -1119,7 +1126,7 @@ Dispatch Bags
 </p>
 
 <h1 className='text-4xl font-bold mt-2'>
-{totalDispatchBags.toLocaleString('en-IN')}
+{formatBags(totalDispatchBags)}
 </h1>
 
 </div>
@@ -1139,7 +1146,7 @@ Total Freight
 </p>
 
 <h1 className='text-4xl font-bold mt-2'>
-₹{totalFreight.toLocaleString('en-IN')}
+{formatCurrency(totalFreight)}
 </h1>
 
 </div>
@@ -1151,7 +1158,7 @@ Loading Amount
 </p>
 
 <h1 className='text-4xl font-bold mt-2'>
-₹{totalLoadingAmount.toLocaleString('en-IN')}
+{formatCurrency(totalLoadingAmount)}
 </h1>
 
 </div>
@@ -1176,7 +1183,7 @@ Total Vasuli
 </p>
 
 <h1 className='text-3xl font-bold text-green-700'>
-₹{totalVasuli.toLocaleString('en-IN')}
+{formatCurrency(totalVasuli)}
 </h1>
 
 </div>
@@ -1197,7 +1204,7 @@ Gross Sales
 </p>
 
 <h1 className='text-3xl font-bold text-blue-600'>
-₹{totalSales.toLocaleString('en-IN')}
+{formatCurrency(totalSales)}
 </h1>
 
 </div>
@@ -1209,7 +1216,7 @@ Credit Notes
 </p>
 
 <h1 className='text-3xl font-bold text-red-600'>
-₹{totalCreditNotes.toLocaleString('en-IN')}
+{formatCurrency(totalCreditNotes)}
 </h1>
 
 </div>
@@ -1221,7 +1228,7 @@ Debit Notes
 </p>
 
 <h1 className='text-3xl font-bold text-green-600'>
-₹{totalDebitNotes.toLocaleString('en-IN')}
+{formatCurrency(totalDebitNotes)}
 </h1>
 
 </div>
@@ -1233,7 +1240,7 @@ Net Adjustment
 </p>
 
 <h1 className='text-4xl font-bold mt-2'>
-₹{netAdjustment.toLocaleString('en-IN')}
+{formatCurrency(netAdjustment)}
 </h1>
 
 </div>
@@ -1245,7 +1252,7 @@ Net Sales
 </p>
 
 <h1 className='text-3xl font-bold text-purple-700'>
-₹{netSales.toLocaleString('en-IN')}
+{formatCurrency(netSales)}
 </h1>
 
 </div>
@@ -1334,19 +1341,19 @@ Freight Type
 Category
 </th>
 
-<th className='p-4'>
-Dispatch Qty
+<th className='p-4 text-right'>
+Dispatch Qty (MT)
 </th>
 
-<th className='p-4'>
+<th className='p-4 text-right'>
 Dispatch Bags
 </th>
 
-<th className='p-4'>
+<th className='p-4 text-right'>
 Freight
 </th>
 
-<th className='p-4'>
+<th className='p-4 text-right'>
 Vasuli
 </th>
     
@@ -1368,24 +1375,20 @@ Vasuli
     {r.name}
     </td>
     
-    <td className='p-4'>
-{Number(r.qty).toFixed(2)}
+    <td className='p-4 text-right'>
+{formatMT(r.qty)}
 </td>
 
-<td className='p-4'>
-{r.bags}
+<td className='p-4 text-right'>
+{formatBags(r.bags)}
 </td>
 
-<td className='p-4'>
-₹{Number(
-r.freight || 0
-).toLocaleString('en-IN')}
+<td className='p-4 text-right'>
+{formatCurrency(r.freight)}
 </td>
 
-<td className='p-4 text-green-700 font-semibold'>
-₹{Number(
-r.vasuli || 0
-).toLocaleString('en-IN')}
+<td className='p-4 text-right text-green-700 font-semibold'>
+{formatCurrency(r.vasuli)}
 </td>
     
     </tr>
@@ -1419,7 +1422,7 @@ r.vasuli || 0
 <th className='p-4'>Bag Name</th>
 <th className='p-4'>Mesh</th>
 
-<th className='p-4'>Qty (Tons)</th>
+<th className='p-4 text-right'>Qty (MT)</th>
 
 <th className='p-4'>
 Sales Rate
@@ -1504,7 +1507,7 @@ fy.months.map(
 key={e.id || index}
 >
     <td className='p-4'>
-{e.dispatch_date}
+{formatDateDisplay(e.dispatch_date)}
 </td>
 
 <td className='p-4'>
@@ -1531,24 +1534,20 @@ key={e.id || index}
 {e.mesh}
 </td>
 
-<td className='p-4 font-semibold'>
-{Number(e.quantity || 0).toFixed(2)}
+<td className='p-4 text-right font-semibold'>
+{formatMT(e.quantity)}
 </td>
 
-<td className='p-4'>
-₹{Number(
-e.sales_rate || 0
-).toLocaleString('en-IN')}
+<td className='p-4 text-right'>
+{formatCurrency(e.sales_rate)}
 </td>
 
-<td className='p-4 font-semibold text-blue-700'>
-₹{Number(
-e.sales_amount || 0
-).toLocaleString('en-IN')}
+<td className='p-4 text-right font-semibold text-blue-700'>
+{formatCurrency(e.sales_amount)}
 </td>
 
-<td className='p-4 font-semibold'>
-{e.dispatch_bags}
+<td className='p-4 text-right font-semibold'>
+{formatBags(e.dispatch_bags)}
 </td>
 
 <td className='p-4'>
@@ -1567,29 +1566,21 @@ e.sales_amount || 0
 {e.freight_type}
 </td>
 
-<td className='p-4'>
-₹{Number(
-e.lr_freight || 0
-).toLocaleString('en-IN')}
+<td className='p-4 text-right'>
+{formatCurrency(e.lr_freight)}
 </td>
 
 
-<td className='p-4'>
-₹{Number(
-e.freight_pmt || 0
-).toLocaleString('en-IN')}
+<td className='p-4 text-right'>
+{formatCurrency(e.freight_pmt)}
 </td>
 
-<td className='p-4 font-semibold'>
-₹{Number(
-e.total_freight || 0
-).toLocaleString('en-IN')}
+<td className='p-4 text-right font-semibold'>
+{formatCurrency(e.total_freight)}
 </td>
 
-<td className='p-4'>
-₹{Number(
-e.loading_amount || 0
-).toLocaleString('en-IN')}
+<td className='p-4 text-right'>
+{formatCurrency(e.loading_amount)}
 </td>
 
 <td className='p-4'>
@@ -1600,10 +1591,8 @@ e.loading_pending
 }
 </td>
 
-<td className='p-4 text-green-700 font-semibold'>
-₹{Number(
-e.vasuli || 0
-).toLocaleString('en-IN')}
+<td className='p-4 text-right text-green-700 font-semibold'>
+{formatCurrency(e.vasuli)}
 </td>
 
 <td className='p-4'>

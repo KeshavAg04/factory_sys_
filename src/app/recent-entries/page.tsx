@@ -7,6 +7,10 @@ import {
   getProductionRate,
   RateMasterRow,
 } from '@/lib/productionRate'
+import {
+  formatCurrency,
+  formatDateDisplay,
+} from '@/lib/formatters'
 import toast from 'react-hot-toast'
 import RoleGuard
 from '@/components/RoleGuard'
@@ -657,7 +661,7 @@ allowedRoles={[
                 >
 
                   <td className="p-4">
-                    {entry.production_date}
+                    {formatDateDisplay(entry.production_date)}
                   </td>
 
                   <td className="p-4">
@@ -689,7 +693,7 @@ allowedRoles={[
                   </td>
 
                   <td className="p-4 font-semibold">
-                    ₹{Number(entry.amount || 0).toLocaleString('en-IN')}
+                    {formatCurrency(entry.amount)}
                   </td>
 
                   <td className="p-4 flex gap-2">

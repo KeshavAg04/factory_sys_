@@ -14,6 +14,9 @@ from '@/components/RoleGuard'
 
 import { supabase }
 from '@/lib/supabase'
+import {
+formatCurrency,
+} from '@/lib/formatters'
 
 export default function MonthlyLabourReportPage(){
 
@@ -563,7 +566,7 @@ border-slate-100
 </td>
 
 <td className="p-4 text-right">
-₹{Number(row.rate || 0).toLocaleString('en-IN')}
+{formatCurrency(row.rate)}
 </td>
 
 <td className="p-4 text-right">
@@ -574,10 +577,7 @@ row.quantity
 </td>
 
 <td className="p-4 text-right font-semibold">
-₹{
-row.amount
-.toLocaleString('en-IN')
-}
+{formatCurrency(row.amount)}
 </td>
 
 </tr>

@@ -3,6 +3,12 @@
 import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import toast from 'react-hot-toast'
+import {
+  formatBags,
+  formatCurrency,
+  formatDateDisplay,
+  formatMT,
+} from '@/lib/formatters'
 import RoleGuard from '@/components/RoleGuard'
 
 
@@ -618,7 +624,7 @@ Invoice No
                 </th>
 
                 <th className="p-4 text-left">
-                  Quantity
+                  Quantity (MT)
                 </th>
 
                 <th className="p-4 text-left">
@@ -700,7 +706,7 @@ Vasuli
                     >
 
                       <td className="p-4">
-                        {entry.dispatch_date}
+                        {formatDateDisplay(entry.dispatch_date)}
                       </td>
 
                       <td className="p-4">
@@ -728,23 +734,19 @@ Vasuli
                       </td>
 
                       <td className="p-4">
-                        {Number(entry.quantity || 0).toFixed(2)}
+                        {formatMT(entry.quantity)}
                       </td>
 
                       <td className="p-4">
-₹{Number(
-entry.sales_rate || 0
-).toLocaleString('en-IN')}
+{formatCurrency(entry.sales_rate)}
 </td>
 
 <td className="p-4 font-semibold text-blue-700">
-₹{Number(
-entry.sales_amount || 0
-).toLocaleString('en-IN')}
+{formatCurrency(entry.sales_amount)}
 </td>
 
                       <td className="p-4 font-semibold">
-  {entry.dispatch_bags}
+  {formatBags(entry.dispatch_bags)}
 </td>
 
                       <td className="p-4">
@@ -760,10 +762,7 @@ entry.sales_amount || 0
 </td>
 
 <td className="p-4">
-₹{Number(entry.lr_freight || 0).toLocaleString('en-IN', {
-minimumFractionDigits:2,
-maximumFractionDigits:2
-})}
+{formatCurrency(entry.lr_freight)}
 </td>
 
 <td className="p-4">
@@ -771,24 +770,15 @@ maximumFractionDigits:2
 </td>
 
 <td className="p-4">
-₹{Number(entry.freight_pmt || 0).toLocaleString('en-IN', {
-minimumFractionDigits:2,
-maximumFractionDigits:2
-})}
+{formatCurrency(entry.freight_pmt)}
 </td>
 
 <td className="p-4 font-semibold">
-₹{Number(entry.total_freight || 0).toLocaleString('en-IN', {
-minimumFractionDigits:2,
-maximumFractionDigits:2
-})}
+{formatCurrency(entry.total_freight)}
 </td>
 
 <td className="p-4">
-₹{Number(entry.loading_amount || 0).toLocaleString('en-IN', {
-minimumFractionDigits:2,
-maximumFractionDigits:2
-})}
+{formatCurrency(entry.loading_amount)}
 </td>
 
 <td className="p-4">
@@ -800,10 +790,7 @@ entry.loading_pending
 </td>
 
 <td className="p-4 font-semibold text-green-700">
-₹{Number(entry.vasuli || 0).toLocaleString('en-IN', {
-minimumFractionDigits:2,
-maximumFractionDigits:2
-})}
+{formatCurrency(entry.vasuli)}
 </td>
 
                       <td className="p-4">

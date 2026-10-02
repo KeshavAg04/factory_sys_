@@ -28,6 +28,10 @@ export type FinancialYearGroup<T> = {
   months: FinancialYearMonthGroup<T>[]
 }
 
+type GroupSortOrder =
+  'financialYear' |
+  'newestFirst'
+
 export function getFinancialYearStartYear(
   value: string | Date
 ) {
@@ -93,7 +97,8 @@ export function getFinancialMonthKey(
 
 export function groupByFinancialYearAndMonth<T>(
   items: T[],
-  getDate: (item: T) => string | Date
+  getDate: (item: T) => string | Date,
+  sortOrder: GroupSortOrder = 'financialYear'
 ) {
   const yearMap =
     new Map<
@@ -186,6 +191,14 @@ export function groupByFinancialYearAndMonth<T>(
       months:
         yearGroup.months.sort(
           (a, b) => {
+            if (sortOrder === 'newestFirst') {
+              if (a.year !== b.year) {
+                return b.year - a.year
+              }
+
+              return b.month - a.month
+            }
+
             const orderA =
               FINANCIAL_MONTH_ORDER.indexOf(
                 a.month
@@ -202,6 +215,58 @@ export function groupByFinancialYearAndMonth<T>(
 
             return a.year - b.year
           }
-        ),
+        ).map((monthGroup) => ({
+          ...monthGroup,
+          items:
+            sortOrder === 'newestFirst'
+              ? [...monthGroup.items].sort(
+                  (a, b) => {
+                    const dateA =
+                      new Date(
+                        getDate(a)
+                      ).getTime()
+
+                    const dateB =
+                      new Date(
+                        getDate(b)
+                      ).getTime()
+
+                    if (dateA !== dateB) {
+                      return dateB - dateA
+                    }
+
+                    const createdA =
+                      new Date(
+                        (a as {
+                          created_at?: string
+                        }).created_at || 0
+                      ).getTime()
+
+                    const createdB =
+                      new Date(
+                        (b as {
+                          created_at?: string
+                        }).created_at || 0
+                      ).getTime()
+
+                    if (createdA !== createdB) {
+                      return createdB - createdA
+                    }
+
+                    return String(
+                      (b as {
+                        id?: string | number
+                      }).id || ''
+                    ).localeCompare(
+                      String(
+                        (a as {
+                          id?: string | number
+                        }).id || ''
+                      )
+                    )
+                  }
+                )
+              : monthGroup.items,
+        })),
     }))
 }

@@ -15,6 +15,10 @@ supabase
 import {
 groupByFinancialYearAndMonth
 } from '@/lib/financialYear'
+import {
+formatCurrency,
+formatDateDisplay,
+} from '@/lib/formatters'
 
 import RoleGuard
 from '@/components/RoleGuard'
@@ -284,7 +288,8 @@ const financialYearGroups =
 useMemo(
 ()=>groupByFinancialYearAndMonth(
 filtered,
-(entry:any)=>entry.adjustment_date
+(entry:any)=>entry.adjustment_date,
+'newestFirst'
 ),
 [
 filtered
@@ -552,7 +557,7 @@ function exportExcel(
     </p>
     
     <h1 className='text-3xl font-bold text-red-600'>
-    ₹{totalCreditNotes.toLocaleString('en-IN')}
+    {formatCurrency(totalCreditNotes)}
     </h1>
     
     </div>
@@ -564,7 +569,7 @@ function exportExcel(
     </p>
     
     <h1 className='text-3xl font-bold text-green-600'>
-    ₹{totalDebitNotes.toLocaleString('en-IN')}
+    {formatCurrency(totalDebitNotes)}
     </h1>
     
     </div>
@@ -576,7 +581,7 @@ function exportExcel(
     </p>
     
     <h1 className='text-3xl font-bold'>
-    ₹{netAdjustment.toLocaleString('en-IN')}
+    {formatCurrency(netAdjustment)}
     </h1>
     
     </div>
@@ -710,7 +715,7 @@ className='border-b'
 </td>
 
 <td className='p-4'>
-{e.adjustment_date}
+{formatDateDisplay(e.adjustment_date)}
 </td>
 
 <td className='p-4'>
@@ -726,9 +731,7 @@ className='border-b'
 </td>
 
 <td className='p-4 font-semibold'>
-₹{Number(
-e.amount || 0
-).toLocaleString('en-IN')}
+{formatCurrency(e.amount)}
 </td>
 
 <td className='p-4'>

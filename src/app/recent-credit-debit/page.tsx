@@ -14,6 +14,10 @@ import toast from 'react-hot-toast'
 
 import RoleGuard
 from '@/components/RoleGuard'
+import {
+formatCurrency,
+formatDateDisplay,
+} from '@/lib/formatters'
 
 export default function RecentCreditDebitPage(){
 
@@ -584,7 +588,7 @@ async function deleteEntry(
         </p>
         
         <h1 className='text-3xl font-bold text-red-600'>
-        ₹{totalCreditNotes.toLocaleString('en-IN')}
+        {formatCurrency(totalCreditNotes)}
         </h1>
         
         </div>
@@ -596,7 +600,7 @@ async function deleteEntry(
         </p>
         
         <h1 className='text-3xl font-bold text-green-600'>
-        ₹{totalDebitNotes.toLocaleString('en-IN')}
+        {formatCurrency(totalDebitNotes)}
         </h1>
         
         </div>
@@ -608,7 +612,7 @@ async function deleteEntry(
         </p>
         
         <h1 className='text-3xl font-bold'>
-        ₹{netAdjustment.toLocaleString('en-IN')}
+        {formatCurrency(netAdjustment)}
         </h1>
         
         </div>
@@ -648,11 +652,11 @@ async function deleteEntry(
         >
         
         <td className='p-4'>{entry.note_number}</td>
-        <td className='p-4'>{entry.adjustment_date}</td>
+        <td className='p-4'>{formatDateDisplay(entry.adjustment_date)}</td>
         <td className='p-4'>{entry.customer_name}</td>
         <td className='p-4'>{entry.invoice_number}</td>
         <td className='p-4'>{entry.adjustment_type}</td>
-        <td className='p-4'>₹{Number(entry.amount || 0).toLocaleString('en-IN')}</td>
+        <td className='p-4'>{formatCurrency(entry.amount)}</td>
         <td className='p-4'>{entry.reason}</td>
         <td className='p-4'>{entry.remarks}</td>
         
