@@ -6,35 +6,15 @@ import { supabase } from '@/lib/supabase'
 import {
 groupByFinancialYearAndMonth
 } from '@/lib/financialYear'
+import {
+dateValue,
+fetchProductionEntries,
+monthBounds,
+productionTons,
+sumProductionQuantity,
+} from '@/lib/productionReporting'
 import RoleGuard
 from '@/components/RoleGuard'
-
-function dateValue(
-value:unknown
-){
- return String(value || '').slice(0,10)
-}
-
-function formatDateValue(
-date:Date
-){
- const year=date.getFullYear()
- const month=String(date.getMonth()+1).padStart(2,'0')
- const day=String(date.getDate()).padStart(2,'0')
- return `${year}-${month}-${day}`
-}
-
-function monthBounds(
-offset:number
-){
- const now=new Date()
- const start=new Date(now.getFullYear(),now.getMonth()+offset,1)
- const end=new Date(now.getFullYear(),now.getMonth()+offset+1,0)
- return {
-  from:formatDateValue(start),
-  to:formatDateValue(end)
- }
-}
 
 export default function ReportsPage(){
 const [entries,setEntries]=useState<any[]>([])
@@ -97,39 +77,18 @@ useEffect(()=>{
   async function loadEntries(
     factoryFilter=''
     ){
- const {data,error}=await supabase
- .from('production_entries')
- .select('*')
- .order('production_date',{ascending:false})
-
- if(error){console.log(error);return}
- const filteredData =
-
-factoryFilter
-
-? (data || []).filter(
-row =>
-row.factory ===
-factoryFilter
-)
-
-: (
-data || []
-)
+ try{
+ const data =
+ await fetchProductionEntries(
+ factoryFilter
+ )
 
 setEntries(
-filteredData
+data
 )
-}
-
-function tons(type:string,qty:number){
- if(!type) return 0
- const t=type.toLowerCase()
- if(t.includes('1400')) return qty*1.4
- if(t.includes('1350')) return qty*1.35
- if(t.includes('1250')) return qty*1.25
- if(t.includes('50kg')||t.includes('50 kg')||t==='50kg') return qty*.05
- return 0
+ }catch(error){
+ console.log(error)
+ }
 }
 
 const values=(key:string)=>[...new Set(entries.map(e=>e[key]).filter(Boolean))]
@@ -180,9 +139,8 @@ const filtered=useMemo(()=>{
     period
    ])
 
-const totalQty=filtered.reduce((a,b)=>a+Number(b.quantity||0),0)
+const totalQty=sumProductionQuantity(filtered)
 const totalAmount=filtered.reduce((a,b)=>a+Number(b.amount||0),0)
-const totalTons=filtered.reduce((a,b)=>a+tons(b.bag_type,Number(b.quantity||0)),0)
 const totalEntries = filtered.length
 
 const financialYearGroups =
@@ -217,7 +175,7 @@ const summary=Object.values(filtered.reduce((acc:any,e)=>{
  }
  if(!acc[key]) acc[key]={name:key,qty:0,tons:0,amount:0}
  acc[key].qty+=Number(e.quantity||0)
- acc[key].tons+=tons(e.bag_type,Number(e.quantity||0))
+ acc[key].tons+=productionTons(e)
  acc[key].amount+=Number(e.amount||0)
  return acc
 },{}))
@@ -428,7 +386,7 @@ className='border rounded-xl p-3 disabled:bg-slate-100'
 
 <div className='grid grid-cols-1 md:grid-cols-4 gap-4'>
 <div className='bg-white p-6 rounded-3xl'><p>Total Bags</p><h1 className='text-3xl font-bold'>{totalQty.toLocaleString('en-IN')}</h1></div>
-<div className='bg-white p-6 rounded-3xl'><p>Goods Produced</p><h1 className='text-3xl font-bold'>{totalTons.toFixed(2)} T</h1></div>
+<div className='bg-white p-6 rounded-3xl'><p>Goods Produced</p><h1 className='text-3xl font-bold'>{totalQty.toLocaleString('en-IN')} Qty</h1></div>
 <div className='bg-white p-6 rounded-3xl'><p>Total Amount</p><h1 className='text-3xl font-bold'>₹{totalAmount.toLocaleString('en-IN')}</h1></div>
 <div className='bg-white p-6 rounded-3xl'>
   <p>Production Entries</p>
@@ -452,7 +410,7 @@ Factory
 
 {mode==='summary' && <div className='bg-white rounded-3xl p-4 md:p-6 overflow-x-auto'><table className='min-w-[900px] w-full text-sm'><thead className='bg-slate-100'><tr className='text-left'><th className='p-4'>Category</th><th className='p-4'>Bags</th><th className='p-4'>Goods(T)</th><th className='p-4'>Amount</th></tr></thead><tbody>{summary.map((r:any)=><tr key={r.name} className='border-b'><td className='p-4'>{r.name}</td><td className='p-4'>{r.qty.toLocaleString('en-IN')}</td><td className='p-4'>{r.tons.toFixed(2)}</td><td className='p-4'>₹{r.amount.toLocaleString('en-IN')}</td></tr>)}</tbody></table></div>}
 
-{mode==='detailed' && <div className='bg-white rounded-3xl overflow-x-auto'><table className='min-w-[1200px] w-full text-sm'><thead className='bg-slate-100'><tr className='text-left'><th className='p-4'>Date</th><th className='p-4'>Factory</th><th className='p-4'>Machine</th><th className='p-4'>Labour</th><th className='p-4'>Shift</th><th className='p-4'>Mesh</th><th className='p-4'>Bag</th><th className='p-4'>Qty</th><th className='p-4'>Goods(T)</th><th className='p-4'>Rate</th><th className='p-4'>Amount</th></tr></thead><tbody>{financialYearGroups.map((fy:any)=>{const expanded=isFinancialYearExpanded(fy.key);return <Fragment key={fy.key}><tr className='bg-slate-200'><td colSpan={11} className='p-4'><button onClick={()=>setExpandedFinancialYears(prev=>({...prev,[fy.key]:!expanded}))} className='font-bold text-slate-900'>{expanded?'v':'>'} {fy.label}</button></td></tr>{expanded && fy.months.map((month:any)=><Fragment key={month.key}><tr className='bg-slate-50'><td colSpan={11} className='p-4 font-semibold text-slate-700'>{month.label}</td></tr>{month.items.map((e:any)=><tr key={e.id} className='border-b'><td className='p-4'>{e.production_date}</td><td className='p-4'>{e.factory}</td><td className='p-4'>{e.machine}</td><td className='p-4'>{e.labour_name}</td><td className='p-4'>{e.shift}</td><td className='p-4'>{e.mesh}</td><td className='p-4'>{e.bag_name}</td><td className='p-4'>{Number(e.quantity || 0).toLocaleString('en-IN')}</td><td className='p-4'>{tons(e.bag_type,Number(e.quantity)).toFixed(2)}</td><td className='p-4'>₹{Number(e.rate || 0).toLocaleString('en-IN')}</td><td className='p-4'>₹{Number(e.amount || 0).toLocaleString('en-IN', {minimumFractionDigits:2, maximumFractionDigits:2})}</td></tr>)}</Fragment>)}</Fragment>})}</tbody></table></div>}
+{mode==='detailed' && <div className='bg-white rounded-3xl overflow-x-auto'><table className='min-w-[1200px] w-full text-sm'><thead className='bg-slate-100'><tr className='text-left'><th className='p-4'>Date</th><th className='p-4'>Factory</th><th className='p-4'>Machine</th><th className='p-4'>Labour</th><th className='p-4'>Shift</th><th className='p-4'>Mesh</th><th className='p-4'>Bag</th><th className='p-4'>Qty</th><th className='p-4'>Goods(T)</th><th className='p-4'>Rate</th><th className='p-4'>Amount</th></tr></thead><tbody>{financialYearGroups.map((fy:any)=>{const expanded=isFinancialYearExpanded(fy.key);return <Fragment key={fy.key}><tr className='bg-slate-200'><td colSpan={11} className='p-4'><button onClick={()=>setExpandedFinancialYears(prev=>({...prev,[fy.key]:!expanded}))} className='font-bold text-slate-900'>{expanded?'v':'>'} {fy.label}</button></td></tr>{expanded && fy.months.map((month:any)=><Fragment key={month.key}><tr className='bg-slate-50'><td colSpan={11} className='p-4 font-semibold text-slate-700'>{month.label}</td></tr>{month.items.map((e:any)=><tr key={e.id} className='border-b'><td className='p-4'>{e.production_date}</td><td className='p-4'>{e.factory}</td><td className='p-4'>{e.machine}</td><td className='p-4'>{e.labour_name}</td><td className='p-4'>{e.shift}</td><td className='p-4'>{e.mesh}</td><td className='p-4'>{e.bag_name}</td><td className='p-4'>{Number(e.quantity || 0).toLocaleString('en-IN')}</td><td className='p-4'>{productionTons(e).toFixed(2)}</td><td className='p-4'>₹{Number(e.rate || 0).toLocaleString('en-IN')}</td><td className='p-4'>₹{Number(e.amount || 0).toLocaleString('en-IN', {minimumFractionDigits:2, maximumFractionDigits:2})}</td></tr>)}</Fragment>)}</Fragment>})}</tbody></table></div>}
 </RoleGuard>
 </div>
 

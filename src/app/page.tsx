@@ -13,6 +13,13 @@ import {
   groupByFinancialYearAndMonth,
 } from '@/lib/financialYear'
 import {
+  dateValue,
+  fetchProductionEntries,
+  monthBounds,
+  productionTons,
+  sumProductionQuantity,
+} from '@/lib/productionReporting'
+import {
   EmptyState,
   FilterPanel,
   PageHeader,
@@ -20,35 +27,6 @@ import {
   StatCard,
   SurfaceCard,
 } from '@/components/erp-ui'
-
-function dateValue(
-  value: unknown
-) {
-  return String(value || '').slice(0, 10)
-}
-
-function formatDateValue(
-  date: Date
-) {
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-
-  return `${year}-${month}-${day}`
-}
-
-function monthBounds(
-  offset: number
-) {
-  const now = new Date()
-  const start = new Date(now.getFullYear(), now.getMonth() + offset, 1)
-  const end = new Date(now.getFullYear(), now.getMonth() + offset + 1, 0)
-
-  return {
-    from: formatDateValue(start),
-    to: formatDateValue(end),
-  }
-}
 
 export default function DashboardPage() {
 
@@ -117,70 +95,22 @@ loadData(factory)
   
   }
 
-  function calculateTons(
-    bagType: string,
-    quantity: number
-  ) {
-  
-    const type =
-      bagType?.toLowerCase() || ''
-  
-    if (type.includes('1400'))
-      return quantity * 1.4
-  
-    if (type.includes('1350'))
-      return quantity * 1.35
-  
-    if (type.includes('1250'))
-      return quantity * 1.25
-  
-    if (
-      type.includes('50kg') ||
-      type.includes('50 kg')
-    )
-      return quantity * 0.05
-  
-    return 0
-  
-  }
-
-
   async function loadData(
 factoryFilter = ''
 ) {
 
     const [
-      productionRes,
+      productionData,
       dispatchRes,
       ] = await Promise.all([
-      
-      supabase
-      .from('production_entries')
-      .select('*')
-      .order('production_date',{
-      ascending:true
-      }),
-      
+      fetchProductionEntries(
+      factoryFilter
+      ),
       supabase
       .from('dispatch_entries')
       .select('*'),
       
       ])
-
-      const productionData =
-
-factoryFilter
-
-? (productionRes.data || [])
-.filter(
-row =>
-row.factory ===
-factoryFilter
-)
-
-: (
-productionRes.data || []
-)
 
 setEntries(
 productionData
@@ -325,15 +255,9 @@ dispatchData
 
 
 
-  const totalTons =
-    filteredEntries.reduce(
-      (sum, item) =>
-        sum +
-        calculateTons(
-          item.bag_type,
-          Number(item.quantity || 0)
-        ),
-      0
+  const totalProduced =
+    sumProductionQuantity(
+      filteredEntries
     )
 
 
@@ -377,12 +301,7 @@ row.quantity || 0
           }
 
           acc[monthKey].tons +=
-            calculateTons(
-              item.bag_type,
-              Number(
-                item.quantity || 0
-              )
-            )
+            productionTons(item)
 
           return acc
 
@@ -511,12 +430,7 @@ return expandedDispatchFY[key] ?? true
             )
 
           acc[key].tons +=
-            calculateTons(
-              item.bag_type,
-              Number(
-                item.quantity || 0
-              )
-            )
+            productionTons(item)
 
           return acc
 
@@ -557,12 +471,7 @@ return expandedDispatchFY[key] ?? true
             )
 
           acc[key].tons +=
-            calculateTons(
-              item.bag_type,
-              Number(
-                item.quantity || 0
-              )
-            )
+            productionTons(item)
 
           return acc
 
@@ -596,12 +505,7 @@ return expandedDispatchFY[key] ?? true
             )
 
           acc[key].tons +=
-            calculateTons(
-              item.bag_type,
-              Number(
-                item.quantity || 0
-              )
-            )
+            productionTons(item)
 
           return acc
 
@@ -691,8 +595,8 @@ return expandedDispatchFY[key] ?? true
 
         <StatCard
           label='Goods Produced'
-          value={totalTons.toFixed(2)}
-          unit='Ton'
+          value={totalProduced.toLocaleString('en-IN')}
+          unit='Qty'
           support='Filtered production quantity'
           tone='blue'
         />
