@@ -12,6 +12,7 @@ fetchProductionEntries,
 monthBounds,
 productionTons,
 sumProductionQuantity,
+sumProductionTons,
 } from '@/lib/productionReporting'
 import RoleGuard
 from '@/components/RoleGuard'
@@ -140,6 +141,7 @@ const filtered=useMemo(()=>{
    ])
 
 const totalQty=sumProductionQuantity(filtered)
+const totalMt=sumProductionTons(filtered)
 const totalAmount=filtered.reduce((a,b)=>a+Number(b.amount||0),0)
 const totalEntries = filtered.length
 
@@ -386,7 +388,7 @@ className='border rounded-xl p-3 disabled:bg-slate-100'
 
 <div className='grid grid-cols-1 md:grid-cols-4 gap-4'>
 <div className='bg-white p-6 rounded-3xl'><p>Total Bags</p><h1 className='text-3xl font-bold'>{totalQty.toLocaleString('en-IN')}</h1></div>
-<div className='bg-white p-6 rounded-3xl'><p>Goods Produced</p><h1 className='text-3xl font-bold'>{totalQty.toLocaleString('en-IN')} Qty</h1></div>
+<div className='bg-white p-6 rounded-3xl'><p>Goods Produced</p><h1 className='text-3xl font-bold'>{totalMt.toFixed(2)} MT</h1></div>
 <div className='bg-white p-6 rounded-3xl'><p>Total Amount</p><h1 className='text-3xl font-bold'>₹{totalAmount.toLocaleString('en-IN')}</h1></div>
 <div className='bg-white p-6 rounded-3xl'>
   <p>Production Entries</p>

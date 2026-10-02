@@ -85,24 +85,39 @@ export function sumProductionQuantity(
   )
 }
 
-export function productionTons(
-  entry: Pick<ProductionEntry, 'bag_type' | 'quantity'>
+export function productionBagWeightKg(
+  bagType?: string | null
 ) {
   const type =
-    entry.bag_type?.toLowerCase() || ''
+    bagType?.toLowerCase() || ''
 
-  const quantity =
-    productionQuantity(entry)
-
-  if (type.includes('1400')) return quantity * 1.4
-  if (type.includes('1350')) return quantity * 1.35
-  if (type.includes('1250')) return quantity * 1.25
+  if (type.includes('1400')) return 1400
+  if (type.includes('1350')) return 1350
+  if (type.includes('1250')) return 1250
   if (
     type.includes('50kg') ||
     type.includes('50 kg')
-  ) return quantity * 0.05
+  ) return 50
 
-  return 0
+  return null
+}
+
+export function productionTons(
+  entry: Pick<ProductionEntry, 'bag_type' | 'quantity'>
+) {
+  const bagWeightKg =
+    productionBagWeightKg(
+      entry.bag_type
+    )
+
+  if (bagWeightKg === null) {
+    return 0
+  }
+
+  return (
+    productionQuantity(entry) *
+    bagWeightKg
+  ) / 1000
 }
 
 export function sumProductionTons(
@@ -113,6 +128,17 @@ export function sumProductionTons(
       sum + productionTons(entry),
     0
   )
+}
+
+export function unknownProductionBagTypeCount(
+  entries: Pick<ProductionEntry, 'bag_type'>[]
+) {
+  return entries.filter(
+    (entry) =>
+      productionBagWeightKg(
+        entry.bag_type
+      ) === null
+  ).length
 }
 
 export async function fetchProductionEntries(

@@ -17,7 +17,7 @@ import {
   fetchProductionEntries,
   monthBounds,
   productionTons,
-  sumProductionQuantity,
+  sumProductionTons,
 } from '@/lib/productionReporting'
 import {
   EmptyState,
@@ -256,7 +256,7 @@ dispatchData
 
 
   const totalProduced =
-    sumProductionQuantity(
+    sumProductionTons(
       filteredEntries
     )
 
@@ -595,9 +595,9 @@ return expandedDispatchFY[key] ?? true
 
         <StatCard
           label='Goods Produced'
-          value={totalProduced.toLocaleString('en-IN')}
-          unit='Qty'
-          support='Filtered production quantity'
+          value={totalProduced.toFixed(2)}
+          unit='MT'
+          support='Filtered production weight'
           tone='blue'
         />
 
