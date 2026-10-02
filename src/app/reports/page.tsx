@@ -9,6 +9,33 @@ groupByFinancialYearAndMonth
 import RoleGuard
 from '@/components/RoleGuard'
 
+function dateValue(
+value:unknown
+){
+ return String(value || '').slice(0,10)
+}
+
+function formatDateValue(
+date:Date
+){
+ const year=date.getFullYear()
+ const month=String(date.getMonth()+1).padStart(2,'0')
+ const day=String(date.getDate()).padStart(2,'0')
+ return `${year}-${month}-${day}`
+}
+
+function monthBounds(
+offset:number
+){
+ const now=new Date()
+ const start=new Date(now.getFullYear(),now.getMonth()+offset,1)
+ const end=new Date(now.getFullYear(),now.getMonth()+offset+1,0)
+ return {
+  from:formatDateValue(start),
+  to:formatDateValue(end)
+ }
+}
+
 export default function ReportsPage(){
 const [entries,setEntries]=useState<any[]>([])
 const [mode,setMode]=useState<'detailed'|'summary'>('detailed')
@@ -82,41 +109,21 @@ function tons(type:string,qty:number){
 
 const values=(key:string)=>[...new Set(entries.map(e=>e[key]).filter(Boolean))]
 
-const filtered=useMemo(()=>entries.filter(e=>{
+const filtered=useMemo(()=>{
+ const presetBounds =
+ period==='month'
+ ? monthBounds(0)
+ : period==='lastMonth'
+ ? monthBounds(-1)
+ : null
+
+ return entries.filter(e=>{
 
     const entryDate =
-    new Date(e.production_date)
-   
-    const now =
-    new Date()
-   
-    if(period==='month'){
-   
-     if(
-      entryDate.getMonth()!==now.getMonth() ||
-      entryDate.getFullYear()!==now.getFullYear()
-     ){
-      return false
-     }
-   
-    }
-   
-    if(period==='lastMonth'){
-   
-     const lastMonth =
-     new Date()
-   
-     lastMonth.setMonth(
-      now.getMonth()-1
-     )
-   
-     if(
-      entryDate.getMonth()!==lastMonth.getMonth() ||
-      entryDate.getFullYear()!==lastMonth.getFullYear()
-     ){
-      return false
-     }
-   
+    dateValue(e.production_date)
+
+    if(presetBounds){
+     if(entryDate<presetBounds.from || entryDate>presetBounds.to) return false
     }
    
     if(search && !JSON.stringify(e).toLowerCase().includes(search.toLowerCase())) return false
@@ -130,14 +137,15 @@ const filtered=useMemo(()=>entries.filter(e=>{
    
     if(period==='custom'){
    
-     if(fromDate && e.production_date<fromDate) return false
-     if(toDate && e.production_date>toDate) return false
+     if(fromDate && entryDate<fromDate) return false
+     if(toDate && entryDate>toDate) return false
    
     }
    
     return true
    
-   }),[
+   })
+  },[
     entries,
     search,
     factory,
