@@ -21,6 +21,35 @@ import {
   SurfaceCard,
 } from '@/components/erp-ui'
 
+function dateValue(
+  value: unknown
+) {
+  return String(value || '').slice(0, 10)
+}
+
+function formatDateValue(
+  date: Date
+) {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+
+  return `${year}-${month}-${day}`
+}
+
+function monthBounds(
+  offset: number
+) {
+  const now = new Date()
+  const start = new Date(now.getFullYear(), now.getMonth() + offset, 1)
+  const end = new Date(now.getFullYear(), now.getMonth() + offset + 1, 0)
+
+  return {
+    from: formatDateValue(start),
+    to: formatDateValue(end),
+  }
+}
+
 export default function DashboardPage() {
 
   const router =
@@ -67,10 +96,20 @@ useState<Record<string,boolean>>({})
   
     }
   
+    const {data:profile} =
+    await supabase
+    .from('profiles')
+    .select('factory')
+    .eq('id',user.id)
+    .single()
+
     const factory =
-localStorage.getItem(
-'userFactory'
-) || ''
+    profile?.factory || ''
+
+localStorage.setItem(
+'userFactory',
+factory
+)
 
 setUserFactory(factory)
 
@@ -173,26 +212,20 @@ dispatchData
     let filtered = [...entries]
   
     if (filter === 'month') {
-  
-      const now = new Date()
-  
-      const currentMonth =
-        now.getMonth()
-  
-      const currentYear =
-        now.getFullYear()
+      const bounds =
+        monthBounds(0)
   
       filtered = filtered.filter(
         item => {
   
           const date =
-            new Date(
+            dateValue(
               item.production_date
             )
   
           return (
-            date.getMonth() === currentMonth &&
-            date.getFullYear() === currentYear
+            date >= bounds.from &&
+            date <= bounds.to
           )
   
         }
@@ -207,7 +240,7 @@ dispatchData
         filtered =
           filtered.filter(
             item =>
-              item.production_date >=
+              dateValue(item.production_date) >=
               fromDate
           )
   
@@ -218,7 +251,7 @@ dispatchData
         filtered =
           filtered.filter(
             item =>
-              item.production_date <=
+              dateValue(item.production_date) <=
               toDate
           )
   
@@ -241,18 +274,18 @@ dispatchData
     let filtered = [...dispatchEntries]
   
     if (filter === 'month') {
-  
-      const now = new Date()
+      const bounds =
+        monthBounds(0)
   
       filtered = filtered.filter(item => {
   
-        const date = new Date(
+        const date = dateValue(
           item.dispatch_date
         )
   
         return (
-          date.getMonth() === now.getMonth() &&
-          date.getFullYear() === now.getFullYear()
+          date >= bounds.from &&
+          date <= bounds.to
         )
   
       })
@@ -265,7 +298,7 @@ dispatchData
   
         filtered = filtered.filter(
           item =>
-            item.dispatch_date >= fromDate
+            dateValue(item.dispatch_date) >= fromDate
         )
   
       }
@@ -274,7 +307,7 @@ dispatchData
   
         filtered = filtered.filter(
           item =>
-            item.dispatch_date <= toDate
+            dateValue(item.dispatch_date) <= toDate
         )
   
       }

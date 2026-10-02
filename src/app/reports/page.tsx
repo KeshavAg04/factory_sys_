@@ -58,14 +58,39 @@ useState<Record<string,boolean>>({})
 
 useEffect(()=>{
 
-  const factory =
-  localStorage.getItem(
-  'userFactory'
-  ) || ''
+  async function init(){
+
+    const {
+      data:{user}
+    } =
+    await supabase.auth.getUser()
+
+    if(!user){
+      return
+    }
+
+    const {data:profile} =
+    await supabase
+    .from('profiles')
+    .select('factory')
+    .eq('id',user.id)
+    .single()
+
+    const factory =
+    profile?.factory || ''
+
+    localStorage.setItem(
+    'userFactory',
+    factory
+    )
   
-  setUserFactory(factory)
+    setUserFactory(factory)
   
-  loadEntries(factory)
+    loadEntries(factory)
+
+  }
+
+  init()
   
   },[])
 
