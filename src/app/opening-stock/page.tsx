@@ -5,6 +5,9 @@ import toast from 'react-hot-toast'
 
 import { supabase } from '@/lib/supabase'
 import RoleGuard from '@/components/RoleGuard'
+import {
+  isVisibleForDemoMode,
+} from '@/lib/permissions'
 
 type OpeningStock = {
   id:number
@@ -56,6 +59,10 @@ export default function OpeningStockPage(){
   },[])
 
   async function loadData(){
+    const role =
+      localStorage.getItem(
+        'userRole'
+      ) || ''
 
     const { data,error } =
       await supabase
@@ -76,16 +83,26 @@ export default function OpeningStockPage(){
     }
 
     setItems(
-      data || []
+      (data || [])
+      .filter((item:any)=>
+        isVisibleForDemoMode(
+          item,
+          role
+        )
+      )
     )
 
   }
   async function loadBagNames(){
+    const role =
+      localStorage.getItem(
+        'userRole'
+      ) || ''
 
     const { data } =
       await supabase
         .from('bag_name_master')
-        .select('bag_name')
+        .select('bag_name,factory')
         .order(
           'bag_name',
           {
@@ -94,7 +111,14 @@ export default function OpeningStockPage(){
         )
   
     setBagNames(
-      data?.map(
+      data
+      ?.filter((item:any)=>
+        isVisibleForDemoMode(
+          item,
+          role
+        )
+      )
+      .map(
         item=>item.bag_name
       ) || []
     )

@@ -9,6 +9,9 @@ import {
   formatDateDisplay,
   formatMT,
 } from '@/lib/formatters'
+import {
+  isVisibleForDemoMode,
+} from '@/lib/permissions'
 import RoleGuard from '@/components/RoleGuard'
 
 
@@ -71,6 +74,10 @@ export default function RecentDispatchPage() {
   ){
 
     setLoading(true)
+    const role =
+      localStorage.getItem(
+        'userRole'
+      ) || ''
 
     let query =
       supabase
@@ -98,7 +105,17 @@ export default function RecentDispatchPage() {
 
     if(!error){
 
-      setEntries(data||[])
+      setEntries(
+        factoryFilter
+          ? data || []
+          : (data || [])
+            .filter((item:any)=>
+              isVisibleForDemoMode(
+                item,
+                role
+              )
+            )
+      )
 
     }
 
@@ -109,6 +126,10 @@ export default function RecentDispatchPage() {
   async function loadMasters(
     factoryFilter = userFactory
   ){
+    const role =
+      localStorage.getItem(
+        'userRole'
+      ) || ''
 
     const [
       customerRes,
@@ -120,7 +141,7 @@ export default function RecentDispatchPage() {
     ] = await Promise.all([
       supabase
         .from('dispatch_entries')
-        .select('customer_name'),
+        .select('customer_name,factory'),
     
       supabase
         .from('factory_master')
@@ -132,7 +153,7 @@ export default function RecentDispatchPage() {
     
       supabase
         .from('bag_name_master')
-        .select('bag_name'),
+        .select('bag_name,factory'),
     
       supabase
         .from('mesh_master')
@@ -141,12 +162,18 @@ export default function RecentDispatchPage() {
     
       supabase
         .from('transporter_master')
-        .select('transporter_name')
+        .select('transporter_name,factory')
     ])
     
     setCustomers([
       ...new Map(
         (customerRes.data || [])
+          .filter((x:any) =>
+            isVisibleForDemoMode(
+              x,
+              role
+            )
+          )
           .filter((x:any) => x.customer_name)
           .map((x:any) => [x.customer_name, x])
       ).values()
@@ -158,12 +185,37 @@ export default function RecentDispatchPage() {
           (item:any)=>
             item.factory_name === factoryFilter
         )
-      : factoryRes.data||[]
+      : (factoryRes.data||[])
+        .filter((item:any)=>
+          isVisibleForDemoMode(
+            {
+              factory_name:
+                item.factory_name,
+            },
+            role
+          )
+        )
     )
     setBagTypes(bagTypeRes.data||[])
-    setBagNames(bagNameRes.data||[])
+    setBagNames(
+      (bagNameRes.data||[])
+      .filter((item:any)=>
+        isVisibleForDemoMode(
+          item,
+          role
+        )
+      )
+    )
     setMeshes(meshRes.data||[])
-    setTransporters(transporterRes.data||[])
+    setTransporters(
+      (transporterRes.data||[])
+      .filter((item:any)=>
+        isVisibleForDemoMode(
+          item,
+          role
+        )
+      )
+    )
     
     }
 

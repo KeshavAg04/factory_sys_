@@ -14,6 +14,9 @@ import {
 import toast from 'react-hot-toast'
 import RoleGuard
 from '@/components/RoleGuard'
+import {
+  isVisibleForDemoMode,
+} from '@/lib/permissions'
 
 export default function RecentEntriesPage() {
 
@@ -73,15 +76,19 @@ export default function RecentEntriesPage() {
     useState<RateMasterRow[]>([])
 
     const fetchMasters = async () => {
+      const role =
+        localStorage.getItem(
+          'userRole'
+        ) || ''
 
       const [meshRes, bagTypeRes, bagNameRes, rateRes] =
         await Promise.all([
           supabase
             .from('rate_master')
-            .select('mesh'),
+            .select('mesh,factory'),
           supabase
             .from('rate_master')
-            .select('bag_type'),
+            .select('bag_type,factory'),
           supabase
             .from('bag_name_master')
             .select('*'),
@@ -93,6 +100,17 @@ export default function RecentEntriesPage() {
       setMeshes([
         ...new Set(
           (meshRes.data || []).map(
+          (item: { mesh: string; factory?: string | null }) =>
+            item
+          )
+          .filter(
+            (item) =>
+              isVisibleForDemoMode(
+                item,
+                role
+              )
+          )
+          .map(
             (item: { mesh: string }) =>
               item.mesh
           )
@@ -101,7 +119,15 @@ export default function RecentEntriesPage() {
 
       setBagTypes([
         ...new Set(
-          (bagTypeRes.data || []).map(
+          (bagTypeRes.data || [])
+          .filter(
+            (item: { factory?: string | null }) =>
+              isVisibleForDemoMode(
+                item,
+                role
+              )
+          )
+          .map(
             (item: { bag_type: string }) =>
               item.bag_type
           )
@@ -109,11 +135,23 @@ export default function RecentEntriesPage() {
       ])
 
       setBagNames(
-        bagNameRes.data || []
+        (bagNameRes.data || [])
+        .filter((item:any)=>
+          isVisibleForDemoMode(
+            item,
+            role
+          )
+        )
       )
 
       setRates(
-        rateRes.data || []
+        (rateRes.data || [])
+        .filter((item:any)=>
+          isVisibleForDemoMode(
+            item,
+            role
+          )
+        )
       )
     }
 
@@ -122,6 +160,10 @@ export default function RecentEntriesPage() {
       ) => {
 
     setLoading(true)
+    const role =
+      localStorage.getItem(
+        'userRole'
+      ) || ''
 
     const { data, error } =
       await supabase
@@ -144,6 +186,13 @@ export default function RecentEntriesPage() {
                 )
         
               : (data || [])
+                .filter(
+                  row =>
+                    isVisibleForDemoMode(
+                      row,
+                      role
+                    )
+                )
         
           setEntries(
             filteredData

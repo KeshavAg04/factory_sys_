@@ -21,6 +21,9 @@ formatCurrency,
 formatDateDisplay,
 formatMT,
 } from '@/lib/formatters'
+import {
+isVisibleForDemoMode,
+} from '@/lib/permissions'
 import RoleGuard from '@/components/RoleGuard'
 
 export default function DispatchReportsPage(){
@@ -112,6 +115,10 @@ factory
 async function loadEntries(
 factoryFilter = ''
 ){
+    const role =
+    localStorage.getItem(
+    'userRole'
+    ) || ''
 
     let dispatchQuery =
     supabase
@@ -158,7 +165,15 @@ factoryFilter = ''
     }
     
     setEntries(
-    dispatchRes.data || []
+    factoryFilter
+    ? dispatchRes.data || []
+    : (dispatchRes.data || [])
+      .filter((item:any)=>
+      isVisibleForDemoMode(
+      item,
+      role
+      )
+      )
     )
     
     const dispatchInvoices =

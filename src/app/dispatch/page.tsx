@@ -8,6 +8,9 @@ import {
 
 import { supabase } from '@/lib/supabase'
 import RoleGuard from '@/components/RoleGuard'
+import {
+  isVisibleForDemoMode,
+} from '@/lib/permissions'
 
 export default function DispatchPage() {
 
@@ -252,6 +255,10 @@ setFactory(factory)
         ])
 
   async function fetchMasters(){
+    const role =
+      localStorage.getItem(
+        'userRole'
+      ) || ''
 
     const factoriesRes=
       await supabase
@@ -273,7 +280,7 @@ setFactory(factory)
         'rate_master'
       )
       .select(
-        'bag_type'
+        'bag_type,factory'
       )
 
     const customerRes=
@@ -282,15 +289,30 @@ setFactory(factory)
         'dispatch_entries'
       )
       .select(
-        'customer_name'
+        'customer_name,factory'
       )
 
     setFactories(
-      factoriesRes.data||[]
+      (factoriesRes.data||[])
+      .filter((item:any)=>
+        isVisibleForDemoMode(
+          {
+            factory_name:
+              item.factory_name,
+          },
+          role
+        )
+      )
     )
 
     setBagNames(
-      bagNameRes.data||[]
+      (bagNameRes.data||[])
+      .filter((item:any)=>
+        isVisibleForDemoMode(
+          item,
+          role
+        )
+      )
     )
 
     setBagTypes([
@@ -298,7 +320,14 @@ setFactory(factory)
         (
           bagTypeRes.data||
           []
-        ).map(
+        )
+        .filter((item:any)=>
+          isVisibleForDemoMode(
+            item,
+            role
+          )
+        )
+        .map(
           (item:any)=>
             item.bag_type
         )
@@ -310,6 +339,12 @@ setFactory(factory)
         (
           customerRes.data||
           []
+        )
+        .filter((item:any)=>
+          isVisibleForDemoMode(
+            item,
+            role
+          )
         )
         .map(
           (item:any)=>
@@ -336,7 +371,7 @@ setFactory(factory)
         'production_entries'
       )
       .select(
-        'mesh'
+        'mesh,factory'
       )
       .eq(
         'bag_name',
@@ -347,7 +382,16 @@ setFactory(factory)
       ...new Set(
         (
           data||[]
-        ).map(
+        )
+        .filter((item:any)=>
+          isVisibleForDemoMode(
+            item,
+            localStorage.getItem(
+              'userRole'
+            ) || ''
+          )
+        )
+        .map(
           (item:any)=>
             item.mesh
         )
@@ -452,6 +496,10 @@ setFactory(factory)
   }
 
   async function loadTransporters(){
+    const role =
+    localStorage.getItem(
+    'userRole'
+    ) || ''
 
     const {data} =
     await supabase
@@ -462,7 +510,13 @@ setFactory(factory)
     )
     
     setTransporters(
-    data || []
+    (data || [])
+    .filter((item:any)=>
+    isVisibleForDemoMode(
+    item,
+    role
+    )
+    )
     )
     
     }

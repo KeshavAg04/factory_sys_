@@ -11,6 +11,9 @@ import {
   findProductionRate,
   getProductionRate,
 } from '@/lib/productionRate'
+import {
+  isVisibleForDemoMode,
+} from '@/lib/permissions'
 
 import RoleGuard
 from '@/components/RoleGuard'
@@ -150,6 +153,10 @@ setFactory(factory)
   }
 
   async function fetchMasters() {
+    const role =
+      localStorage.getItem(
+        'userRole'
+      ) || ''
 
     const factoriesRes =
       await supabase
@@ -164,12 +171,12 @@ setFactory(factory)
     const meshRes =
       await supabase
         .from('rate_master')
-        .select('mesh')
+        .select('mesh,factory')
 
     const bagTypeRes =
       await supabase
         .from('rate_master')
-        .select('bag_type')
+        .select('bag_type,factory')
 
     const bagNameRes =
       await supabase
@@ -186,19 +193,41 @@ setFactory(factory)
         .from(
           'production_entries'
         )
-        .select('labour_name')
+        .select('labour_name,factory')
 
     setFactories(
-      factoriesRes.data || []
+      (factoriesRes.data || [])
+      .filter((item:any)=>
+        isVisibleForDemoMode(
+          {
+            factory_name:
+              item.factory_name,
+          },
+          role
+        )
+      )
     )
 
     setMachines(
-      machinesRes.data || []
+      (machinesRes.data || [])
+      .filter((item:any)=>
+        isVisibleForDemoMode(
+          item,
+          role
+        )
+      )
     )
 
     setMeshes([
       ...new Set(
-        (meshRes.data || []).map(
+        (meshRes.data || [])
+        .filter((item:any)=>
+          isVisibleForDemoMode(
+            item,
+            role
+          )
+        )
+        .map(
           (item: any) =>
             item.mesh
         )
@@ -210,7 +239,14 @@ setFactory(factory)
         (
           bagTypeRes.data ||
           []
-        ).map(
+        )
+        .filter((item:any)=>
+          isVisibleForDemoMode(
+            item,
+            role
+          )
+        )
+        .map(
           (item: any) =>
             item.bag_type
         )
@@ -218,10 +254,24 @@ setFactory(factory)
     ])
 
     setBagNames(
-      bagNameRes.data || []
+      (bagNameRes.data || [])
+      .filter((item:any)=>
+        isVisibleForDemoMode(
+          item,
+          role
+        )
+      )
     )
 
-    setRates(rateRes.data || [])
+    setRates(
+      (rateRes.data || [])
+      .filter((item:any)=>
+        isVisibleForDemoMode(
+          item,
+          role
+        )
+      )
+    )
 
     setLabours([
       ...new Set(
@@ -229,6 +279,12 @@ setFactory(factory)
           labourRes.data ||
           []
         )
+          .filter((item: any) =>
+            isVisibleForDemoMode(
+              item,
+              role
+            )
+          )
           .map(
             (item: any) =>
               item.labour_name

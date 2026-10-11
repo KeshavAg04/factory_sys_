@@ -5,6 +5,9 @@ import toast from 'react-hot-toast'
 
 import { supabase } from '@/lib/supabase'
 import RoleGuard from '@/components/RoleGuard'
+import {
+  isVisibleForDemoMode,
+} from '@/lib/permissions'
 
 type BagName = {
   id:string
@@ -32,6 +35,10 @@ export default function BagNameMasterPage(){
   },[])
 
   async function loadData(){
+    const role =
+      localStorage.getItem(
+        'userRole'
+      ) || ''
 
     const { data,error } =
       await supabase
@@ -52,7 +59,13 @@ export default function BagNameMasterPage(){
     }
 
     setItems(
-      data || []
+      (data || [])
+      .filter((item:any)=>
+        isVisibleForDemoMode(
+          item,
+          role
+        )
+      )
     )
 
   }

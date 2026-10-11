@@ -18,3 +18,27 @@ export function isDemoRole(
     'demo'
   )
 }
+
+export function isDemoFactory(
+  factory?: string | null
+) {
+  return (
+    (factory || '').trim().toLowerCase() ===
+    DEMO_FACTORY.toLowerCase()
+  )
+}
+
+export function isVisibleForDemoMode<T extends {
+  factory?: string | null
+  factory_name?: string | null
+}>(
+  row: T,
+  role?: string | null
+) {
+  const rowFactory =
+    row.factory ?? row.factory_name ?? null
+
+  return isDemoRole(role)
+    ? isDemoFactory(rowFactory)
+    : !isDemoFactory(rowFactory)
+}

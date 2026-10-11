@@ -1,4 +1,9 @@
 import { supabase } from './supabase'
+import {
+  DEMO_FACTORY,
+  isDemoRole,
+  isVisibleForDemoMode,
+} from './permissions'
 
 export type ProductionEntry = {
   id: string | number
@@ -146,6 +151,16 @@ export async function fetchProductionEntries(
 ) {
   const rows: ProductionEntry[] = []
   let from = 0
+  const role =
+    typeof window === 'undefined'
+      ? ''
+      : localStorage.getItem(
+          'userRole'
+        ) || ''
+
+  const shouldFilterDemoRows =
+    factoryFilter !== DEMO_FACTORY &&
+    !isDemoRole(role)
 
   while (true) {
     let query =
@@ -186,7 +201,17 @@ export async function fetchProductionEntries(
       data || []
 
     rows.push(
-      ...page
+      ...(
+        shouldFilterDemoRows
+          ? page.filter(
+              (row) =>
+                isVisibleForDemoMode(
+                  row,
+                  role
+                )
+            )
+          : page
+      )
     )
 
     if (page.length < PAGE_SIZE) {

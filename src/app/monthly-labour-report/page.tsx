@@ -17,6 +17,9 @@ from '@/lib/supabase'
 import {
 formatCurrency,
 } from '@/lib/formatters'
+import {
+isVisibleForDemoMode,
+} from '@/lib/permissions'
 
 export default function MonthlyLabourReportPage(){
 
@@ -81,6 +84,10 @@ setFactory(value)
 }
 
 async function loadFactories(){
+const role =
+localStorage.getItem(
+'userRole'
+) || ''
 
 const {data} =
 await supabase
@@ -94,12 +101,25 @@ ascending:true
 )
 
 setFactories(
-data || []
+(data || [])
+.filter((item:any)=>
+isVisibleForDemoMode(
+{
+factory_name:
+item.factory_name,
+},
+role
+)
+)
 )
 
 }
 
 async function loadEntries(){
+    const role =
+    localStorage.getItem(
+    'userRole'
+    ) || ''
 
     const {data,error} =
     await supabase
@@ -121,7 +141,13 @@ async function loadEntries(){
     }
     
     setEntries(
-    data || []
+    (data || [])
+    .filter((item:any)=>
+    isVisibleForDemoMode(
+    item,
+    role
+    )
+    )
     )
     
     }
